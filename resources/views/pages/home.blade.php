@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
 @section('content')
-<section class="hero" style="--hero-image: url('{{ asset('uploads/hero.webp') }}');">
+<section class="hero text-center md:text-left" style="--hero-image: url('{{ asset('uploads/hero.webp') }}');">
     <div class="container hero-grid">
-        <div class="reveal">
+        <div class="reveal mx-auto max-w-3xl md:mx-0 md:max-w-none">
             <p class="eyebrow">National Debt Recovery and Tracing Experts</p>
-            <h1>Authority in Recovery. Precision in Tracing. Confidence in Results.</h1>
-            <p class="lead">Colldett Trace Limited delivers disciplined debt recovery, asset tracing, investigations, and vehicle security services for banks, financial institutions, and corporates.</p>
-            <div class="actions">
+            <h1 class="max-w-4xl text-balance text-3xl font-black leading-tight tracking-tight text-white md:text-5xl lg:text-6xl">Authority in Recovery. Precision in Tracing. Confidence in Results.</h1>
+            <p class="lead text-base md:text-lg">Colldett Trace Limited delivers disciplined debt recovery, asset tracing, investigations, and vehicle security services for banks, financial institutions, and corporates.</p>
+            <div class="actions justify-center md:justify-start">
                 <a class="btn hero-btn-primary" href="{{ route('contact') }}">
                     <span>Recover Your Debt</span>
                     <i aria-hidden="true">→</i>
@@ -89,7 +89,7 @@
                 <p class="eyebrow">Core Services</p>
                 <h2>Recovery and tracing services built for institutional performance</h2>
             </div>
-            <a class="btn btn-soft services-head-cta" href="{{ route('services') }}">View Full Capibilities</a>
+            <a class="btn btn-soft services-head-cta" href="{{ route('services') }}">View Full Capabilities</a>
         </div>
         <div class="services-meta reveal">
             <span>Commercial Recovery</span>
@@ -194,6 +194,7 @@
     <div class="container reveal">
         <div class="affiliate-box premium-box">
             <div class="affiliate-grid">
+                <div class="affiliate-image" style="--affiliate-image: url('{{ asset('uploads/legal.jpeg') }}');" role="img" aria-label="Professional legal partner meeting"></div>
                 <div class="affiliate-content">
                     <div class="brand-arrow-accent" aria-hidden="true">
                         <span class="bar"></span>
@@ -220,7 +221,6 @@
                         </a>
                     </div>
                 </div>
-                <div class="affiliate-image" style="--affiliate-image: url('{{ asset('uploads/legal.jpeg') }}');" role="img" aria-label="Professional legal partner meeting"></div>
             </div>
         </div>
     </div>
@@ -250,7 +250,7 @@
                     </div>
                     <h3>{{ $article['title'] }}</h3>
                     <p>{{ $article['excerpt'] }}</p>
-                    <a class="insight-cta" href="{{ route('insights') }}">Read Insight <i aria-hidden="true">→</i></a>
+                    <a class="insight-cta" href="{{ route('insights.show', $article['slug']) }}">Read Insight <i aria-hidden="true">→</i></a>
                 </article>
             @endforeach
         </div>
@@ -261,27 +261,55 @@
     <div class="container cta-box reveal">
         <h2>Start a structured recovery engagement today</h2>
         <p>Partner with a disciplined team trusted by financial and commercial clients.</p>
-        <div class="actions">
-            <a class="btn" href="{{ route('contact') }}">Request Assistance</a>
-            <a class="btn btn-gold" href="{{ route('contact') }}">Start Recovery</a>
+        <div class="actions flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center md:gap-4">
+            <a class="btn w-full min-h-11 justify-center px-6 py-3 text-sm sm:w-auto md:text-base" href="{{ route('contact') }}">Request Assistance</a>
+            <a class="btn btn-gold w-full min-h-11 justify-center px-6 py-3 text-sm sm:w-auto md:text-base" href="{{ route('contact') }}">Start Recovery</a>
         </div>
     </div>
 </section>
 
 <section class="section section-contact" id="contact">
-    <div class="container two-col">
-        <div class="reveal">
+    <div class="container contact-home-grid">
+        <div class="reveal contact-home-left">
+            <div class="brand-arrow-accent" aria-hidden="true">
+                <span class="bar"></span>
+                <span class="chevrons">
+                    <i class="c1"></i><i class="c2"></i><i class="c3"></i>
+                </span>
+            </div>
             <p class="eyebrow">Contact</p>
-            <h2>Speak to a specialist</h2>
-            <p>{{ $site['company']['phone'] }}</p>
-            <p>{{ $site['company']['email'] }}</p>
-            <p>{{ $site['company']['address'] }}</p>
+            <h2>Speak to a specialist and start recovery with confidence</h2>
+            <p class="contact-home-lead">Connect with our team for debt recovery, tracing, investigations, and vehicle security support. We respond quickly with a structured next-step plan.</p>
+            <div class="contact-home-cards">
+                <a href="tel:{{ preg_replace('/\s+/', '', $site['company']['phone']) }}" class="contact-mini-card">
+                    <strong>Phone</strong>
+                    <span>{{ $site['company']['phone'] }}</span>
+                </a>
+                <a href="mailto:{{ $site['company']['email'] }}" class="contact-mini-card">
+                    <strong>Email</strong>
+                    <span>{{ $site['company']['email'] }}</span>
+                </a>
+                <div class="contact-mini-card">
+                    <strong>Office</strong>
+                    <span>{{ $site['company']['address'] }}</span>
+                </div>
+            </div>
         </div>
-        <div class="reveal">
-            <a href="{{ route('contact') }}" class="contact-portal">
-                Open secure inquiry portal
-                <span>Submit debt recovery, tracing, or vehicle security requests.</span>
-            </a>
+        <div class="reveal contact-home-right">
+            <div class="contact-portal-panel">
+                <p class="eyebrow">Secure Inquiry</p>
+                <h3>Open secure inquiry portal</h3>
+                <p>Submit debt recovery, tracing, or vehicle tracking requests with complete confidentiality.</p>
+                <ul class="checklist compact">
+                    <li>Dedicated specialist follow-up</li>
+                    <li>Confidential case handling</li>
+                    <li>Fast onboarding process</li>
+                </ul>
+                <div class="contact-home-actions">
+                    <a href="{{ route('contact') }}" class="btn btn-gold">Request Assistance</a>
+                    <a href="{{ route('contact') }}" class="btn btn-soft">Book a Consultation</a>
+                </div>
+            </div>
         </div>
     </div>
 </section>

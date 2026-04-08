@@ -1,0 +1,219 @@
+/*
+ | Colldett document shell (header, rule, body shell, footer) — DomPDF-safe.
+ | Mirrors preview (document-theme) for .colldett-document*; pair with invoice-body.css for invoices.
+ */
+
+:root {
+  --colldett-doc-green: #1a4d3a;
+  --colldett-doc-green-dark: #0f3326;
+  --colldett-doc-gold: #c9a227;
+  --colldett-doc-gold-soft: #e8d48b;
+  --colldett-doc-text: #4a5c54;
+  --colldett-doc-muted: #6b7a72;
+}
+
+.colldett-document {
+  /* Slightly tighter horizontal padding so PDF matches wider print band */
+  --doc-pad-x: 1.5rem;
+  --doc-pad-top: 1.75rem;
+  --doc-pad-bottom: 1.5rem;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  background: #fff;
+  color: var(--colldett-doc-text);
+  border: 1px solid #e2e8f0;
+  border-radius: 2px;
+  overflow: hidden;
+  min-height: auto;
+}
+
+.colldett-document--letterhead-bg {
+  background-size: cover;
+  background-position: top center;
+  background-repeat: no-repeat;
+}
+
+.colldett-document__header {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: start;
+  padding: var(--doc-pad-top) var(--doc-pad-x) 1rem;
+  padding-right: 0;
+}
+
+.colldett-document__corner {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 4.5rem 4.5rem 0;
+  border-color: transparent var(--colldett-doc-green-dark) transparent transparent;
+  z-index: 2;
+}
+
+.colldett-document__brand {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.colldett-document__logo {
+  height: 3.75rem;
+  width: auto;
+  max-width: 14rem;
+  object-fit: contain;
+}
+
+.colldett-document__address {
+  position: relative;
+  z-index: 3;
+  margin-top: 0.25rem;
+  margin-right: var(--doc-pad-x);
+  max-width: 14rem;
+  text-align: right;
+  font-style: normal;
+  font-size: 0.65rem;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--colldett-doc-muted);
+}
+
+.colldett-document__rule {
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--colldett-doc-gold-soft) 0%,
+    var(--colldett-doc-gold) 45%,
+    var(--colldett-doc-gold-soft) 100%
+  );
+  opacity: 0.95;
+}
+
+.colldett-document__body {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  padding: 1.75rem var(--doc-pad-x) 2rem;
+  min-height: 0;
+}
+
+.colldett-document__body--no-doc-title {
+  padding-top: 1rem;
+}
+
+.colldett-document__doc-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--colldett-doc-green-dark);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.colldett-document__footer-wrap {
+  margin-top: auto;
+  padding-top: 1.25rem;
+  background: #fff;
+}
+
+.colldett-document__footer-accent {
+  display: flex;
+  align-items: center;
+  padding: 0 0 0.65rem var(--doc-pad-x);
+}
+
+.colldett-footer-accent__svg {
+  display: block;
+  height: 0.65rem;
+  width: auto;
+  min-width: 6.5rem;
+}
+
+.colldett-document__footer-rule-thin {
+  height: 2px;
+  margin: 0;
+  background: linear-gradient(
+    90deg,
+    var(--colldett-doc-gold-soft) 0%,
+    var(--colldett-doc-gold) 50%,
+    var(--colldett-doc-gold-soft) 100%
+  );
+}
+
+.colldett-document__footer {
+  position: relative;
+  z-index: 1;
+  padding: 1rem var(--doc-pad-x) var(--doc-pad-bottom);
+  background: #fff;
+}
+
+.colldett-document__footer-grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--colldett-doc-green);
+}
+
+.colldett-document__footer-item {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.45rem;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 34%;
+}
+
+.colldett-document__footer-item--center {
+  justify-content: center;
+  text-align: left;
+}
+
+.colldett-document__footer-item--end {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.colldett-document__footer-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--colldett-doc-green-dark);
+}
+
+.colldett-document__footer-text {
+  color: var(--colldett-doc-green);
+  word-break: break-word;
+}
+
+.colldett-document__footer-text a {
+  color: var(--colldett-doc-green-dark);
+  text-decoration: none;
+}
+
+.colldett-document__footer-icon svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}

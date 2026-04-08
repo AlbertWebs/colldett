@@ -1,0 +1,26 @@
+{
+    "id": "/admin",
+    "name": "Colldett Admin",
+    "short_name": "Admin",
+    "description": "Colldett administration console — install for faster access.",
+    "start_url": "/admin",
+    "scope": "/admin",
+    "display": "standalone",
+    "orientation": "any",
+    "background_color": "#f4f7fb",
+    "theme_color": "#0f4c81",
+    "icons": [
+        {
+            "src": "/uploads/favicon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/uploads/favicon.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}

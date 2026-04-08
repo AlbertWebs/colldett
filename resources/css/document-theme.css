@@ -1,0 +1,347 @@
+@import "tailwindcss";
+
+/* Colldett official document theme — forest green + gold, letterhead-aligned */
+
+@theme {
+  --colldett-doc-green: #1a4d3a;
+  --colldett-doc-green-dark: #0f3326;
+  --colldett-doc-gold: #c9a227;
+  --colldett-doc-gold-soft: #e8d48b;
+  --colldett-doc-text: #4a5c54;
+  --colldett-doc-muted: #6b7a72;
+}
+
+@import "./invoice-body.css" layer(components);
+
+@layer components {
+  .colldett-document {
+    --doc-pad-x: 2.25rem;
+    --doc-pad-top: 1.75rem;
+    --doc-pad-bottom: 1.5rem;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    max-width: 52rem;
+    margin-left: auto;
+    margin-right: auto;
+    background: #fff;
+    color: var(--colldett-doc-text);
+    box-shadow:
+      0 4px 6px -1px rgb(0 0 0 / 0.06),
+      0 24px 48px -12px rgb(15 23 42 / 0.12);
+    border: 1px solid rgb(226 232 240 / 0.9);
+    border-radius: 2px;
+    overflow: hidden;
+    min-height: 70vh;
+  }
+
+  .colldett-document--letterhead-bg {
+    background-size: cover;
+    background-position: top center;
+    background-repeat: no-repeat;
+  }
+
+  .colldett-document__header {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    align-items: start;
+    padding: var(--doc-pad-top) var(--doc-pad-x) 1rem;
+    padding-right: 0;
+  }
+
+  .colldett-document__corner {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 4.5rem 4.5rem 0;
+    border-color: transparent var(--colldett-doc-green-dark) transparent transparent;
+    z-index: 2;
+  }
+
+  .colldett-document__brand {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .colldett-document__logo {
+    height: 3.75rem;
+    width: auto;
+    max-width: 14rem;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+
+  .colldett-document__address {
+    position: relative;
+    z-index: 3;
+    margin-top: 0.25rem;
+    margin-right: var(--doc-pad-x);
+    max-width: 14rem;
+    text-align: right;
+    font-style: normal;
+    font-size: 0.65rem;
+    font-weight: 600;
+    line-height: 1.45;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--colldett-doc-muted);
+  }
+
+  .colldett-document__rule {
+    height: 3px;
+    background: linear-gradient(
+      90deg,
+      var(--colldett-doc-gold-soft) 0%,
+      var(--colldett-doc-gold) 45%,
+      var(--colldett-doc-gold-soft) 100%
+    );
+    opacity: 0.95;
+  }
+
+  .colldett-document__body {
+    position: relative;
+    z-index: 1;
+    flex: 1 1 auto;
+    padding: 1.75rem var(--doc-pad-x) 2rem;
+    min-height: 12rem;
+  }
+
+  .colldett-document__doc-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--colldett-doc-green-dark);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgb(226 232 240);
+  }
+
+  /* Letterhead-style footer: green bar + gold chevrons, thin gold rule, 3-column contacts */
+  .colldett-document__footer-wrap {
+    margin-top: auto;
+    padding-top: 1.25rem;
+    background: #fff;
+  }
+
+  .colldett-document__footer-accent {
+    display: flex;
+    align-items: center;
+    padding: 0 0 0.65rem var(--doc-pad-x);
+  }
+
+  .colldett-footer-accent__svg {
+    display: block;
+    height: 0.65rem;
+    width: auto;
+    min-width: 6.5rem;
+  }
+
+  .colldett-document__footer-rule-thin {
+    height: 2px;
+    margin: 0;
+    background: linear-gradient(
+      90deg,
+      var(--colldett-doc-gold-soft) 0%,
+      var(--colldett-doc-gold) 50%,
+      var(--colldett-doc-gold-soft) 100%
+    );
+  }
+
+  .colldett-document__footer {
+    position: relative;
+    z-index: 1;
+    padding: 1rem var(--doc-pad-x) var(--doc-pad-bottom);
+    background: #fff;
+  }
+
+  .colldett-document__footer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.75rem 1rem;
+    align-items: start;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--colldett-doc-green);
+  }
+
+  .colldett-document__footer-item {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 0.45rem;
+    justify-self: start;
+    max-width: 100%;
+  }
+
+  .colldett-document__footer-item--center {
+    justify-self: center;
+  }
+
+  .colldett-document__footer-item--end {
+    justify-self: end;
+  }
+
+  .colldett-document__footer-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--colldett-doc-green-dark);
+  }
+
+  .colldett-document__footer-icon svg {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  .colldett-document__footer-text {
+    color: var(--colldett-doc-green);
+    word-break: break-word;
+  }
+
+  .colldett-document__footer-text a {
+    color: var(--colldett-doc-green-dark);
+    text-decoration: none;
+  }
+
+  .colldett-document__footer-text a:hover {
+    text-decoration: underline;
+  }
+
+  .colldett-document-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+
+  .colldett-document-table th {
+    text-align: left;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--colldett-doc-muted);
+    padding: 0.5rem 0.75rem;
+    background: rgb(248 250 249);
+    border: 1px solid rgb(226 232 240);
+  }
+
+  .colldett-document-table td {
+    padding: 0.65rem 0.75rem;
+    border: 1px solid rgb(226 232 240);
+    vertical-align: top;
+    color: rgb(15 23 42);
+  }
+
+  @media print {
+    /* Slightly wider printable band than PDF default (tighter L/R page margins + inner pad) */
+    @page {
+      size: A4 portrait;
+      margin: 12mm 9mm 16mm 9mm;
+    }
+
+    html {
+      font-size: 16px;
+      height: 100%;
+    }
+
+    body {
+      margin: 0 !important;
+      background: #fff !important;
+      color: #4a5c54;
+      min-height: 100%;
+    }
+
+    /* Admin shell: print only the document (same visual as on-screen preview, without panel chrome) */
+    aside.admin-sidebar,
+    header.admin-top-header {
+      display: none !important;
+    }
+
+    .min-h-screen > .flex {
+      display: block !important;
+    }
+
+    .min-h-screen > .flex > div.w-full {
+      width: 100% !important;
+      max-width: none !important;
+      padding-left: 0 !important;
+      margin: 0 !important;
+    }
+
+    /* Only the admin layout shell <main>; not .colldett-document__body (nested <main>) */
+    body .min-h-screen > .flex > div.w-full > main {
+      padding: 0 !important;
+      background: #fff !important;
+      max-width: none !important;
+    }
+
+    /*
+     * Sticky letterhead footer on the first printed page when body content is short.
+     * Use column flex + min-height ≈ one sheet; flex child body grows, footer uses margin-top: auto.
+     * (Avoid overflow:hidden here — it can collapse flex children in print engines.)
+     */
+    .colldett-document {
+      --doc-pad-x: 1.5rem;
+      --doc-pad-top: 1.5rem;
+      --doc-pad-bottom: 1.25rem;
+      display: flex !important;
+      flex-direction: column !important;
+      overflow: visible !important;
+      box-shadow: none !important;
+      border: none !important;
+      border-radius: 0 !important;
+      max-width: none !important;
+      width: 100% !important;
+      margin: 0 !important;
+      min-height: 100vh !important;
+      height: auto !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .colldett-document__header,
+    .colldett-document__rule {
+      flex: 0 0 auto !important;
+    }
+
+    .colldett-document__body {
+      flex: 1 1 auto !important;
+      min-height: 1px !important;
+      overflow: visible !important;
+    }
+
+    .colldett-document__footer-wrap {
+      flex: 0 0 auto !important;
+      margin-top: auto !important;
+    }
+
+    .colldett-document img {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .colldett-document__corner,
+    .colldett-document__rule,
+    .colldett-document__footer-rule-thin,
+    .colldett-document__footer-accent {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .no-print {
+      display: none !important;
+    }
+  }
+}

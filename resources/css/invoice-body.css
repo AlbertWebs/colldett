@@ -1,0 +1,317 @@
+/*
+ | Invoice statement block — shared by document-theme (preview) and DomPDF (download).
+ | Keep in sync: imported into document-theme.css; embedded in billing-document-pdf.
+ */
+
+.colldett-document__body--no-doc-title {
+  padding-top: 1rem;
+}
+
+.colldett-invoice {
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: #0f172a;
+}
+
+/* DomPDF: grid is unreliable — table layout when .colldett-invoice--pdf */
+.colldett-invoice--pdf .colldett-invoice__meta-row {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0 0;
+}
+
+.colldett-invoice--pdf .colldett-invoice__main,
+.colldett-invoice--pdf .colldett-invoice__payment {
+  display: table-cell;
+  vertical-align: top;
+}
+
+.colldett-invoice--pdf .colldett-invoice__main {
+  width: 62%;
+  padding-right: 1.25rem;
+}
+
+.colldett-invoice--pdf .colldett-invoice__payment {
+  width: 38%;
+}
+
+/* Dates + payment only; line-item tables sit below at full document width */
+.colldett-invoice__meta-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(11rem, 14rem);
+  gap: 1.5rem 2rem;
+  align-items: start;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 42rem) {
+  .colldett-invoice:not(.colldett-invoice--pdf) .colldett-invoice__meta-row {
+    grid-template-columns: 1fr;
+  }
+
+  .colldett-invoice:not(.colldett-invoice--pdf) .colldett-invoice__payment {
+    order: -1;
+    text-align: left !important;
+  }
+}
+
+.colldett-invoice__number-bar {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.65rem 1rem;
+  margin-bottom: 0.75rem;
+  background: #f1f5f9;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: 0.02em;
+}
+
+.colldett-invoice__dates {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  color: #0f172a;
+}
+
+.colldett-invoice--pdf .colldett-invoice__dates {
+  display: block;
+}
+
+.colldett-invoice--pdf .colldett-invoice__dates > div {
+  margin-bottom: 0.25rem;
+}
+
+.colldett-invoice__date-label {
+  font-weight: 600;
+  margin-right: 0.25rem;
+}
+
+.colldett-invoice__to {
+  margin-bottom: 1.25rem;
+}
+
+.colldett-invoice__to-title {
+  font-weight: 700;
+  font-size: 0.9375rem;
+  margin-bottom: 0.35rem;
+  color: #0f172a;
+}
+
+.colldett-invoice__to-lines {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #334155;
+}
+
+.colldett-invoice__payment {
+  text-align: right;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: #0f172a;
+}
+
+.colldett-invoice__payment-title {
+  font-weight: 700;
+  font-size: 1.0625rem;
+  margin-bottom: 0.65rem;
+  color: #0f172a;
+}
+
+.colldett-invoice__payment-block {
+  margin-bottom: 0.75rem;
+}
+
+.colldett-invoice__payment-heading {
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+  font-size: 0.8125rem;
+}
+
+.colldett-invoice__payment-line {
+  color: #334155;
+}
+
+.colldett-invoice__payment-note {
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.colldett-invoice__table {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+  margin-bottom: 1.25rem;
+  table-layout: fixed;
+}
+
+.colldett-invoice__table th {
+  padding: 0.5rem 0.65rem;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+  text-align: left;
+}
+
+.colldett-invoice__th-desc {
+  width: auto;
+  min-width: 0;
+}
+
+.colldett-invoice__th-total {
+  text-align: right;
+  width: 9.5rem;
+  max-width: 35%;
+}
+
+.colldett-invoice__table td {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #e2e8f0;
+  vertical-align: top;
+  color: #0f172a;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.colldett-invoice__table--items td:first-child {
+  min-width: 0;
+}
+
+.colldett-invoice__cell-num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.colldett-invoice__summary-row td {
+  background: #fff;
+}
+
+.colldett-invoice__summary-label {
+  text-align: right;
+  font-weight: 600;
+  color: #334155;
+}
+
+.colldett-invoice__summary-row--total .colldett-invoice__summary-label,
+.colldett-invoice__summary-row--total .colldett-invoice__cell-num {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.colldett-invoice__notes {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.colldett-invoice__notes-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 0.35rem;
+}
+
+.colldett-invoice__notes-body {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #334155;
+  white-space: pre-line;
+}
+
+.colldett-invoice__generated {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+/* Demand letter — preview / print (non-PDF browser); PDF uses inline styles in billing-document-pdf */
+.colldett-demand-letter {
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: #0f172a;
+}
+
+.colldett-demand-letter__meta {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.colldett-demand-letter__meta-row {
+  margin-bottom: 0.65rem;
+}
+
+.colldett-demand-letter__meta-row--grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+  margin-bottom: 0;
+}
+
+@media (max-width: 42rem) {
+  .colldett-demand-letter__meta-row--grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.colldett-demand-letter__meta-label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 0.2rem;
+}
+
+.colldett-demand-letter__meta-value {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.colldett-demand-letter__subject-block {
+  margin-bottom: 1.25rem;
+  padding: 0.85rem 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 2px;
+}
+
+.colldett-demand-letter__subject-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin: 0 0 0.35rem;
+}
+
+.colldett-demand-letter__subject-text {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.colldett-demand-letter__body {
+  font-size: 0.875rem;
+  line-height: 1.65;
+  color: #1e293b;
+  white-space: pre-wrap;
+}

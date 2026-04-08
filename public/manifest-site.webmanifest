@@ -1,0 +1,26 @@
+{
+    "id": "/",
+    "name": "Colldett Trace Limited",
+    "short_name": "Colldett",
+    "description": "Professional recovery and tracing — add to your home screen for quick access.",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait-primary",
+    "background_color": "#f7f9f8",
+    "theme_color": "#215e1d",
+    "icons": [
+        {
+            "src": "/uploads/favicon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/uploads/favicon.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}
