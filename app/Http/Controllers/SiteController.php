@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Capability;
+use App\Models\ContactDetail;
 use App\Models\Insight;
 use App\Support\AdminStoredSettings;
 use App\Support\TeamDirectory;
@@ -256,6 +257,7 @@ class SiteController extends Controller
         $site['insights'] = $this->getInsights();
         $site['team'] = TeamDirectory::forPublicSite();
         $site['about'] = $this->aboutContent();
+        $site = $this->mergeContactDetailsFromDatabase($site);
 
         return [
             'metaTitle' => $title.' | '.$site['company']['name'],
@@ -276,6 +278,45 @@ class SiteController extends Controller
     private function readAdminSettings(): array
     {
         return AdminStoredSettings::all();
+    }
+
+    /**
+     * Overlay phone, email, address, and map embed from contact_details when present.
+     *
+     * @param  array<string, mixed>  $site
+     * @return array<string, mixed>
+     */
+    private function mergeContactDetailsFromDatabase(array $site): array
+    {
+        if (! Schema::hasTable('contact_details')) {
+            $site['company']['map_embed_url'] = (string) (config('colldett.company.map_embed_url') ?? '');
+
+            return $site;
+        }
+
+        $db = ContactDetail::query()->first();
+        if ($db === null) {
+            $site['company']['map_embed_url'] = (string) (config('colldett.company.map_embed_url') ?? '');
+
+            return $site;
+        }
+
+        if (filled($db->phone)) {
+            $site['company']['phone'] = $db->phone;
+        }
+        if (filled($db->email)) {
+            $site['company']['email'] = $db->email;
+        }
+        if (filled($db->address)) {
+            $site['company']['address'] = $db->address;
+        }
+        if (filled($db->map_embed_url)) {
+            $site['company']['map_embed_url'] = $db->map_embed_url;
+        } else {
+            $site['company']['map_embed_url'] = (string) (config('colldett.company.map_embed_url') ?? '');
+        }
+
+        return $site;
     }
 
     private function resolveMediaUrl(?string $path): string

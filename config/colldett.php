@@ -8,6 +8,7 @@ return [
         'phone' => '+254 700 000 000',
         'email' => 'info@colldetttrace.com',
         'address' => "St George's House 4th Flr, Suite 404, Nairobi, Kenya",
+        'map_embed_url' => 'https://www.google.com/maps?q=Nairobi%20Kenya&output=embed',
         'affiliate_law_firm' => [
             'name' => "Bridget Achieng' and Associates",
             'summary' => 'Our affiliate legal partner supports legal recovery actions, litigation, and enforcement where strategic legal intervention is required.',

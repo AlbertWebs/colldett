@@ -11,7 +11,6 @@ use App\Http\Controllers\Admin\ServiceCrudController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\TeamController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\WebsiteContentController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\SiteController;
 use Illuminate\Support\Facades\Route;
@@ -35,13 +34,6 @@ Route::post('/contact', [ContactController::class, 'store'])->name('contact.stor
 
 Route::prefix('admin')->name('admin.')->group(function (): void {
     Route::view('/', 'admin.dashboard')->name('dashboard');
-    Route::get('/website-content', [WebsiteContentController::class, 'index'])->name('website-content');
-    Route::get('/website-content/create', [WebsiteContentController::class, 'create'])->name('website-content.create');
-    Route::post('/website-content', [WebsiteContentController::class, 'store'])->name('website-content.store');
-    Route::get('/website-content/{id}/edit', [WebsiteContentController::class, 'edit'])->name('website-content.edit');
-    Route::patch('/website-content/{id}', [WebsiteContentController::class, 'update'])->name('website-content.update');
-    Route::get('/website-content/{id}/delete', [WebsiteContentController::class, 'deleteConfirm'])->name('website-content.delete-confirm');
-    Route::delete('/website-content/{id}', [WebsiteContentController::class, 'destroy'])->name('website-content.destroy');
     Route::get('/about-content', [AboutContentController::class, 'edit'])->name('about-content.edit');
     Route::post('/about-content', [AboutContentController::class, 'update'])->name('about-content.update');
     Route::get('/services', [ServiceCrudController::class, 'index'])->name('services.index');

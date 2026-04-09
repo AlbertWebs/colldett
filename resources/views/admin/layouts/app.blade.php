@@ -28,7 +28,6 @@
         [
             'title' => 'Content',
             'items' => [
-                ['route' => 'admin.website-content', 'label' => 'Website Content', 'icon' => 'M4 5h16v14H4z M8 9h8 M8 13h5', 'active' => ['admin.website-content']],
                 ['route' => 'admin.about-content.edit', 'label' => 'About Content', 'icon' => 'M4 7h16M4 12h16M4 17h12', 'active' => ['admin.about-content.*']],
                 ['route' => 'admin.services.index', 'label' => 'Services', 'icon' => 'M4 7h16M4 12h16M4 17h10', 'active' => ['admin.services.*']],
                 ['route' => 'admin.industries.index', 'label' => 'Industries', 'icon' => 'M3 6h18M6 12h12M9 18h6', 'active' => ['admin.industries.*']],

@@ -20,19 +20,31 @@
                 Our team responds to all inquiries and support requests as quickly as possible.
             </p>
 
+            @php
+                $coPhone = trim((string) ($site['company']['phone'] ?? ''));
+                $coEmail = trim((string) ($site['company']['email'] ?? ''));
+                $coAddress = trim((string) ($site['company']['address'] ?? ''));
+                $telHref = $coPhone !== '' ? 'tel:'.preg_replace('/\s+/', '', $coPhone) : '';
+            @endphp
             <div class="contact-detail-list">
-                <a class="contact-detail-item" href="tel:{{ preg_replace('/\s+/', '', $site['company']['phone']) }}">
-                    <span>Call us</span>
-                    <strong>{{ $site['company']['phone'] }}</strong>
-                </a>
-                <a class="contact-detail-item" href="mailto:{{ $site['company']['email'] }}">
-                    <span>Email</span>
-                    <strong>{{ $site['company']['email'] }}</strong>
-                </a>
-                <div class="contact-detail-item">
-                    <span>Office</span>
-                    <strong>{{ $site['company']['address'] }}</strong>
-                </div>
+                @if($coPhone !== '')
+                    <a class="contact-detail-item" href="{{ $telHref }}">
+                        <span>Call us</span>
+                        <strong>{{ $coPhone }}</strong>
+                    </a>
+                @endif
+                @if($coEmail !== '')
+                    <a class="contact-detail-item" href="mailto:{{ $coEmail }}">
+                        <span>Email</span>
+                        <strong>{{ $coEmail }}</strong>
+                    </a>
+                @endif
+                @if($coAddress !== '')
+                    <div class="contact-detail-item">
+                        <span>Office</span>
+                        <strong>{{ $coAddress }}</strong>
+                    </div>
+                @endif
             </div>
 
             <div class="contact-support-tags" aria-label="Support highlights">
@@ -42,7 +54,12 @@
                 <span>Vehicle Tracking</span>
             </div>
 
-            <iframe title="Map" loading="lazy" class="map" src="https://www.google.com/maps?q=Nairobi%20Kenya&output=embed"></iframe>
+            @php
+                $mapEmbed = trim((string) ($site['company']['map_embed_url'] ?? ''));
+            @endphp
+            @if($mapEmbed !== '')
+                <iframe title="Office location map" loading="lazy" class="map" src="{{ $mapEmbed }}" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+            @endif
         </aside>
 
         <div class="contact-form-card">

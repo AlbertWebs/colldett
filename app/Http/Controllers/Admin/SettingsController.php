@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ContactDetail;
 use App\Support\AdminStoredSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -59,6 +61,13 @@ class SettingsController extends Controller
             'invoice_other_heading' => $saved['invoice_other_heading'] ?? 'Other',
             'invoice_payment_other_lines' => $saved['invoice_payment_other_lines'] ?? '',
             'invoice_payment_note' => $saved['invoice_payment_note'] ?? config('colldett.invoice.payment_details.note', ''),
+            'company_map_embed_url' => old(
+                'company_map_embed_url',
+                Schema::hasTable('contact_details')
+                    ? (ContactDetail::query()->value('map_embed_url')
+                        ?? (string) (config('colldett.company.map_embed_url') ?? ''))
+                    : (string) (config('colldett.company.map_embed_url') ?? '')
+            ),
         ];
 
         return view('admin.settings', compact('settings'));
@@ -84,7 +93,8 @@ class SettingsController extends Controller
             'company_tagline' => ['nullable', 'string', 'max:255'],
             'company_email' => ['nullable', 'email', 'max:255'],
             'company_phone' => ['nullable', 'string', 'max:255'],
-            'company_address' => ['nullable', 'string', 'max:255'],
+            'company_address' => ['nullable', 'string', 'max:2000'],
+            'company_map_embed_url' => ['nullable', 'string', 'max:4000'],
             'company_domain' => ['nullable', 'string', 'max:255'],
             'company_description' => ['nullable', 'string', 'max:2000'],
             'company_logo_file' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,svg', 'max:4096'],
@@ -107,6 +117,9 @@ class SettingsController extends Controller
         $saved = $this->readSettings();
         $settings = array_merge($saved, $data);
 
+        $mapEmbedUrl = $settings['company_map_embed_url'] ?? null;
+        unset($settings['company_map_embed_url']);
+
         if ($request->hasFile('company_logo_file')) {
             $settings['company_logo'] = $this->storeUploadedImage($request->file('company_logo_file'), 'company-logo');
         }
@@ -126,6 +139,15 @@ class SettingsController extends Controller
         Storage::disk('local')->put(self::STORAGE_PATH, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
         AdminStoredSettings::flushCache();
+
+        if (Schema::hasTable('contact_details')) {
+            ContactDetail::syncFromAdminSettings([
+                'phone' => $settings['company_phone'] ?? null,
+                'email' => $settings['company_email'] ?? null,
+                'address' => $settings['company_address'] ?? null,
+                'map_embed_url' => $mapEmbedUrl,
+            ]);
+        }
 
         return redirect()
             ->route('admin.settings')

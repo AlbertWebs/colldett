@@ -46,7 +46,12 @@
                     </div>
                     <div class="space-y-1.5 sm:col-span-2">
                         <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Address</label>
-                        <input class="admin-input" name="company_address" placeholder="Company Address" value="{{ old('company_address', $settings['company_address'] ?? '') }}" />
+                        <textarea class="admin-input min-h-20" name="company_address" placeholder="Company Address" rows="3">{{ old('company_address', $settings['company_address'] ?? '') }}</textarea>
+                    </div>
+                    <div class="space-y-1.5 sm:col-span-2">
+                        <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Map embed URL</label>
+                        <textarea class="admin-input min-h-16 font-mono text-xs" name="company_map_embed_url" placeholder="https://www.google.com/maps/embed?... or maps output=embed URL" rows="2">{{ old('company_map_embed_url', $settings['company_map_embed_url'] ?? '') }}</textarea>
+                        <p class="text-xs text-admin-muted">Used on the public Contact page map. Paste the iframe <code class="rounded bg-slate-100 px-1">src</code> URL only.</p>
                     </div>
                     <div class="space-y-1.5 sm:col-span-2">
                         <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Domain</label>
