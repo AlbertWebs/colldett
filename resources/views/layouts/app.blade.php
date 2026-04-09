@@ -238,13 +238,24 @@
     </div>
 </nav>
 
+@php
+    $footerTagline = trim((string) ($site['company']['tagline'] ?? ''));
+    $footerPhone = trim((string) ($site['company']['phone'] ?? ''));
+    $footerEmail = trim((string) ($site['company']['email'] ?? ''));
+    $footerAddress = trim((string) ($site['company']['address'] ?? ''));
+@endphp
 <footer class="footer">
     <div class="container footer-main">
         <div class="footer-brand">
             <a href="{{ route('home') }}" class="brand footer-brand-link">
                 <img src="{{ $site['branding']['footer_logo'] ?? asset('uploads/logo-white.png') }}" alt="{{ $site['company']['name'] }} logo" class="brand-logo footer-logo">
             </a>
-            <p>{{ $site['company']['description'] }}</p>
+            @if($footerTagline !== '')
+                <p class="footer-brand-tagline">{{ $footerTagline }}</p>
+            @endif
+            <div class="footer-brand-description">
+                {!! $site['company']['description'] !!}
+            </div>
             <div class="footer-brand-tags">
                 <span>Debt Recovery</span>
                 <span>Asset Tracing</span>
@@ -292,11 +303,31 @@
         </div>
 
         <div class="footer-links footer-contact">
-            <h4>Contact</h4>
-            <a href="tel:{{ preg_replace('/\s+/', '', $site['company']['phone']) }}">{{ $site['company']['phone'] }}</a>
-            <a href="mailto:{{ $site['company']['email'] }}">{{ $site['company']['email'] }}</a>
-            <p>{{ $site['company']['address'] }}</p>
-            <a href="{{ route('contact') }}">Open Inquiry Portal</a>
+            <h4>Get in touch</h4>
+            <div class="footer-contact-stack">
+                @if($footerPhone !== '')
+                    <a class="footer-contact-block" href="tel:{{ preg_replace('/\s+/', '', $footerPhone) }}">
+                        <span class="footer-contact-label">Phone</span>
+                        <span class="footer-contact-value">{{ $footerPhone }}</span>
+                    </a>
+                @endif
+                @if($footerEmail !== '')
+                    <a class="footer-contact-block" href="mailto:{{ $footerEmail }}">
+                        <span class="footer-contact-label">Email</span>
+                        <span class="footer-contact-value">{{ $footerEmail }}</span>
+                    </a>
+                @endif
+                @if($footerAddress !== '')
+                    <div class="footer-contact-block footer-contact-block--static">
+                        <span class="footer-contact-label">Office</span>
+                        <span class="footer-contact-value">{{ $footerAddress }}</span>
+                    </div>
+                @endif
+            </div>
+            <a class="footer-inquiry-cta" href="{{ route('contact') }}">
+                <span>Open inquiry portal</span>
+                <span class="footer-inquiry-cta__icon" aria-hidden="true">→</span>
+            </a>
         </div>
     </div>
 

@@ -324,6 +324,16 @@ return [
     ],
 
     /*
+    | Admin panel gate: set ADMIN_ACCESS_SECRET (password) and/or ADMIN_ACCESS_PIN in .env.
+    | At least one must be set; login accepts either value. Uses session (not Laravel users).
+    */
+    'admin' => [
+        'access_secret' => env('ADMIN_ACCESS_SECRET', ''),
+        'access_pin' => env('ADMIN_ACCESS_PIN', ''),
+        'session_key' => 'admin_panel_authenticated',
+    ],
+
+    /*
     | Public site SEO defaults (overridable per page in SiteController).
     | SEO_INDEX=false in .env forces noindex for staging.
     */

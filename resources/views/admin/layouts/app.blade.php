@@ -120,10 +120,13 @@
                     @endforeach
                 </div>
 
-                <a href="{{ route('home') }}" title="Logout" :class="sidebarCollapsed ? 'lg:justify-center lg:px-2' : ''" class="admin-sidebar-logout mt-4 flex items-center gap-3 rounded-xl border px-3 py-2.5 text-sm text-slate-300">
-                    <span aria-hidden="true">↩</span>
-                    <span x-show="!sidebarCollapsed" x-transition.opacity>Logout</span>
-                </a>
+                <form method="POST" action="{{ route('admin.logout') }}" class="mt-4">
+                    @csrf
+                    <button type="submit" title="Sign out" :class="sidebarCollapsed ? 'lg:justify-center lg:px-2' : ''" class="admin-sidebar-logout flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left text-sm text-slate-300 hover:bg-slate-800/80">
+                        <span aria-hidden="true">↩</span>
+                        <span x-show="!sidebarCollapsed" x-transition.opacity>Sign out</span>
+                    </button>
+                </form>
             </nav>
         </aside>
 
@@ -169,7 +172,10 @@
                                 <a class="block rounded-md px-3 py-2 hover:bg-slate-50" href="{{ route('admin.profile') }}">Profile</a>
                                 <a class="block rounded-md px-3 py-2 hover:bg-slate-50" href="{{ route('admin.account-settings') }}">Account Settings</a>
                                 <a class="block rounded-md px-3 py-2 hover:bg-slate-50" href="{{ route('admin.change-password') }}">Change Password</a>
-                                <a class="block rounded-md px-3 py-2 text-rose-600 hover:bg-rose-50" href="{{ route('home') }}">Logout</a>
+                                <form method="POST" action="{{ route('admin.logout') }}" class="block">
+                                    @csrf
+                                    <button type="submit" class="w-full rounded-md px-3 py-2 text-left text-rose-600 hover:bg-rose-50">Sign out</button>
+                                </form>
                             </div>
                         </div>
                     </div>

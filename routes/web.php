@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AboutContentController;
+use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\BillingController;
 use App\Http\Controllers\Admin\CaseController;
 use App\Http\Controllers\Admin\ClientController;
@@ -33,6 +34,14 @@ Route::get('/compliance', [SiteController::class, 'compliance'])->name('complian
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
 Route::prefix('admin')->name('admin.')->group(function (): void {
+    Route::get('/login', [AdminAuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AdminAuthController::class, 'login'])
+        ->middleware('throttle:10,1')
+        ->name('login.attempt');
+});
+
+Route::middleware('admin.access')->prefix('admin')->name('admin.')->group(function (): void {
+    Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
     Route::view('/', 'admin.dashboard')->name('dashboard');
     Route::get('/about-content', [AboutContentController::class, 'edit'])->name('about-content.edit');
     Route::post('/about-content', [AboutContentController::class, 'update'])->name('about-content.update');
