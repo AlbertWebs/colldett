@@ -87,7 +87,7 @@
     }
 
     .logo {
-      height: 56px;
+      height: 64px;
       width: auto;
       display: block;
     }
@@ -145,6 +145,26 @@
       color: rgba(210, 229, 209, 0.88);
     }
 
+    .contact {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.16);
+      display: grid;
+      gap: 8px;
+      color: rgba(228, 240, 227, 0.95);
+      font-size: 0.96rem;
+    }
+
+    .contact a {
+      color: #f5d06a;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .contact a:hover {
+      text-decoration: underline;
+    }
+
     @keyframes spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
@@ -168,7 +188,7 @@
     @media (max-width: 520px) {
       .page { padding: 14px; }
       .card { border-radius: 18px; }
-      .logo { height: 48px; }
+      .logo { height: 54px; }
     }
   </style>
 </head>
@@ -176,7 +196,7 @@
   <main class="page">
     <section class="card" aria-label="Coming soon announcement">
       <div class="logo-wrap">
-        <img class="logo" src="public/uploads/logo.png" alt="Colldett Trace Limited logo">
+        <img class="logo" src="public/uploads/logo-white.png" alt="Colldett Trace Limited logo">
       </div>
       <p class="kicker">Colldett Trace Limited</p>
       <h1>Something <span class="accent">Amazing</span> Is Coming Soon</h1>
@@ -185,6 +205,11 @@
         <span class="dot"></span>
         <span class="dot"></span>
         <span class="dot"></span>
+      </div>
+      <div class="contact" aria-label="Contact details">
+        <div>Email: <a href="mailto:info@colldetttrace.com">info@colldetttrace.com</a></div>
+        <div>Phone: <a href="tel:+254700000000">+254 700 000 000</a></div>
+        <div>Address: St George's House 4th Flr, Suite 404, Nairobi, Kenya</div>
       </div>
       <p class="foot">Thank you for your patience.</p>
     </section>
