@@ -1,0 +1,13 @@
+const l={site:"colldett_pwa_install_dismissed_site",admin:"colldett_pwa_install_dismissed_admin"};function o(){return window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===!0}function w(){const t=navigator.userAgent||"";return/iPad|iPhone|iPod/.test(t)&&!window.MSStream}function m(){return document.querySelector('link[rel~="icon"]')?.href||"/uploads/favicon.png"}async function b(){if("serviceWorker"in navigator)try{await navigator.serviceWorker.register("/sw.js",{scope:"/"})}catch(t){console.warn("[PWA] Service worker registration failed",t)}}function d(t,{deferredPrompt:a,iosHint:e}){const c=m(),i=t==="admin",u=i?"Install admin console":"Install Colldett",p=i?"Add this panel to your home screen for quick access to billing, cases, and reports.":"Add Colldett to your home screen for faster access and a focused experience.",n=document.createElement("div");n.className=`pwa-install-banner ${i?"pwa-install-banner--admin":""}`,n.setAttribute("role","dialog"),n.setAttribute("aria-labelledby","pwa-install-title"),n.innerHTML=`
+        <div class="pwa-install-banner__inner">
+            <img class="pwa-install-banner__icon" src="${c}" width="40" height="40" alt="" />
+            <div class="pwa-install-banner__text">
+                <p id="pwa-install-title" class="pwa-install-banner__title">${u}</p>
+                <p class="pwa-install-banner__body">${e||p}</p>
+            </div>
+            <div class="pwa-install-banner__actions">
+                ${e?"":'<button type="button" class="pwa-install-banner__btn pwa-install-banner__btn--primary" data-pwa-install>Install</button>'}
+                <button type="button" class="pwa-install-banner__btn pwa-install-banner__btn--ghost" data-pwa-dismiss>Not now</button>
+            </div>
+        </div>
+    `;const r=()=>{localStorage.setItem(l[t],"1"),n.remove()};n.querySelector("[data-pwa-dismiss]")?.addEventListener("click",r);const s=n.querySelector("[data-pwa-install]");s&&a&&s.addEventListener("click",async()=>{s.disabled=!0;try{await a.prompt(),await a.userChoice}catch{}a=null,r()}),document.body.appendChild(n)}function _(t){if(t!=="site"&&t!=="admin"||(b(),o())||localStorage.getItem(l[t]))return;let a=null;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault(),a=e,!document.querySelector(".pwa-install-banner")&&d(t,{deferredPrompt:a,iosHint:null})}),w()&&window.setTimeout(()=>{if(o()||localStorage.getItem(l[t])||document.querySelector(".pwa-install-banner"))return;d(t,{deferredPrompt:null,iosHint:"On Safari: tap Share → <strong>Add to Home Screen</strong> to install this app."})},5e3)}document.addEventListener("DOMContentLoaded",()=>{const t=document.body?.dataset?.pwaContext;(t==="site"||t==="admin")&&_(t)});
