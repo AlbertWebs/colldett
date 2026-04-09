@@ -76,16 +76,18 @@
                 @foreach($site['team'] as $member)
                     @php
                         $isRecoveryManager = str_contains(strtolower($member['role']), 'manager - debt recovery');
-                        $memberImage = str_starts_with($member['image'], 'http') ? $member['image'] : asset($member['image']);
                     @endphp
                     <article class="about-team-card portrait-card {{ $isRecoveryManager ? '' : 'team-card-featured' }}">
                         <div class="portrait-media">
-                            <img class="avatar-img" src="{{ $memberImage }}" alt="{{ $member['name'] }} portrait" loading="lazy">
+                            @include('partials.team-member-photo', ['member' => $member, 'variant' => 'card'])
                         </div>
                         <div class="portrait-content">
                             <h3>{{ $member['name'] }}</h3>
                             <p class="team-role {{ $isRecoveryManager ? '' : 'team-role-featured' }}">{{ $member['role'] }}</p>
-                            <a href="{{ route('team.show', $member['slug']) }}" class="team-profile-link">View Profile</a>
+                            <a href="{{ route('team.show', $member['slug']) }}" class="team-profile-link" aria-label="View full profile for {{ $member['name'] }}">
+                                <span class="team-profile-link__label">View profile</span>
+                                <span class="team-profile-link__icon" aria-hidden="true">→</span>
+                            </a>
                         </div>
                     </article>
                 @endforeach

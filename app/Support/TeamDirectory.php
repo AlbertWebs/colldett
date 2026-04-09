@@ -118,4 +118,73 @@ final class TeamDirectory
             return trim((string) $item);
         }, $value), static fn (string $s): bool => $s !== ''));
     }
+
+    /**
+     * True when the image field is empty or points at a known stock / placeholder source.
+     */
+    public static function imageIsGenericPlaceholder(string $image): bool
+    {
+        $image = trim($image);
+        if ($image === '') {
+            return true;
+        }
+
+        if (str_starts_with($image, 'http://') || str_starts_with($image, 'https://')) {
+            $host = parse_url($image, PHP_URL_HOST);
+            $host = is_string($host) ? strtolower($host) : '';
+            $hostNorm = preg_replace('/^www\./', '', $host) ?? $host;
+            foreach (config('colldett.team_generic_image_hosts', []) as $pattern) {
+                $pattern = strtolower(trim((string) $pattern));
+                if ($pattern === '') {
+                    continue;
+                }
+                if ($hostNorm === $pattern || str_ends_with($hostNorm, '.'.$pattern)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        $base = strtolower(basename($image));
+        foreach (config('colldett.team_generic_image_filename_fragments', []) as $frag) {
+            $frag = strtolower(trim((string) $frag));
+            if ($frag !== '' && str_contains($base, $frag)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static function memberPortraitImageUrl(string $image): string
+    {
+        return str_starts_with($image, 'http') ? $image : asset($image);
+    }
+
+    /**
+     * Two-letter initials from a display name (handles commas and suffixes).
+     */
+    public static function initialsFromMemberName(string $name): string
+    {
+        $primary = trim(explode(',', $name, 2)[0] ?? '');
+        $primary = trim(preg_replace('/[^\p{L}\p{N}\s\-]/u', ' ', $primary) ?? '');
+        $parts = preg_split('/\s+/u', $primary, -1, PREG_SPLIT_NO_EMPTY);
+        if ($parts === false || $parts === []) {
+            return '?';
+        }
+
+        if (count($parts) === 1) {
+            $word = $parts[0];
+            $len = mb_strlen($word);
+
+            return mb_strtoupper($len <= 1 ? $word : mb_substr($word, 0, min(2, $len)));
+        }
+
+        $first = mb_substr($parts[0], 0, 1);
+        $lastWord = $parts[array_key_last($parts)];
+        $last = mb_substr($lastWord, 0, 1);
+
+        return mb_strtoupper($first.$last);
+    }
 }

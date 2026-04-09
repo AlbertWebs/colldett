@@ -16,6 +16,9 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\SiteController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/robots.txt', [SiteController::class, 'robots'])->name('robots');
+Route::get('/sitemap.xml', [SiteController::class, 'sitemap'])->name('sitemap');
+
 Route::get('/', [SiteController::class, 'home'])->name('home');
 Route::get('/about', [SiteController::class, 'about'])->name('about');
 Route::get('/services', [SiteController::class, 'services'])->name('services');

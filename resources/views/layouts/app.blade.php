@@ -1,32 +1,84 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', strtolower(config('colldett.seo.locale', 'en_KE'))) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $metaTitle ?? config('colldett.company.name') }}</title>
-    <meta name="description" content="{{ $metaDescription ?? config('colldett.company.description') }}">
+    @php
+        $seoLocale = config('colldett.seo.locale', 'en_KE');
+        $canonical = $canonicalUrl ?? request()->url();
+        $pageTitle = $metaTitle ?? config('colldett.company.name');
+        $pageDesc = $metaDescription ?? config('colldett.company.description');
+        $ogTypeVal = $ogType ?? 'website';
+        $defaultOgImage = $site['branding']['logo'] ?? asset('uploads/logo.png');
+        $ogImageVal = $metaImage ?? $defaultOgImage;
+        $ogImageAltVal = $ogImageAlt ?? ($pageTitle.' — '.$site['company']['name']);
+        $robotsVal = $metaRobots ?? (filter_var(env('SEO_INDEX', true), FILTER_VALIDATE_BOOL)
+            ? config('colldett.seo.robots_default')
+            : 'noindex,nofollow');
+        $twitterSite = config('colldett.seo.twitter_site');
+        $twitterCreator = config('colldett.seo.twitter_creator');
+        $geoRegion = config('colldett.seo.geo_region');
+        $geoPlace = config('colldett.seo.geo_placename');
+    @endphp
+    <title>{{ $pageTitle }}</title>
+    <meta name="description" content="{{ $pageDesc }}">
+    @if(!empty($metaKeywords))
+        <meta name="keywords" content="{{ $metaKeywords }}">
+    @endif
+    <meta name="robots" content="{{ $robotsVal }}">
+    <meta name="author" content="{{ $site['company']['name'] }}">
+    @if(!empty($geoRegion))
+        <meta name="geo.region" content="{{ $geoRegion }}">
+    @endif
+    @if(!empty($geoPlace))
+        <meta name="geo.placename" content="{{ $geoPlace }}">
+    @endif
     <meta name="theme-color" content="{{ config('colldett.pwa.site.theme_color', '#215e1d') }}">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="{{ config('colldett.pwa.site.short_name', 'Colldett') }}">
     <link rel="manifest" href="{{ asset('manifest-site.webmanifest') }}">
-    <link rel="canonical" href="{{ url()->current() }}">
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="{{ $metaTitle ?? config('colldett.company.name') }}">
-    <meta property="og:description" content="{{ $metaDescription ?? config('colldett.company.description') }}">
-    <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:site_name" content="{{ config('colldett.company.name') }}">
-    @if(!empty($metaImage))
-        <meta property="og:image" content="{{ $metaImage }}">
-        <meta name="twitter:image" content="{{ $metaImage }}">
+    <link rel="canonical" href="{{ $canonical }}">
+    <link rel="alternate" hreflang="{{ str_replace('_', '-', $seoLocale) }}" href="{{ $canonical }}">
+    <link rel="alternate" hreflang="x-default" href="{{ route('home', absolute: true) }}">
+
+    <meta property="og:type" content="{{ $ogTypeVal }}">
+    <meta property="og:title" content="{{ $pageTitle }}">
+    <meta property="og:description" content="{{ $pageDesc }}">
+    <meta property="og:url" content="{{ $canonical }}">
+    <meta property="og:site_name" content="{{ $site['company']['name'] }}">
+    <meta property="og:locale" content="{{ $seoLocale }}">
+    <meta property="og:image" content="{{ $ogImageVal }}">
+    <meta property="og:image:secure_url" content="{{ $ogImageVal }}">
+    <meta property="og:image:alt" content="{{ $ogImageAltVal }}">
+    @if($ogTypeVal === 'article' && !empty($articlePublishedTime))
+        <meta property="article:published_time" content="{{ $articlePublishedTime }}">
     @endif
+    @if($ogTypeVal === 'article' && !empty($articleModifiedTime))
+        <meta property="article:modified_time" content="{{ $articleModifiedTime }}">
+    @endif
+
     <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $pageTitle }}">
+    <meta name="twitter:description" content="{{ $pageDesc }}">
+    <meta name="twitter:image" content="{{ $ogImageVal }}">
+    <meta name="twitter:image:alt" content="{{ $ogImageAltVal }}">
+    @if(!empty($twitterSite))
+        <meta name="twitter:site" content="{{ str_starts_with($twitterSite, '@') ? $twitterSite : '@'.$twitterSite }}">
+    @endif
+    @if(!empty($twitterCreator))
+        <meta name="twitter:creator" content="{{ str_starts_with($twitterCreator, '@') ? $twitterCreator : '@'.$twitterCreator }}">
+    @endif
+
     <link rel="icon" type="image/png" href="{{ $site['branding']['favicon'] ?? asset('uploads/favicon.png') }}">
     <link rel="apple-touch-icon" href="{{ $site['branding']['favicon'] ?? asset('uploads/favicon.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @if(!empty($seoJsonLd))
+        <script type="application/ld+json">{!! json_encode($seoJsonLd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
+    @endif
     @stack('head')
 </head>
 @php
@@ -206,7 +258,6 @@
                 <a href="{{ $site['social']['instagram'] ?? '#' }}" aria-label="Instagram" title="Instagram" target="_blank" rel="noopener noreferrer">ig</a>
                 <a href="{{ $site['social']['youtube'] ?? '#' }}" aria-label="YouTube" title="YouTube" target="_blank" rel="noopener noreferrer">yt</a>
             </div>
-            <a class="btn btn-gold footer-brand-cta" href="{{ route('contact') }}">Request Recovery Support</a>
         </div>
 
         <div class="footer-links">
@@ -253,9 +304,11 @@
     <div class="footer-bottom">
         <div class="container footer-bottom-wrap">
             <p>&copy; {{ now()->year }} {{ $site['company']['name'] }}. All rights reserved. <span class="footer-powered">Powered by <a href="http://designekta.com/" target="_blank" rel="noopener noreferrer">Designekta Studios</a></span></p>
-            <div>
+            <div class="footer-bottom-links">
                 <a href="{{ route('privacy') }}">Privacy Policy</a>
+                <span class="footer-bottom-sep" aria-hidden="true">|</span>
                 <a href="{{ route('terms') }}">Terms and Conditions</a>
+                <span class="footer-bottom-sep" aria-hidden="true">|</span>
                 <a href="{{ route('compliance') }}">Compliance</a>
             </div>
         </div>

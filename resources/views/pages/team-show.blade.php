@@ -1,26 +1,29 @@
 @extends('layouts.app')
 
 @php
-    $memberImage = str_starts_with($member['image'], 'http') ? $member['image'] : asset($member['image']);
+    use App\Support\TeamDirectory;
+    $teamUsesAvatar = TeamDirectory::imageIsGenericPlaceholder((string) ($member['image'] ?? ''));
+    $memberImage = $teamUsesAvatar ? null : TeamDirectory::memberPortraitImageUrl((string) ($member['image'] ?? ''));
+    $personSchema = array_filter([
+        '@context' => 'https://schema.org',
+        '@type' => 'Person',
+        'name' => $member['name'],
+        'jobTitle' => $member['role'],
+        'worksFor' => [
+            '@type' => 'Organization',
+            'name' => config('colldett.company.name'),
+            'url' => url('/'),
+        ],
+        'description' => $member['seo_description'] ?? $member['bio'],
+        'image' => $memberImage,
+        'email' => ! empty($member['email']) ? 'mailto:'.$member['email'] : null,
+        'url' => url()->current(),
+    ], static fn ($v) => $v !== null && $v !== '');
 @endphp
 
 @push('head')
 <script type="application/ld+json">
-{!! json_encode([
-    '@context' => 'https://schema.org',
-    '@type' => 'Person',
-    'name' => $member['name'],
-    'jobTitle' => $member['role'],
-    'worksFor' => [
-        '@type' => 'Organization',
-        'name' => config('colldett.company.name'),
-        'url' => url('/'),
-    ],
-    'description' => $member['seo_description'] ?? $member['bio'],
-    'image' => $memberImage,
-    'email' => isset($member['email']) ? 'mailto:' . $member['email'] : null,
-    'url' => url()->current(),
-], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+{!! json_encode($personSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
 </script>
 @endpush
 
@@ -42,7 +45,7 @@
 <section class="section team-profile-section reveal">
     <div class="container team-profile-grid">
         <div class="team-profile-media">
-            <img src="{{ $memberImage }}" alt="{{ $member['name'] }} portrait">
+            @include('partials.team-member-photo', ['member' => $member, 'variant' => 'profile'])
         </div>
         <article class="team-profile-content">
             <h2>{{ $member['name'] }}</h2>

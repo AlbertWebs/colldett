@@ -269,6 +269,23 @@ return [
             'principles' => ['Professional engagement', 'Timely updates', 'Confidential handling'],
         ],
     ],
+
+    /*
+    | Team photos: these patterns are treated as generic placeholders; the site shows initials avatars instead.
+    */
+    'team_generic_image_hosts' => [
+        'randomuser.me',
+        'pravatar.cc',
+        'i.pravatar.cc',
+        'ui-avatars.com',
+    ],
+    'team_generic_image_filename_fragments' => [
+        'placeholder',
+        'generic',
+        'silhouette',
+        'default-avatar',
+    ],
+
     'insights' => [
         [
             'slug' => 'improving-recovery-outcomes-through-early-case-segmentation',
@@ -303,6 +320,19 @@ return [
                 'A mature tracking program combines technology, field execution, and reporting governance to improve asset security and reduce recovery delays.',
             ],
         ],
+    ],
+
+    /*
+    | Public site SEO defaults (overridable per page in SiteController).
+    | SEO_INDEX=false in .env forces noindex for staging.
+    */
+    'seo' => [
+        'locale' => 'en_KE',
+        'robots_default' => 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1',
+        'twitter_site' => null,
+        'twitter_creator' => null,
+        'geo_region' => 'KE',
+        'geo_placename' => 'Nairobi',
     ],
 
     /*

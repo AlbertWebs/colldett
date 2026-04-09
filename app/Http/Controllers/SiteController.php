@@ -6,26 +6,82 @@ use App\Models\Capability;
 use App\Models\Insight;
 use App\Support\AdminStoredSettings;
 use App\Support\TeamDirectory;
+use Carbon\Carbon;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class SiteController extends Controller
 {
+    public function robots(): Response
+    {
+        $base = rtrim((string) config('app.url'), '/');
+        $lines = [
+            'User-agent: *',
+            'Disallow:',
+            '',
+            'Sitemap: '.$base.'/sitemap.xml',
+            '',
+        ];
+
+        return response(implode("\n", $lines), 200, [
+            'Content-Type' => 'text/plain; charset=UTF-8',
+        ]);
+    }
+
+    public function sitemap(): Response
+    {
+        $entries = $this->buildSitemapEntries();
+
+        return response()
+            ->view('sitemap', ['entries' => $entries], 200)
+            ->header('Content-Type', 'application/xml; charset=UTF-8');
+    }
+
     public function home(): View
     {
-        return view('pages.home', $this->viewData('Home'));
+        $data = $this->viewData('Home');
+        $site = $data['site'];
+        $company = $site['company']['name'];
+
+        $metaTitle = 'Debt Recovery, Asset Tracing & Investigations in Kenya | '.$company;
+        $metaDescription = 'Colldett Trace Limited provides professional debt recovery, asset tracing, investigations, and car tracking for banks, MFIs, SACCOs, and corporates in Kenya and East Africa — structured, confidential, compliance-led.';
+        $heroImage = asset('uploads/hero.webp');
+
+        $data['metaTitle'] = $metaTitle;
+        $data['metaDescription'] = $metaDescription;
+        $data['metaImage'] = $heroImage;
+        $data['ogImageAlt'] = $company.' — debt recovery, asset tracing, and investigations in Kenya';
+        $data['metaKeywords'] = 'debt recovery Kenya, debt collection Nairobi, asset tracing Kenya, skip tracing, corporate debt recovery, bank collections Kenya, car tracking Kenya, investigations Kenya, enforcement readiness, Colldett Trace';
+        $data['canonicalUrl'] = route('home', absolute: true);
+        $data['ogType'] = 'website';
+        $data['seoJsonLd'] = $this->homeStructuredData($site, $metaDescription, $heroImage);
+
+        return view('pages.home', $data);
     }
 
     public function about(): View
     {
-        return view('pages.about', $this->viewData('About Us'));
+        $data = $this->viewData('About Us');
+        $intro = $data['site']['about']['hero_intro'] ?? $data['metaDescription'];
+        $data['metaDescription'] = Str::limit(strip_tags((string) $intro), 158);
+        $data['metaKeywords'] = 'about Colldett Trace, debt recovery firm Kenya, recovery team Nairobi, mission vision Colldett';
+        $data['canonicalUrl'] = route('about', absolute: true);
+        $data['ogImageAlt'] = 'About '.$data['site']['company']['name'];
+
+        return view('pages.about', $data);
     }
 
     public function services(): View
     {
-        $data = $this->viewData('Services');
+        $data = $this->viewData('Our Capabilities');
         $data['services'] = $this->getCapabilities();
+        $data['metaDescription'] = 'Explore Colldett capabilities: debt recovery, asset tracing, insurance tracing, investigations, skip tracing, portfolio management, and car tracking — built for institutional clients in Kenya.';
+        $data['metaKeywords'] = 'debt recovery services, asset tracing services, car tracking Kenya, skip tracing, insurance tracing, portfolio management collections';
+        $data['canonicalUrl'] = route('services', absolute: true);
+        $data['ogImageAlt'] = $data['site']['company']['name'].' — our capabilities';
 
         return view('pages.services', $data);
     }
@@ -36,7 +92,10 @@ class SiteController extends Controller
         abort_unless($capability, 404);
 
         $data = $this->viewData($capability['name']);
-        $data['metaDescription'] = $capability['description'] ?? config('colldett.company.description');
+        $data['metaDescription'] = Str::limit(strip_tags((string) ($capability['description'] ?? config('colldett.company.description'))), 158);
+        $data['metaKeywords'] = $capability['name'].', debt recovery Kenya, asset tracing, Colldett Trace';
+        $data['canonicalUrl'] = route('capabilities.show', $slug, absolute: true);
+        $data['ogImageAlt'] = $capability['name'].' — '.$data['site']['company']['name'];
         $data['capability'] = $capability;
         $data['capabilityDetails'] = $capability['details'] ?? $this->capabilityDetails($slug);
 
@@ -45,12 +104,24 @@ class SiteController extends Controller
 
     public function industries(): View
     {
-        return view('pages.industries', $this->viewData('Industries'));
+        $data = $this->viewData('Industries');
+        $data['metaDescription'] = 'Sector-aligned debt recovery and tracing for banks, MFIs, SACCOs, corporates, insurance, and law firms in Kenya — practical execution and compliance-led engagement.';
+        $data['metaKeywords'] = 'debt recovery banks Kenya, corporate collections, MFI recovery, SACCO collections, law firm tracing support';
+        $data['canonicalUrl'] = route('industries', absolute: true);
+        $data['ogImageAlt'] = 'Industries we serve — '.$data['site']['company']['name'];
+
+        return view('pages.industries', $data);
     }
 
     public function insights(): View
     {
-        return view('pages.insights', $this->viewData('Insights'));
+        $data = $this->viewData('Insights');
+        $data['metaDescription'] = 'Insights and briefs on debt recovery strategy, asset tracing, enforcement readiness, and operational discipline from Colldett Trace Limited.';
+        $data['metaKeywords'] = 'debt recovery insights, asset tracing articles, collections strategy Kenya, enforcement readiness';
+        $data['canonicalUrl'] = route('insights', absolute: true);
+        $data['ogImageAlt'] = 'Insights and resources — '.$data['site']['company']['name'];
+
+        return view('pages.insights', $data);
     }
 
     public function insightShow(string $slug): View
@@ -59,14 +130,56 @@ class SiteController extends Controller
         abort_unless($insight, 404);
 
         $data = $this->viewData($insight['title']);
+        $data['metaDescription'] = Str::limit(strip_tags((string) ($insight['excerpt'] ?? '')), 158);
+        $data['canonicalUrl'] = route('insights.show', $slug, absolute: true);
+        $data['ogType'] = 'article';
+        $published = $this->insightIsoDate($insight['date'] ?? null);
+        $data['articlePublishedTime'] = $published;
+        $data['articleModifiedTime'] = $published;
+        $data['ogImageAlt'] = $insight['title'].' — '.$data['site']['company']['name'];
         $data['insight'] = $insight;
+        $root = rtrim((string) config('app.url'), '/');
+        $articleLd = [
+            '@context' => 'https://schema.org',
+            '@type' => 'Article',
+            'headline' => $insight['title'],
+            'description' => $data['metaDescription'],
+            'mainEntityOfPage' => [
+                '@type' => 'WebPage',
+                '@id' => route('insights.show', $slug, absolute: true),
+            ],
+            'author' => [
+                '@type' => 'Organization',
+                'name' => $data['site']['company']['name'],
+            ],
+            'publisher' => [
+                '@type' => 'Organization',
+                'name' => $data['site']['company']['name'],
+                'url' => $root.'/',
+                'logo' => [
+                    '@type' => 'ImageObject',
+                    'url' => $data['site']['branding']['logo'] ?? asset('uploads/logo.png'),
+                ],
+            ],
+        ];
+        if ($published !== null) {
+            $articleLd['datePublished'] = $published;
+            $articleLd['dateModified'] = $published;
+        }
+        $data['seoJsonLd'] = $articleLd;
 
         return view('pages.insight-show', $data);
     }
 
     public function contact(): View
     {
-        return view('pages.contact', $this->viewData('Contact'));
+        $data = $this->viewData('Contact');
+        $data['metaDescription'] = 'Contact Colldett Trace Limited for debt recovery, asset tracing, and investigations. Request a consultation — Nairobi, Kenya.';
+        $data['metaKeywords'] = 'contact Colldett Trace, debt recovery contact Kenya, tracing services enquiry';
+        $data['canonicalUrl'] = route('contact', absolute: true);
+        $data['ogImageAlt'] = 'Contact '.$data['site']['company']['name'];
+
+        return view('pages.contact', $data);
     }
 
     public function teamShow(string $slug): View
@@ -75,11 +188,13 @@ class SiteController extends Controller
         abort_unless($member && ($member['is_active'] ?? true), 404);
 
         $data = $this->viewData($member['name']);
-        $data['metaDescription'] = $member['seo_description'] ?? ($member['bio'] ?? config('colldett.company.description'));
+        $data['metaDescription'] = Str::limit(strip_tags((string) ($member['seo_description'] ?? ($member['bio'] ?? config('colldett.company.description')))), 158);
         $memberImage = $member['image'] ?? null;
         $data['metaImage'] = $memberImage
             ? (str_starts_with($memberImage, 'http') ? $memberImage : asset($memberImage))
             : null;
+        $data['canonicalUrl'] = route('team.show', $slug, absolute: true);
+        $data['ogImageAlt'] = $member['name'].' — '.$data['site']['company']['name'];
         $data['member'] = $member;
 
         return view('pages.team-show', $data);
@@ -87,17 +202,32 @@ class SiteController extends Controller
 
     public function privacy(): View
     {
-        return view('pages.privacy-policy', $this->viewData('Privacy Policy'));
+        $data = $this->viewData('Privacy Policy');
+        $data['metaDescription'] = 'Privacy Policy for Colldett Trace Limited — how we handle personal data in line with the Data Protection Act and our service operations.';
+        $data['canonicalUrl'] = route('privacy', absolute: true);
+        $data['ogImageAlt'] = 'Privacy Policy — '.$data['site']['company']['name'];
+
+        return view('pages.privacy-policy', $data);
     }
 
     public function terms(): View
     {
-        return view('pages.terms-and-conditions', $this->viewData('Terms and Conditions'));
+        $data = $this->viewData('Terms and Conditions');
+        $data['metaDescription'] = 'Terms and Conditions for using the Colldett Trace Limited website and related digital services.';
+        $data['canonicalUrl'] = route('terms', absolute: true);
+        $data['ogImageAlt'] = 'Terms and Conditions — '.$data['site']['company']['name'];
+
+        return view('pages.terms-and-conditions', $data);
     }
 
     public function compliance(): View
     {
-        return view('pages.compliance', $this->viewData('Compliance'));
+        $data = $this->viewData('Compliance');
+        $data['metaDescription'] = 'Compliance framework at Colldett Trace Limited — regulatory alignment, ethical recovery practice, and documentation standards.';
+        $data['canonicalUrl'] = route('compliance', absolute: true);
+        $data['ogImageAlt'] = 'Compliance — '.$data['site']['company']['name'];
+
+        return view('pages.compliance', $data);
     }
 
     private function viewData(string $title): array
@@ -131,6 +261,15 @@ class SiteController extends Controller
             'metaTitle' => $title.' | '.$site['company']['name'],
             'metaDescription' => $site['company']['description'],
             'site' => $site,
+            'canonicalUrl' => null,
+            'ogType' => 'website',
+            'metaKeywords' => null,
+            'metaRobots' => null,
+            'metaImage' => null,
+            'ogImageAlt' => null,
+            'articlePublishedTime' => null,
+            'articleModifiedTime' => null,
+            'seoJsonLd' => null,
         ];
     }
 
@@ -150,6 +289,154 @@ class SiteController extends Controller
         }
 
         return asset(ltrim($path, '/'));
+    }
+
+    /**
+     * @return list<array{loc: string, changefreq: string, priority: string}>
+     */
+    private function buildSitemapEntries(): array
+    {
+        $base = rtrim((string) config('app.url'), '/');
+        $entries = [];
+
+        $push = static function (string $loc, string $changefreq, string $priority) use (&$entries): void {
+            $entries[] = ['loc' => $loc, 'changefreq' => $changefreq, 'priority' => $priority];
+        };
+
+        $push($base.'/', 'weekly', '1.0');
+        $push($base.'/about', 'monthly', '0.9');
+        $push($base.'/services', 'weekly', '0.95');
+        $push($base.'/industries', 'monthly', '0.85');
+        $push($base.'/insights', 'weekly', '0.85');
+        $push($base.'/contact', 'monthly', '0.9');
+        $push($base.'/privacy-policy', 'yearly', '0.3');
+        $push($base.'/terms-and-conditions', 'yearly', '0.3');
+        $push($base.'/compliance', 'yearly', '0.5');
+
+        foreach ($this->getCapabilities() as $cap) {
+            if (! empty($cap['slug'])) {
+                $push($base.'/capabilities/'.$cap['slug'], 'monthly', '0.8');
+            }
+        }
+
+        foreach ($this->getInsights() as $row) {
+            if (! empty($row['slug'])) {
+                $push($base.'/insights/'.$row['slug'], 'monthly', '0.75');
+            }
+        }
+
+        foreach (TeamDirectory::forPublicSite() as $member) {
+            if (! empty($member['slug'])) {
+                $push($base.'/team/'.$member['slug'], 'monthly', '0.65');
+            }
+        }
+
+        return $entries;
+    }
+
+    private function homeStructuredData(array $site, string $metaDescription, string $heroImageUrl): array
+    {
+        $root = rtrim((string) config('app.url'), '/');
+        $socialLinks = collect($site['social'] ?? [])
+            ->filter(fn ($url) => ! empty($url) && $url !== '#')
+            ->values()
+            ->all();
+
+        $logoUrl = $site['branding']['logo'] ?? asset('uploads/logo.png');
+
+        $serviceItems = collect($site['services'] ?? [])
+            ->filter(fn ($s) => is_array($s) && ! empty($s['slug']))
+            ->take(12)
+            ->values()
+            ->map(function (array $s, int $i): array {
+                return [
+                    '@type' => 'ListItem',
+                    'position' => $i + 1,
+                    'name' => $s['name'] ?? 'Service',
+                    'url' => route('capabilities.show', $s['slug'], absolute: true),
+                ];
+            })
+            ->all();
+
+        return [
+            '@context' => 'https://schema.org',
+            '@graph' => [
+                [
+                    '@type' => 'Organization',
+                    '@id' => $root.'/#organization',
+                    'name' => $site['company']['name'],
+                    'url' => $root.'/',
+                    'logo' => [
+                        '@type' => 'ImageObject',
+                        'url' => $logoUrl,
+                    ],
+                    'image' => [$logoUrl, $heroImageUrl],
+                    'email' => $site['company']['email'] ?? null,
+                    'telephone' => $site['company']['phone'] ?? null,
+                    'sameAs' => $socialLinks,
+                    'contactPoint' => [
+                        '@type' => 'ContactPoint',
+                        'contactType' => 'customer service',
+                        'email' => $site['company']['email'] ?? null,
+                        'telephone' => $site['company']['phone'] ?? null,
+                        'areaServed' => ['KE', 'East Africa'],
+                        'availableLanguage' => ['English', 'Swahili'],
+                    ],
+                ],
+                [
+                    '@type' => 'WebSite',
+                    '@id' => $root.'/#website',
+                    'url' => $root.'/',
+                    'name' => $site['company']['name'],
+                    'description' => $metaDescription,
+                    'inLanguage' => config('colldett.seo.locale', 'en_KE'),
+                    'publisher' => [
+                        '@id' => $root.'/#organization',
+                    ],
+                ],
+                [
+                    '@type' => 'ProfessionalService',
+                    '@id' => $root.'/#professional-service',
+                    'name' => $site['company']['name'],
+                    'url' => $root.'/',
+                    'image' => [$heroImageUrl, $logoUrl],
+                    'description' => $metaDescription,
+                    'areaServed' => [
+                        '@type' => 'Country',
+                        'name' => 'Kenya',
+                    ],
+                    'address' => [
+                        '@type' => 'PostalAddress',
+                        'streetAddress' => $site['company']['address'] ?? null,
+                        'addressCountry' => 'KE',
+                    ],
+                    'email' => $site['company']['email'] ?? null,
+                    'telephone' => $site['company']['phone'] ?? null,
+                    'provider' => [
+                        '@id' => $root.'/#organization',
+                    ],
+                ],
+                [
+                    '@type' => 'ItemList',
+                    '@id' => $root.'/#core-capabilities',
+                    'name' => 'Core capabilities',
+                    'itemListElement' => $serviceItems,
+                ],
+            ],
+        ];
+    }
+
+    private function insightIsoDate(?string $displayDate): ?string
+    {
+        if ($displayDate === null || trim($displayDate) === '') {
+            return null;
+        }
+
+        try {
+            return Carbon::parse('1 '.$displayDate)->startOfMonth()->toIso8601String();
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     private function getCapabilities(): array

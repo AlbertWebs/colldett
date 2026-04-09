@@ -117,10 +117,17 @@
                 <h3 class="admin-card-title">Photo</h3>
                 @php
                     $img = old('image', $member['image'] ?? '');
-                    $imgUrl = $img ? (str_starts_with($img, 'http') ? $img : asset($img)) : null;
+                    $previewName = old('name', $member['name'] ?? 'Name');
+                    $useAvatarPreview = \App\Support\TeamDirectory::imageIsGenericPlaceholder((string) $img);
+                    $imgUrl = ! $useAvatarPreview && $img !== ''
+                        ? (str_starts_with($img, 'http') ? $img : asset($img))
+                        : null;
                 @endphp
                 @if($imgUrl)
                     <img src="{{ $imgUrl }}" alt="Portrait preview" class="h-44 w-full rounded-lg border border-admin-border object-cover bg-white" />
+                @elseif($useAvatarPreview)
+                    <div class="grid h-44 w-full place-items-center rounded-lg border border-admin-border bg-gradient-to-br from-emerald-900 to-emerald-700 text-2xl font-bold tracking-wide text-white" role="img" aria-label="Initials preview">{{ \App\Support\TeamDirectory::initialsFromMemberName($previewName) }}</div>
+                    <p class="text-xs text-admin-muted">Generic or empty image — public pages show this initials avatar.</p>
                 @else
                     <div class="grid h-32 w-full place-items-center rounded-lg border border-dashed border-admin-border bg-slate-50 text-xs text-admin-muted">No image</div>
                 @endif

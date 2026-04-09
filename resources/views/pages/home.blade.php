@@ -18,10 +18,27 @@
                 </a>
             </div>
         </div>
-        <div class="hero-panel reveal">
-            <div class="stat"><strong>Nationwide</strong><span>Operational reach and field capability</span></div>
-            <div class="stat"><strong>Structured</strong><span>Process-led recovery workflows</span></div>
-            <div class="stat"><strong>Confidential</strong><span>Secure handling for sensitive matters</span></div>
+        <div class="hero-panel reveal" data-hero-stats-carousel>
+            <div class="hero-stats-carousel" role="region" aria-roledescription="carousel" aria-label="Key capabilities">
+                <div class="hero-stats-viewport">
+                    <div class="hero-stats-track" data-hero-stats-track>
+                        <div class="hero-stats-slide" id="hero-stat-slide-0" role="group" aria-roledescription="slide" aria-label="1 of 3: Nationwide">
+                            <div class="stat"><strong>Nationwide</strong><span>Operational reach and field capability</span></div>
+                        </div>
+                        <div class="hero-stats-slide" id="hero-stat-slide-1" role="group" aria-roledescription="slide" aria-label="2 of 3: Structured">
+                            <div class="stat"><strong>Structured</strong><span>Process-led recovery workflows</span></div>
+                        </div>
+                        <div class="hero-stats-slide" id="hero-stat-slide-2" role="group" aria-roledescription="slide" aria-label="3 of 3: Confidential">
+                            <div class="stat"><strong>Confidential</strong><span>Secure handling for sensitive matters</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-stats-toolbar" role="tablist" aria-label="Carousel slides">
+                    <button type="button" class="hero-stats-dot is-active" data-hero-stats-dot="0" role="tab" aria-selected="true" aria-controls="hero-stat-slide-0" aria-label="Show Nationwide"></button>
+                    <button type="button" class="hero-stats-dot" data-hero-stats-dot="1" role="tab" aria-selected="false" aria-controls="hero-stat-slide-1" aria-label="Show Structured"></button>
+                    <button type="button" class="hero-stats-dot" data-hero-stats-dot="2" role="tab" aria-selected="false" aria-controls="hero-stat-slide-2" aria-label="Show Confidential"></button>
+                </div>
+            </div>
         </div>
     </div>
     <div class="hero-scroll-wrap">

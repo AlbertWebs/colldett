@@ -23,8 +23,11 @@
             <tbody>
                 @forelse($members as $member)
                     @php
-                        $image = $member['image'] ?? null;
-                        $imageUrl = $image ? (str_starts_with($image, 'http') ? $image : asset($image)) : null;
+                        $image = (string) ($member['image'] ?? '');
+                        $useAvatarThumb = \App\Support\TeamDirectory::imageIsGenericPlaceholder($image);
+                        $imageUrl = ! $useAvatarThumb && $image !== ''
+                            ? (str_starts_with($image, 'http') ? $image : asset($image))
+                            : null;
                         $active = (bool) ($member['is_active'] ?? true);
                     @endphp
                     <tr>
@@ -34,7 +37,7 @@
                                     <img src="{{ $imageUrl }}" alt="{{ $member['name'] }} photo" class="h-10 w-10 rounded-full object-cover border border-admin-border">
                                 @else
                                     <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-admin-primary text-white text-xs font-semibold">
-                                        {{ strtoupper(substr($member['name'] ?? 'TM', 0, 2)) }}
+                                        {{ \App\Support\TeamDirectory::initialsFromMemberName((string) ($member['name'] ?? '')) }}
                                     </span>
                                 @endif
                                 <div>
