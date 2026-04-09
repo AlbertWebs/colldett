@@ -297,7 +297,6 @@
             <a href="mailto:{{ $site['company']['email'] }}">{{ $site['company']['email'] }}</a>
             <p>{{ $site['company']['address'] }}</p>
             <a href="{{ route('contact') }}">Open Inquiry Portal</a>
-            <a href="{{ route('about') }}#affiliate">Affiliate Legal Partner</a>
         </div>
     </div>
 
