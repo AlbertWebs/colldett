@@ -3,8 +3,9 @@
     $isInvoice = $module === 'invoices';
     $isQuotation = $module === 'quotations';
     $isPayment = $module === 'payments';
+    $isFeeNote = $module === 'fee-notes';
     $isDemand = $module === 'demand';
-    $docTitle = $isInvoice ? 'Invoice' : ($isDemand ? 'Demand Letter' : ($isQuotation ? 'Quotation' : ($isPayment ? 'Payment receipt' : $meta['singular'] . ' preview')));
+    $docTitle = $isInvoice ? 'Invoice' : ($isDemand ? 'Demand Letter' : ($isQuotation ? 'Quotation' : ($isPayment ? 'Payment receipt' : ($isFeeNote ? 'Fee Note' : $meta['singular'] . ' preview'))));
     $showPreviewFooterActions = $showPreviewFooterActions ?? false;
     $showLetterheadDocTitle = ! $isInvoice && ! $isQuotation && ! $isPayment;
 @endphp
@@ -19,6 +20,8 @@
         @include('admin.partials.quotation-document-content', ['values' => $values])
     @elseif($isPayment)
         @include('admin.partials.payment-receipt-document-content', ['values' => $values])
+    @elseif($isFeeNote)
+        @include('admin.partials.fee-note-document-content', ['values' => $values])
     @elseif($isDemand)
         @include('admin.partials.demand-letter-preview', ['values' => $values])
     @else

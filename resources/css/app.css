@@ -808,23 +808,25 @@ p { margin: 0; color: var(--muted); }
 }
 .service-feature-card {
   @apply grid grid-cols-1 items-center gap-4 p-4 lg:grid-cols-[1.2fr_0.95fr_auto] lg:gap-4 lg:p-6;
-  background: linear-gradient(125deg, #163f14, #225e1d);
-  border: 1px solid rgba(255,255,255,.08);
+  background: linear-gradient(145deg, #ffffff, #f2f7f3);
+  border: 1px solid #cfdbd2;
+  border-left: 4px solid #1f5a1b;
   border-radius: 20px;
   margin-top: 28px;
   margin-bottom: 16px;
-  box-shadow: 0 16px 34px rgba(9,33,14,.24);
+  box-shadow: 0 16px 30px rgba(12,36,20,.12);
 }
-.service-feature-card h3 { color: #fff; margin: 6px 0 10px; }
-.service-feature-card p { color: rgba(245,252,246,.82); }
+.service-feature-card h3 { color: #16361d; margin: 6px 0 10px; }
+.service-feature-card p { color: #4e6258; }
 .service-feature-metrics {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 .service-feature-metrics span {
-  border: 1px solid rgba(255,255,255,.28);
-  color: #fff;
+  border: 1px solid #cbd8cf;
+  color: #23422c;
+  background: #edf4ef;
   border-radius: 999px;
   padding: .4rem .65rem;
   font-size: .76rem;
@@ -1322,13 +1324,62 @@ p { margin: 0; color: var(--muted); }
   font-size: 1.02rem;
 }
 .cta-box {
-  background: linear-gradient(130deg, #1c4f18, #1f5a1b);
-  color: var(--white);
+  background: linear-gradient(140deg, #ffffff, #f3f8f4);
+  color: #16361d;
+  border: 4px solid #1f5a1b;
   border-radius: 24px;
   padding: clamp(30px, 4vw, 56px);
-  box-shadow: 0 22px 40px rgba(16,54,20,.3);
+  box-shadow: 0 16px 30px rgba(16,54,20,.12);
+  position: relative;
+  overflow: hidden;
 }
-.cta-box p { color: rgba(255,255,255,.85); margin-top: 12px; }
+.cta-box::before {
+  content: '';
+  position: absolute;
+  top: -90px;
+  right: -80px;
+  width: 240px;
+  height: 240px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(31,90,27,.12), rgba(31,90,27,0));
+  pointer-events: none;
+}
+.cta-box::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  border: 1px solid rgba(31,90,27,.14);
+  pointer-events: none;
+}
+.cta-box > * {
+  position: relative;
+  z-index: 1;
+}
+.cta-box h2 {
+  color: #14361c;
+  max-width: 760px;
+  text-wrap: balance;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+.cta-box .actions {
+  margin-top: 18px;
+}
+.cta-box p {
+  color: #4c6156;
+  margin-top: 12px;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 760px;
+  text-align: center;
+}
+.cta-box .actions .btn {
+  border-radius: 12px;
+  font-weight: 800;
+  letter-spacing: .01em;
+}
 
 .section-contact { padding-top: 84px; }
 .contact-home-grid {
@@ -2259,6 +2310,12 @@ a.contact-detail-item:hover {
 }
 
 @media (max-width: 960px) {
+  .hero-panel {
+    display: none;
+  }
+  .topbar-meta {
+    display: none;
+  }
   .topbar-meta-wrap {
     min-height: auto;
     padding-top: 6px;
@@ -2607,6 +2664,24 @@ a.contact-detail-item:hover {
   }
   .tech-panel { min-height: 300px; }
   .services-page-section { background: #f7f8f7; }
+  .cta-box {
+    padding: 40px 18px;
+  }
+  section.section > .container.cta-box {
+    width: calc(100% - 2rem);
+    max-width: min(80rem, calc(100vw - 2rem));
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .cta-box .actions {
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+  .cta-box .actions .btn {
+    min-height: 40px;
+    padding: 0.5rem 0.65rem;
+    font-size: 0.82rem;
+  }
   .service-row-title { font-size: 1.16rem; }
   .service-row-content { padding-left: 0; }
   .capability-detail-grid { grid-template-columns: 1fr; }
@@ -2620,19 +2695,35 @@ a.contact-detail-item:hover {
     padding: 14px clamp(12px, 3vw, 16px);
   }
   .contact-home-actions .btn { width: 100%; }
+  .home-cta-section {
+    padding-bottom: 22px;
+  }
+  .section-contact {
+    padding-top: 36px;
+  }
   .hero-scroll-wrap { bottom: 16px; }
+  .hero-scroll-wrap {
+    display: none;
+  }
   .hero .actions {
     flex-wrap: nowrap;
     gap: 8px;
+    margin-bottom: 4px;
+    position: relative;
+    z-index: 2;
   }
   .hero .actions .btn {
     flex: 1 1 0;
     min-width: 0;
     width: auto;
+    min-height: 42px;
     justify-content: center;
-    padding-left: 0.65rem;
-    padding-right: 0.65rem;
-    font-size: clamp(0.72rem, 2.6vw, 0.94rem);
+    padding-top: 0.56rem;
+    padding-bottom: 0.56rem;
+    padding-left: 0.58rem;
+    padding-right: 0.58rem;
+    font-size: clamp(0.68rem, 2.35vw, 0.86rem);
+    gap: 0.32rem;
   }
   .welcome-actions {
     flex-wrap: nowrap;
@@ -2681,6 +2772,7 @@ a.contact-detail-item:hover {
     gap: 18px;
   }
 }
+
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

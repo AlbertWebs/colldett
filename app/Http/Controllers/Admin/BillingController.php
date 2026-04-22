@@ -31,6 +31,9 @@ class BillingController extends Controller
         if ($module === 'quotations') {
             $values['number'] = $this->peekNextQuotationNumber();
         }
+        if ($module === 'fee-notes') {
+            $values['number'] = $this->peekNextFeeNoteNumber();
+        }
         if ($module === 'payments') {
             $values['payment_id'] = $this->peekNextPaymentId();
         }
@@ -75,6 +78,15 @@ class BillingController extends Controller
 
         if ($module === 'quotations') {
             $data['number'] = $this->generateNextQuotationNumber();
+
+            return redirect()
+                ->route('admin.billing.module.preview', [$module, 1])
+                ->with('status', $meta['singular'].' created successfully.')
+                ->with('preview_values', $data);
+        }
+
+        if ($module === 'fee-notes') {
+            $data['number'] = $this->generateNextFeeNoteNumber();
 
             return redirect()
                 ->route('admin.billing.module.preview', [$module, 1])
@@ -143,7 +155,7 @@ class BillingController extends Controller
         $docRef = '#'.($values['number'] ?? ($values['payment_id'] ?? ('REC-'.$id)));
         $docTitle = $module === 'invoices'
             ? 'Invoice'
-            : ($module === 'demand' ? 'Demand Letter' : $meta['singular'].' preview');
+            : ($module === 'demand' ? 'Demand Letter' : ($module === 'fee-notes' ? 'Fee Note' : $meta['singular'].' preview'));
         $slugBase = $module === 'payments'
             ? ($values['payment_id'] ?? 'payment-'.$id)
             : ($values['number'] ?? ($meta['singular'].'-'.$id));
@@ -169,6 +181,13 @@ class BillingController extends Controller
             ])->setPaper('a4', 'portrait')->setOptions($pdfOptions);
         } elseif ($module === 'payments') {
             $pdf = Pdf::loadView('admin.billing-payment-receipt-pdf', [
+                'values' => $values,
+                'documentChromeCss' => $this->documentChromeStylesheet(),
+                'invoiceBodyCss' => $this->invoiceBodyStylesheet(),
+                'logoUrl' => $logoDataUri,
+            ])->setPaper('a4', 'portrait')->setOptions($pdfOptions);
+        } elseif ($module === 'fee-notes') {
+            $pdf = Pdf::loadView('admin.billing-fee-note-pdf', [
                 'values' => $values,
                 'documentChromeCss' => $this->documentChromeStylesheet(),
                 'invoiceBodyCss' => $this->invoiceBodyStylesheet(),
@@ -252,6 +271,31 @@ class BillingController extends Controller
                     ['name' => 'scope', 'label' => 'Scope', 'type' => 'textarea'],
                 ],
             ],
+            'fee-notes' => [
+                'title' => 'Fee Notes',
+                'singular' => 'Fee Note',
+                'description' => 'Create structured fee notes using the advocate-style format.',
+                'fields' => [
+                    ['name' => 'number', 'label' => 'Fee Note Number'],
+                    ['name' => 'our_ref', 'label' => 'Our Reference'],
+                    ['name' => 'your_ref', 'label' => 'Your Reference'],
+                    ['name' => 'client', 'label' => 'Client'],
+                    ['name' => 'address', 'label' => 'Client Address', 'type' => 'textarea'],
+                    ['name' => 'issued_date', 'label' => 'Issue Date', 'type' => 'date'],
+                    ['name' => 'payment_terms', 'label' => 'Payment Terms'],
+                    ['name' => 'line_description', 'label' => 'Particulars of Service Rendered', 'type' => 'textarea'],
+                    ['name' => 'amount', 'label' => 'Professional Fee (before VAT)'],
+                    ['name' => 'vat_rate', 'label' => 'VAT Rate (e.g. 0.16)'],
+                    ['name' => 'account_name', 'label' => 'Bank Account Name'],
+                    ['name' => 'account_number', 'label' => 'Bank Account Number'],
+                    ['name' => 'bank_name', 'label' => 'Bank Name'],
+                    ['name' => 'branch', 'label' => 'Branch'],
+                    ['name' => 'swift_code', 'label' => 'Swift Code'],
+                    ['name' => 'bank_code', 'label' => 'Bank Code'],
+                    ['name' => 'branch_code', 'label' => 'Branch Code'],
+                    ['name' => 'notes', 'label' => 'Additional Notes', 'type' => 'textarea'],
+                ],
+            ],
             'sla' => [
                 'title' => 'SLA / Engagement Letters',
                 'singular' => 'SLA / Engagement Letter',
@@ -320,6 +364,26 @@ class BillingController extends Controller
                 'notes' => 'Thank you for your business.',
             ],
             'quotations' => ['number' => 'QTN-2026-1001', 'client' => 'Apex Motors', 'valid_until' => '2026-04-30', 'amount' => '410000', 'scope' => 'Debt tracing and legal demand support'],
+            'fee-notes' => [
+                'number' => 'FN-2026-1001',
+                'our_ref' => '7/4523/001',
+                'your_ref' => '4523',
+                'client' => 'MORANI LIMITED',
+                'address' => "P.O BOX 3146-10400\nNYERI\nKENYA\nTel No: +254 721 385 891\nEmail: accounts@sirimon.co.ke",
+                'issued_date' => '2026-03-12',
+                'payment_terms' => 'IMMEDIATE',
+                'line_description' => 'Professional fees for debt collection KES 53,216 at a commission rate of 10%.',
+                'amount' => '5321.60',
+                'vat_rate' => '0.16',
+                'account_name' => 'TRIPLEOKLAW LLP',
+                'account_number' => '3000070911',
+                'bank_name' => 'PRIME BANK LTD',
+                'branch' => 'Hurlingham',
+                'swift_code' => 'PRIEKENX',
+                'bank_code' => '10',
+                'branch_code' => '010',
+                'notes' => 'When replying please quote our reference.',
+            ],
             'sla' => ['client' => 'Metro Health', 'scope' => 'Portfolio recovery support', 'fees' => '8% success fee', 'start_date' => '2026-04-01', 'end_date' => '2027-03-31', 'terms' => 'Monthly reporting and weekly case updates'],
             'demand' => [
                 'client' => 'Apex Motors',
@@ -375,6 +439,7 @@ class BillingController extends Controller
     private const INVOICE_INDEX_PATH = 'admin/billing_invoices.json';
 
     private const QUOTATION_SEQ_PATH = 'admin/billing_quotation_seq.json';
+    private const FEE_NOTE_SEQ_PATH = 'admin/billing_fee_note_seq.json';
 
     private function peekNextInvoiceNumber(): string
     {
@@ -550,6 +615,44 @@ class BillingController extends Controller
             return 1000;
         }
         $data = json_decode(Storage::disk('local')->get(self::QUOTATION_SEQ_PATH), true);
+        if (! is_array($data)) {
+            return 1000;
+        }
+        if ((int) ($data['year'] ?? 0) !== $year) {
+            return 1000;
+        }
+
+        return (int) ($data['last'] ?? 1000);
+    }
+
+    private function peekNextFeeNoteNumber(): string
+    {
+        $year = (int) date('Y');
+        $last = $this->feeNoteLastIssued();
+
+        return sprintf('FN-%d-%04d', $year, $last + 1);
+    }
+
+    private function generateNextFeeNoteNumber(): string
+    {
+        $year = (int) date('Y');
+        $last = $this->feeNoteLastIssued();
+        $next = $last + 1;
+        Storage::disk('local')->put(self::FEE_NOTE_SEQ_PATH, json_encode([
+            'year' => $year,
+            'last' => $next,
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
+        return sprintf('FN-%d-%04d', $year, $next);
+    }
+
+    private function feeNoteLastIssued(): int
+    {
+        $year = (int) date('Y');
+        if (! Storage::disk('local')->exists(self::FEE_NOTE_SEQ_PATH)) {
+            return 1000;
+        }
+        $data = json_decode(Storage::disk('local')->get(self::FEE_NOTE_SEQ_PATH), true);
         if (! is_array($data)) {
             return 1000;
         }

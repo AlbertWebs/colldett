@@ -61,6 +61,7 @@ class SettingsController extends Controller
             'invoice_other_heading' => $saved['invoice_other_heading'] ?? 'Other',
             'invoice_payment_other_lines' => $saved['invoice_payment_other_lines'] ?? '',
             'invoice_payment_note' => $saved['invoice_payment_note'] ?? config('colldett.invoice.payment_details.note', ''),
+            'show_reports_nav' => filter_var($saved['show_reports_nav'] ?? false, FILTER_VALIDATE_BOOL),
             'company_map_embed_url' => old(
                 'company_map_embed_url',
                 Schema::hasTable('contact_details')
@@ -110,12 +111,14 @@ class SettingsController extends Controller
             'document_prefixes' => ['nullable', 'string', 'max:500'],
             'currency_tax' => ['nullable', 'string', 'max:255'],
             'regional_preferences' => ['nullable', 'string', 'max:255'],
+            'show_reports_nav' => ['nullable', 'boolean'],
         ]);
 
         unset($data['company_logo_file'], $data['footer_logo_file'], $data['favicon_file'], $data['document_letterhead_file']);
 
         $saved = $this->readSettings();
         $settings = array_merge($saved, $data);
+        $settings['show_reports_nav'] = $request->boolean('show_reports_nav');
 
         $mapEmbedUrl = $settings['company_map_embed_url'] ?? null;
         unset($settings['company_map_embed_url']);

@@ -4,7 +4,7 @@
     "name": "pwa"
   },
   "resources/css/admin.css": {
-    "file": "assets/admin-DWO8I7St.css",
+    "file": "assets/admin-c2WzL4kj.css",
     "src": "resources/css/admin.css",
     "isEntry": true,
     "name": "admin",
@@ -13,7 +13,7 @@
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-CScfOpRv.css",
+    "file": "assets/app-BNqixykz.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -22,7 +22,7 @@
     ]
   },
   "resources/css/document-theme.css": {
-    "file": "assets/document-theme-DOvKAfHy.css",
+    "file": "assets/document-theme-BN4oR2V_.css",
     "src": "resources/css/document-theme.css",
     "isEntry": true,
     "name": "document-theme",

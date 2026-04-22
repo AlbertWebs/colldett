@@ -315,3 +315,95 @@
   color: #1e293b;
   white-space: pre-wrap;
 }
+
+/* Fee note */
+.colldett-fee-note {
+  font-size: 0.8125rem;
+  color: #111827;
+  line-height: 1.45;
+}
+
+.colldett-fee-note__meta-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
+  gap: 1rem 1.25rem;
+  margin-bottom: 0.9rem;
+}
+
+.colldett-fee-note__meta-line {
+  margin: 0 0 0.35rem;
+}
+
+.colldett-fee-note__meta-line strong {
+  color: #1f2937;
+}
+
+.colldett-fee-note__address {
+  margin-top: 0.25rem;
+  white-space: pre-line;
+}
+
+.colldett-fee-note__table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+
+.colldett-fee-note__table th,
+.colldett-fee-note__table td {
+  border: 1px solid #94a3b8;
+  padding: 0.35rem 0.45rem;
+  vertical-align: top;
+}
+
+.colldett-fee-note__table thead th {
+  background: #1f77a8;
+  color: #fff;
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.colldett-fee-note__num {
+  width: 10.5rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.colldett-fee-note__label {
+  text-align: right;
+  font-weight: 600;
+}
+
+.colldett-fee-note__row-total td {
+  font-weight: 700;
+}
+
+.colldett-fee-note__bank h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.colldett-fee-note__bank-grid {
+  display: grid;
+  grid-template-columns: 10rem minmax(0, 1fr);
+  gap: 0.12rem 0.65rem;
+}
+
+.colldett-fee-note__bank-grid > div:nth-child(odd) {
+  color: #374151;
+}
+
+.colldett-fee-note__note {
+  margin-top: 0.8rem;
+  color: #334155;
+}
+
+@media (max-width: 42rem) {
+  .colldett-fee-note__meta-grid,
+  .colldett-fee-note__bank-grid {
+    grid-template-columns: 1fr;
+  }
+}

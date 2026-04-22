@@ -274,13 +274,13 @@
     </div>
 </section>
 
-<section class="section">
+<section class="section home-cta-section">
     <div class="container cta-box reveal">
         <h2>Start a structured recovery engagement today</h2>
         <p>Partner with a disciplined team trusted by financial and commercial clients.</p>
-        <div class="actions flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center md:gap-4">
-            <a class="btn w-full min-h-11 justify-center px-6 py-3 text-sm sm:w-auto md:text-base" href="{{ route('contact') }}">Request Assistance</a>
-            <a class="btn btn-gold w-full min-h-11 justify-center px-6 py-3 text-sm sm:w-auto md:text-base" href="{{ route('contact') }}">Start Recovery</a>
+        <div class="actions flex w-full flex-nowrap justify-center gap-2 md:gap-4">
+            <a class="btn min-h-11 flex-1 justify-center px-3 py-3 text-sm sm:flex-none sm:px-6 md:text-base" href="{{ route('contact') }}">Request Assistance</a>
+            <a class="btn btn-gold min-h-11 flex-1 justify-center px-3 py-3 text-sm sm:flex-none sm:px-6 md:text-base" href="{{ route('contact') }}">Start Recovery</a>
         </div>
     </div>
 </section>

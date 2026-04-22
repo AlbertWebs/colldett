@@ -17,12 +17,14 @@
 </head>
 <body class="bg-admin-bg text-admin-ink" data-pwa-context="admin">
 @php
+    $adminUiSettings = \App\Support\AdminStoredSettings::all();
+    $showReportsNav = filter_var($adminUiSettings['show_reports_nav'] ?? false, FILTER_VALIDATE_BOOL);
     $navGroups = [
         [
             'title' => 'Overview',
             'items' => [
                 ['route' => 'admin.dashboard', 'label' => 'Dashboard', 'icon' => 'M3 12h18M3 6h18M3 18h18', 'active' => ['admin.dashboard']],
-                ['route' => 'admin.reports', 'label' => 'Reports', 'icon' => 'M4 18h16 M7 14v-4 M12 14V8 M17 14V6', 'active' => ['admin.reports']],
+                ...($showReportsNav ? [['route' => 'admin.reports', 'label' => 'Reports', 'icon' => 'M4 18h16 M7 14v-4 M12 14V8 M17 14V6', 'active' => ['admin.reports']]] : []),
             ],
         ],
         [
@@ -120,7 +122,7 @@
                     @endforeach
                 </div>
 
-                <form method="POST" action="{{ route('admin.logout') }}" class="mt-4">
+                <form method="POST" action="{{ route('admin.logout') }}" class="mt-4 pb-4">
                     @csrf
                     <button type="submit" title="Sign out" :class="sidebarCollapsed ? 'lg:justify-center lg:px-2' : ''" class="admin-sidebar-logout flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left text-sm text-slate-300 hover:bg-slate-800/80">
                         <span aria-hidden="true">↩</span>

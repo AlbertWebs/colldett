@@ -220,6 +220,29 @@
                     </div>
                 </div>
             </article>
+
+            <article class="admin-card p-5 space-y-4 xl:col-span-5">
+                <div>
+                    <h3 class="admin-card-title text-base">Dashboard Preferences</h3>
+                    <p class="mt-1 text-xs text-admin-muted">Control admin navigation visibility for optional modules.</p>
+                </div>
+                <div class="rounded-lg border border-admin-border bg-slate-50 p-3">
+                    <input type="hidden" name="show_reports_nav" value="0">
+                    <label class="flex items-start gap-3">
+                        <input
+                            class="mt-0.5 h-4 w-4 rounded border-admin-border text-admin-primary focus:ring-admin-primary/30"
+                            type="checkbox"
+                            name="show_reports_nav"
+                            value="1"
+                            @checked(old('show_reports_nav', $settings['show_reports_nav'] ?? false))
+                        />
+                        <span>
+                            <span class="block text-sm font-semibold text-admin-ink">Show Reports in sidebar</span>
+                            <span class="mt-0.5 block text-xs text-admin-muted">When disabled, Reports is hidden from the left navigation menu.</span>
+                        </span>
+                    </label>
+                </div>
+            </article>
         </div>
 
         @if($errors->any())

@@ -35,6 +35,11 @@
                     <div class="mb-4">
                         <h3 class="admin-card-title text-base">Document Details</h3>
                         <p class="mt-1 text-xs text-admin-muted">Fill all required fields to generate a complete {{ strtolower($meta['singular']) }} record.</p>
+                        @if($module === 'fee-notes')
+                            <p class="mt-2 rounded-lg border border-sky-200/80 bg-sky-50/80 px-3 py-2 text-sm text-sky-950">
+                                Fill this top-to-bottom: <strong>reference details</strong>, then <strong>client particulars</strong>, then <strong>fee computation</strong>, then <strong>remittance account details</strong>.
+                            </p>
+                        @endif
                         @if($module === 'demand')
                             <p class="mt-2 rounded-lg border border-emerald-200/80 bg-emerald-50/80 px-3 py-2 text-sm text-emerald-950">
                                 The <strong>engaging client</strong> is who instructs you. Write the full letter — including recipient, address, and salutation if needed — in <strong>Letter (body)</strong>.
@@ -42,13 +47,51 @@
                         @endif
                     </div>
 
+                    @php
+                        $feeNoteSectionStarts = [
+                            'number' => ['title' => 'Reference Details', 'desc' => 'Core identifiers and issuance details.'],
+                            'address' => ['title' => 'Client Particulars', 'desc' => 'Use the full recipient block exactly as it should appear on the fee note.'],
+                            'line_description' => ['title' => 'Fee Computation', 'desc' => 'Enter the rendered service and tax inputs used to compute totals.'],
+                            'account_name' => ['title' => 'Remittance Account Details', 'desc' => 'Bank instructions shown at the bottom of the fee note.'],
+                        ];
+                        $feeNoteFieldHelp = [
+                            'our_ref' => 'Internal office/matter reference.',
+                            'your_ref' => 'Client reference if provided.',
+                            'payment_terms' => 'Example: IMMEDIATE, 7 DAYS, 14 DAYS.',
+                            'line_description' => 'This text appears in the particulars row in the table.',
+                            'vat_rate' => 'Use decimal form (0.16) or percentage (16).',
+                        ];
+                        $feeNotePlaceholders = [
+                            'our_ref' => 'e.g. 7/4523/001',
+                            'your_ref' => 'e.g. 4523',
+                            'payment_terms' => 'e.g. IMMEDIATE',
+                            'line_description' => 'Professional fees for debt collection ...',
+                            'amount' => 'e.g. 5321.60',
+                            'vat_rate' => 'e.g. 0.16',
+                            'account_name' => 'e.g. TRIPLEOKLAW LLP',
+                            'account_number' => 'e.g. 3000070911',
+                            'bank_name' => 'e.g. PRIME BANK LTD',
+                            'branch' => 'e.g. Hurlingham',
+                            'swift_code' => 'e.g. PRIEKENX',
+                            'bank_code' => 'e.g. 10',
+                            'branch_code' => 'e.g. 010',
+                        ];
+                    @endphp
                     <div class="grid gap-3 md:grid-cols-2">
                         @foreach($meta['fields'] as $field)
+                            @if($module === 'fee-notes' && isset($feeNoteSectionStarts[$field['name']]))
+                                <div class="md:col-span-2 mt-2 rounded-lg border border-admin-border bg-slate-50 px-3 py-2">
+                                    <p class="text-xs font-semibold uppercase tracking-wide text-admin-ink">{{ $feeNoteSectionStarts[$field['name']]['title'] }}</p>
+                                    <p class="mt-0.5 text-xs text-admin-muted">{{ $feeNoteSectionStarts[$field['name']]['desc'] }}</p>
+                                </div>
+                            @endif
                             <div class="{{ ($field['type'] ?? 'text') === 'textarea' ? 'md:col-span-2' : '' }}">
                                 <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-admin-muted">{{ $field['label'] }}</label>
                                 @if($field['name'] === 'client')
                                     <select class="admin-select" name="{{ $field['name'] }}" data-no-autolabel="true">
-                                        <option value="">{{ $module === 'demand' ? 'Select engaging client' : 'Select client' }}</option>
+                                        <option value="">
+                                            {{ $module === 'demand' ? 'Select engaging client' : ($module === 'fee-notes' ? 'Select client organization' : 'Select client') }}
+                                        </option>
                                         @foreach(($clients ?? []) as $client)
                                             <option value="{{ $client }}" @selected(old($field['name'], $values[$field['name']] ?? '') === $client)>{{ $client }}</option>
                                         @endforeach
@@ -113,7 +156,7 @@
                                         @endforeach
                                     </select>
                                     <p class="mt-1 text-xs text-admin-muted">Choose the invoice this payment applies to (number, client, and amount from issued invoices).</p>
-                                @elseif(in_array($module, ['invoices', 'quotations'], true) && $field['name'] === 'number' && $mode === 'create')
+                                @elseif(in_array($module, ['invoices', 'quotations', 'fee-notes'], true) && $field['name'] === 'number' && $mode === 'create')
                                     <input
                                         class="admin-input cursor-not-allowed bg-slate-50 text-admin-ink"
                                         type="text"
@@ -125,6 +168,8 @@
                                     <p class="mt-1 text-xs text-admin-muted">
                                         @if($module === 'invoices')
                                             Auto-generated on save (INV-YEAR-####). Shown here as the next available number.
+                                        @elseif($module === 'fee-notes')
+                                            Auto-generated on save (FN-YEAR-####). Shown here as the next available number.
                                         @else
                                             Auto-generated on save (QTN-YEAR-####). Shown here as the next available number.
                                         @endif
@@ -133,7 +178,7 @@
                                     <textarea
                                         class="admin-input min-h-32"
                                         name="{{ $field['name'] }}"
-                                        placeholder="{{ $module === 'demand' && $field['name'] === 'body' ? 'Full letter text: recipient, address, salutation, and paragraphs as needed.' : 'Enter '.strtolower($field['label']) }}"
+                                        placeholder="{{ $module === 'demand' && $field['name'] === 'body' ? 'Full letter text: recipient, address, salutation, and paragraphs as needed.' : ($module === 'fee-notes' ? ($feeNotePlaceholders[$field['name']] ?? 'Enter '.strtolower($field['label'])) : 'Enter '.strtolower($field['label'])) }}"
                                         data-no-autolabel="true"
                                     >{{ old($field['name'], $values[$field['name']] ?? '') }}</textarea>
                                 @else
@@ -142,9 +187,12 @@
                                         type="{{ $field['type'] ?? 'text' }}"
                                         name="{{ $field['name'] }}"
                                         value="{{ old($field['name'], $values[$field['name']] ?? '') }}"
-                                        placeholder="Enter {{ strtolower($field['label']) }}"
+                                        placeholder="{{ $module === 'fee-notes' ? ($feeNotePlaceholders[$field['name']] ?? 'Enter '.strtolower($field['label'])) : 'Enter '.strtolower($field['label']) }}"
                                         data-no-autolabel="true"
                                     />
+                                @endif
+                                @if($module === 'fee-notes' && isset($feeNoteFieldHelp[$field['name']]))
+                                    <p class="mt-1 text-xs text-admin-muted">{{ $feeNoteFieldHelp[$field['name']] }}</p>
                                 @endif
                             </div>
                         @endforeach
