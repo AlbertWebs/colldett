@@ -18,20 +18,10 @@
     </div>
 
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        @foreach([
-            ['Total Clients', '1,248', '+4.8%'],
-            ['Total Cases', '387', '+2.1%'],
-            ['Total Invoices', '942', '+6.3%'],
-            ['Total Payments', 'KES 92.6M', '+8.9%'],
-            ['Outstanding Amount', 'KES 31.4M', '-3.4%'],
-            ['Recovered Amount', 'KES 61.2M', '+10.2%'],
-            ['Pending Cases', '142', '-1.7%'],
-            ['Avg Resolution Time', '11 days', '-0.6 day'],
-        ] as $stat)
+        @foreach(($kpis ?? []) as $stat)
             <article class="admin-stat admin-stat-premium">
                 <div class="flex items-start justify-between gap-2">
                     <p class="text-xs uppercase tracking-wide text-admin-muted">{{ $stat[0] }}</p>
-                    <span class="admin-kpi-trend {{ str_starts_with($stat[2], '-') ? 'is-down' : 'is-up' }}">{{ $stat[2] }}</span>
                 </div>
                 <p class="mt-2 text-xl font-semibold">{{ $stat[1] }}</p>
             </article>

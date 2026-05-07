@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\BillingController;
 use App\Http\Controllers\Admin\CaseController;
 use App\Http\Controllers\Admin\ClientController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\GalleryController as AdminGalleryController;
 use App\Http\Controllers\Admin\IndustryCrudController;
 use App\Http\Controllers\Admin\InsightCrudController;
@@ -45,7 +46,7 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
 
 Route::middleware('admin.access')->prefix('admin')->name('admin.')->group(function (): void {
     Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
-    Route::view('/', 'admin.dashboard')->name('dashboard');
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/about-content', [AboutContentController::class, 'edit'])->name('about-content.edit');
     Route::post('/about-content', [AboutContentController::class, 'update'])->name('about-content.update');
     Route::get('/services', [ServiceCrudController::class, 'index'])->name('services.index');
