@@ -2,6 +2,7 @@
     use App\Support\AdminStoredSettings;
     use Illuminate\Support\Carbon;
     $inv = AdminStoredSettings::invoice();
+    $kraPin = AdminStoredSettings::companyKraPin();
     $vatRate = (float) ($inv['vat_rate'] ?? 0.16);
     $vatLabel = $inv['vat_label'] ?? (number_format($vatRate * 100, 2) . '% VAT');
     $currency = $inv['currency'] ?? 'Ksh';
@@ -41,6 +42,9 @@
             <div class="colldett-invoice__dates">
                 <div><span class="colldett-invoice__date-label">Invoice Date:</span> {{ $issued->format('l, F jS, Y') }}</div>
                 <div><span class="colldett-invoice__date-label">Due Date:</span> {{ $due->format('l, F jS, Y') }}</div>
+                @if($kraPin !== '')
+                    <div><span class="colldett-invoice__date-label">KRA PIN:</span> {{ $kraPin }}</div>
+                @endif
             </div>
             <div class="colldett-invoice__to">
                 <div class="colldett-invoice__to-title">Invoiced To</div>

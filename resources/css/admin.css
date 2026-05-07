@@ -119,6 +119,34 @@
     @apply text-sm font-semibold text-admin-ink;
   }
 
+  .admin-gallery-dropzone {
+    @apply relative cursor-pointer overflow-hidden rounded-xl border border-dashed border-admin-border bg-slate-50 p-4 transition;
+  }
+
+  .admin-gallery-dropzone:hover {
+    @apply border-slate-300 bg-slate-50/70;
+  }
+
+  .admin-gallery-dropzone.is-dragover {
+    @apply border-sky-300 bg-sky-50;
+  }
+
+  .admin-gallery-dropzone__inner {
+    @apply flex items-center gap-3;
+  }
+
+  .admin-gallery-dropzone__icon {
+    @apply flex h-10 w-10 items-center justify-center rounded-xl border border-admin-border bg-white text-admin-muted;
+  }
+
+  .admin-gallery-dropzone__preview {
+    @apply mt-4 items-center justify-between gap-3 rounded-xl border border-admin-border bg-white p-3;
+  }
+
+  .admin-gallery-dropzone__preview img {
+    @apply h-28 w-44 rounded-lg border border-admin-border object-cover bg-slate-50;
+  }
+
   .admin-input {
     @apply w-full rounded-lg border border-admin-border bg-white px-3 py-2 text-sm text-admin-ink outline-none ring-0 transition focus:border-admin-primary focus:ring-2 focus:ring-admin-primary/20;
   }

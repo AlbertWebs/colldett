@@ -44,10 +44,17 @@ return [
                 [
                     'heading' => 'Bank',
                     'lines' => [
-                        'Bank Name: (configure)',
-                        'Account Name: Colldett Trace Limited',
-                        'Account Number: (configure)',
-                        'Branch: Nairobi',
+                        'Account Name: Colldett Trace',
+                        'Account Number: 1351221760',
+                        'Reference: your invoice number',
+                    ],
+                ],
+                [
+                    'heading' => 'M-Pesa',
+                    'lines' => [
+                        'Paybill: 522533',
+                        'Account Number: 8080678',
+                        'Account Name: Colldett Trace',
                         'Reference: your invoice number',
                     ],
                 ],
@@ -75,17 +82,118 @@ return [
         [
             'name' => 'Investigations & Field Services',
             'slug' => 'investigations',
-            'description' => 'On-ground investigations, verification, and field intelligence to de-risk recovery and litigation decisions.',
+            'description' => 'Professional investigations and field services for verification, intelligence gathering, and enforcement readiness — delivered with structured reporting and trusted partners where needed.',
+            'seo_title' => 'Investigations & Field Services in Kenya | Colldett Trace Limited',
+            'seo_description' => 'Investigations and field services for verification, intelligence gathering, and recovery support — including partner-led specialist support where required, with disciplined reporting and confidentiality.',
+            'seo_keywords' => 'investigations Kenya, field investigations Nairobi, background checks, verification services, field intelligence, asset verification, partner investigators',
+            'details' => [
+                'Field verification and data validation for decision-ready clarity',
+                'Operational intelligence gathering to reduce recovery and litigation risk',
+                'Partner-enabled specialist support when the scope requires it',
+                'Confidential, structured reporting aligned to institutional standards',
+            ],
+            'content' => [
+                'intro' => "Investigations & Field Services\n\nColldett Trace Limited provides disciplined investigations and field services to support debt recovery, asset tracing, and enforcement readiness. We combine field intelligence with structured workflows to verify critical facts, identify risk signals, and provide actionable findings that support informed decisions.",
+                'sections' => [
+                    [
+                        'title' => 'What we do',
+                        'bullets' => [
+                            'Field verification of addresses, business operations, and identity signals.',
+                            'Background and relationship checks to confirm key facts and reduce exposure.',
+                            'Asset and location verification to support negotiation and enforcement planning.',
+                            'Incident and fraud signal support for sensitive matters that require controlled handling.',
+                        ],
+                    ],
+                    [
+                        'title' => 'Partner-enabled execution',
+                        'body' => 'Where a matter requires specialist coverage, additional jurisdictions, or niche expertise, we work with trusted partners to extend field capability — while maintaining a single accountable workflow, quality control, and consistent reporting standards.',
+                    ],
+                    [
+                        'title' => 'How we report',
+                        'bullets' => [
+                            'Clear findings and evidence-led notes (what we observed, verified, and could not verify).',
+                            'Risk flags and recommended next steps aligned to recovery timelines.',
+                            'Confidential handling of sensitive information and lawful data practices.',
+                            'Structured updates to support internal approvals and client oversight.',
+                        ],
+                    ],
+                    [
+                        'title' => 'Value to your team',
+                        'body' => 'Our investigations reduce uncertainty and improve recovery decisions by strengthening what your team knows, documenting what can be proven, and enabling compliant escalation when required.',
+                    ],
+                ],
+            ],
         ],
         [
             'name' => 'Skip Tracing',
             'slug' => 'skip-tracing',
-            'description' => 'Targeted debtor location services using lawful data points and professional field follow-through.',
+            'description' => 'Specialized skip tracing services delivering timely, accurate, actionable intelligence to locate individuals, verify critical data, and support compliant recoveries.',
+            'seo_title' => 'Skip Tracing Services in Kenya | Colldett Trace Limited',
+            'seo_description' => 'Skip tracing services for debt collection agencies, legal teams, and investigators — locate individuals, verify data, and support compliant recovery decisions with timely, actionable intelligence.',
+            'seo_keywords' => 'skip tracing Kenya, skip tracer Nairobi, debtor tracing, locate debtors, asset tracing, debt recovery support, investigations, lawful data verification',
+            'details' => [
+                'Comprehensive data sources across reliable channels',
+                'Advanced tools for precise tracking and analysis',
+                'Skilled, experienced skip tracers for complex investigations',
+                'Ethical, compliant practices aligned to professional standards',
+            ],
+            'content' => [
+                'intro' => "Skip Tracing.\n\nAt Colldett, we provide specialized skip tracing services designed to support debt collection agencies, law enforcement, and private investigators. Our mission is to deliver timely, accurate, and actionable intelligence that empowers informed decision-making. With meticulous attention to detail and a relentless pursuit of results, we leave no stone unturned in locating individuals, uncovering hidden assets, and verifying critical data.",
+                'sections' => [
+                    [
+                        'title' => 'Key Strengths',
+                        'bullets' => [
+                            'Comprehensive Data Sources: Access to diverse and reliable information channels.',
+                            'Advanced Technology & Tools: Cutting-edge systems for precise tracking and analysis.',
+                            'Skilled & Experienced Skip Tracers: Professionals adept at handling complex investigations.',
+                            'Tailored Approach: Customized strategies to meet unique client needs.',
+                            'Ethical Practices: Strict adherence to legal and professional standards.',
+                            'Proactive & Persistent Efforts: Determined pursuit to ensure successful outcomes.',
+                            'Timely & Actionable Results: Delivering intelligence that drives effective decisions.',
+                        ],
+                    ],
+                    [
+                        'title' => 'Value Proposition',
+                        'body' => 'Our skip tracing services enable clients to:',
+                        'bullets' => [
+                            'Locate debtors efficiently for faster recoveries.',
+                            'Enhance asset management through thorough investigations.',
+                            'Safeguard relationships by focusing on constructive and compliant resolutions.',
+                        ],
+                    ],
+                ],
+            ],
         ],
         [
             'name' => 'Debt Portfolio Management',
             'slug' => 'debt-portfolio-management',
-            'description' => 'Portfolio triage, segmentation, and action plans that improve liquidation rates across aging accounts.',
+            'description' => 'Debt portfolio management with legal precision and financial discipline — segmentation, risk-based action plans, and reporting for measurable recovery outcomes.',
+            'seo_title' => 'Debt Portfolio Management in Kenya | Colldett Trace Limited',
+            'seo_description' => 'Structured debt portfolio management for institutions: segmentation by age/value/risk, targeted interventions, compliant escalation, and performance reporting for measurable recoveries.',
+            'seo_keywords' => 'debt portfolio management Kenya, portfolio recovery strategy, collections segmentation, risk-based collections, recovery reporting, institutional recovery',
+            'details' => [
+                'Portfolio segmentation and strategy design by age, value, and risk',
+                'Action planning with measured engagement and structured escalation',
+                'Legal-aligned execution for higher-risk and non-responsive accounts',
+                'Performance tracking and reporting for decision-ready visibility',
+            ],
+            'content' => [
+                'intro' => "Debt Portfolio Management\n\nAt Colldett Trace Limited, our Debt Portfolio Management service combines legal precision with financial discipline to deliver structured and measurable recovery outcomes. We manage debt portfolios as controlled assets, aligning recovery strategies with institutional risk frameworks and cash flow priorities.",
+                'sections' => [
+                    [
+                        'title' => 'Portfolio segmentation and strategy design',
+                        'body' => 'Our approach begins with portfolio segmentation and strategy design, categorizing accounts by age, value, and risk profile. This enables targeted interventions, ensuring that each account is handled with the appropriate level of intensity and expertise.',
+                    ],
+                    [
+                        'title' => 'Risk-based action plans and escalation',
+                        'body' => 'We implement action plans based on risk and aging buckets, applying firm but measured engagement at early stages, and structured escalation—including legal action—where recovery risk increases. Each step is deliberate, compliant, and geared toward efficient resolution.',
+                    ],
+                    [
+                        'title' => 'Reporting and performance tracking',
+                        'body' => 'Through robust reporting and performance tracking, we provide clear visibility on recovery progress, enabling informed decision-making. Our disciplined workflows and accountability structures ensure consistent performance while safeguarding client interests.',
+                    ],
+                ],
+            ],
         ],
         [
             'name' => 'Car Tracking',
@@ -107,6 +215,11 @@ return [
         'Insurance Companies',
         'Corporates',
         'Law Firms',
+        'Pharmaceuticals',
+        'Manufacturing',
+        'Hotel and Hospitality',
+        'Real Estate',
+        'Other Debt Related Services',
     ],
     'team' => [
         [
@@ -244,7 +357,7 @@ return [
             'department' => 'Debt Recovery Management Team',
             'image' => 'uploads/team/Samwel-Mogire.jpg',
             'bio' => 'Samwel Mogire manages debt recovery execution and escalation for field and office case streams.',
-            'experience_years' => 8,
+            'experience_years' => 11,
             'location' => 'Nairobi, Kenya',
             'email' => 'samwel@colldetttrace.com',
             'seo_description' => 'Profile of Samwel Mogire, Manager - Debt Recovery at Colldett Trace Limited.',

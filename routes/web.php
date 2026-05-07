@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\BillingController;
 use App\Http\Controllers\Admin\CaseController;
 use App\Http\Controllers\Admin\ClientController;
+use App\Http\Controllers\Admin\GalleryController as AdminGalleryController;
 use App\Http\Controllers\Admin\IndustryCrudController;
 use App\Http\Controllers\Admin\InsightCrudController;
 use App\Http\Controllers\Admin\ReportController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\TeamController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\SiteController;
 use Illuminate\Support\Facades\Route;
 
@@ -23,6 +25,7 @@ Route::get('/', [SiteController::class, 'home'])->name('home');
 Route::get('/about', [SiteController::class, 'about'])->name('about');
 Route::get('/services', [SiteController::class, 'services'])->name('services');
 Route::get('/capabilities/{slug}', [SiteController::class, 'capabilityShow'])->name('capabilities.show');
+Route::get('/gallery', [GalleryController::class, 'index'])->name('gallery');
 Route::get('/industries', [SiteController::class, 'industries'])->name('industries');
 Route::get('/insights', [SiteController::class, 'insights'])->name('insights');
 Route::get('/insights/{slug}', [SiteController::class, 'insightShow'])->name('insights.show');
@@ -52,6 +55,13 @@ Route::middleware('admin.access')->prefix('admin')->name('admin.')->group(functi
     Route::patch('/services/{id}', [ServiceCrudController::class, 'update'])->name('services.update');
     Route::get('/services/{id}/delete', [ServiceCrudController::class, 'deleteConfirm'])->name('services.delete-confirm');
     Route::delete('/services/{id}', [ServiceCrudController::class, 'destroy'])->name('services.destroy');
+
+    Route::get('/gallery', [AdminGalleryController::class, 'index'])->name('gallery.index');
+    Route::get('/gallery/create', [AdminGalleryController::class, 'create'])->name('gallery.create');
+    Route::post('/gallery', [AdminGalleryController::class, 'store'])->name('gallery.store');
+    Route::get('/gallery/{gallery}/edit', [AdminGalleryController::class, 'edit'])->name('gallery.edit');
+    Route::patch('/gallery/{gallery}', [AdminGalleryController::class, 'update'])->name('gallery.update');
+    Route::delete('/gallery/{gallery}', [AdminGalleryController::class, 'destroy'])->name('gallery.destroy');
 
     Route::get('/industries', [IndustryCrudController::class, 'index'])->name('industries.index');
     Route::get('/industries/create', [IndustryCrudController::class, 'create'])->name('industries.create');

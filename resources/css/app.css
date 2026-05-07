@@ -967,6 +967,54 @@ p { margin: 0; color: var(--muted); }
 .services-grid {
   @apply grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3;
 }
+
+/* Gallery */
+.gallery-section {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(33, 94, 29, 0.05), transparent 34%),
+    radial-gradient(circle at 92% 88%, rgba(223, 176, 26, 0.06), transparent 30%),
+    linear-gradient(to bottom, #fbfcfb 0%, #f2f6f3 100%);
+}
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+.gallery-card {
+  border: 1px solid #d7e2d9;
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 14px 28px rgba(13, 34, 21, .08);
+}
+.gallery-link {
+  display: block;
+  position: relative;
+  background: #f2f6f3;
+}
+.gallery-link img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  display: block;
+}
+.gallery-card figcaption {
+  padding: 10px 12px 12px;
+  font-size: .92rem;
+  color: #3f5249;
+}
+.gallery-empty {
+  border: 1px solid #d7e2d9;
+  background: rgba(255,255,255,.9);
+  border-radius: 18px;
+  padding: 24px;
+  text-align: center;
+  grid-column: 1 / -1;
+}
+.gallery-empty h2 {
+  color: #1f4a1b;
+  margin-bottom: 8px;
+}
 .service-card {
   position: relative;
   background: var(--white);
@@ -998,6 +1046,23 @@ p { margin: 0; color: var(--muted); }
   color: #5f7268;
   margin-bottom: 8px;
   font-weight: 700;
+}
+.service-card-cta {
+  margin-top: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  color: #1e5a1b;
+  font-weight: 800;
+  font-size: .9rem;
+}
+.service-card-cta i {
+  font-style: normal;
+  transition: transform .2s ease;
+}
+.service-card-cta:hover i {
+  transform: translateX(2px);
 }
 .service-card-soon { border: 1px solid #dcbc5f; box-shadow: 0 16px 32px rgba(223,176,26,.17); }
 .badge {
@@ -1710,6 +1775,21 @@ p { margin: 0; color: var(--muted); }
 .capability-detail-side h3 {
   margin-bottom: 8px;
   color: #1f4a1b;
+}
+.capability-detail-main h2 {
+  font-size: clamp(1.15rem, 2.1vw, 1.65rem);
+  line-height: 1.18;
+  letter-spacing: -0.02em;
+  color: #1f4a1b;
+  margin-top: 1.25rem;
+  margin-bottom: 0.65rem;
+}
+.capability-detail-main p {
+  font-size: 0.98rem;
+  line-height: 1.7;
+}
+.capability-detail-main .checklist {
+  margin-top: 0.75rem;
 }
 .capability-pill {
   display: inline-flex;

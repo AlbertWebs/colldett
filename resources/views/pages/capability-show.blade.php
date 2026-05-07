@@ -18,13 +18,46 @@
 <section class="section capability-detail-section reveal">
     <div class="container capability-detail-grid">
         <article class="capability-detail-main">
-            <h2>How this capability works</h2>
-            <p>We execute this capability through disciplined workflows, practical escalation controls, and outcome-focused case management aligned to institutional standards.</p>
-            <ul class="checklist">
-                @foreach($capabilityDetails as $item)
-                    <li>{{ $item }}</li>
+            @if(!empty($capability['content']))
+                @php
+                    $content = is_array($capability['content']) ? $capability['content'] : [];
+                    $intro = (string) ($content['intro'] ?? '');
+                    $sections = is_array($content['sections'] ?? null) ? $content['sections'] : [];
+                @endphp
+                @if($intro !== '')
+                    @foreach(preg_split("/\r\n\r\n|\n\n/", trim($intro)) as $para)
+                        <p class="mb-4">{{ $para }}</p>
+                    @endforeach
+                @endif
+                @foreach($sections as $section)
+                    @php
+                        $title = (string) ($section['title'] ?? '');
+                        $body = (string) ($section['body'] ?? '');
+                        $bullets = is_array($section['bullets'] ?? null) ? $section['bullets'] : [];
+                    @endphp
+                    @if($title !== '')
+                        <h2 class="mt-6">{{ $title }}</h2>
+                    @endif
+                    @if($body !== '')
+                        <p class="mt-3">{{ $body }}</p>
+                    @endif
+                    @if($bullets !== [])
+                        <ul class="checklist mt-4">
+                            @foreach($bullets as $b)
+                                <li>{{ $b }}</li>
+                            @endforeach
+                        </ul>
+                    @endif
                 @endforeach
-            </ul>
+            @else
+                <h2>How this capability works</h2>
+                <p>We execute this capability through disciplined workflows, practical escalation controls, and outcome-focused case management aligned to institutional standards.</p>
+                <ul class="checklist">
+                    @foreach($capabilityDetails as $item)
+                        <li>{{ $item }}</li>
+                    @endforeach
+                </ul>
+            @endif
         </article>
         <aside class="capability-detail-side">
             @if(!empty($capability['featured']))

@@ -52,6 +52,13 @@ final class AdminStoredSettings
         return (string) ($saved['company_email'] ?? config('colldett.company.email', ''));
     }
 
+    public static function companyKraPin(): string
+    {
+        $saved = self::all();
+
+        return trim((string) ($saved['company_kra_pin'] ?? ''));
+    }
+
     /**
      * Merged document theme for letterhead preview/PDF (footer contacts, header address).
      *
@@ -180,6 +187,8 @@ final class AdminStoredSettings
             if ($lines !== []) {
                 $out[] = ['heading' => $otherHeading, 'lines' => $lines];
             }
+        } elseif (isset($defaultSections[1]) && is_array($defaultSections[1]) && ! empty($defaultSections[1]['lines'])) {
+            $out[] = $defaultSections[1];
         }
 
         if ($out === []) {

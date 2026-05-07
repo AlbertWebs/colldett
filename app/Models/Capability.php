@@ -11,6 +11,10 @@ class Capability extends Model
         'slug',
         'description',
         'details',
+        'content',
+        'seo_title',
+        'seo_description',
+        'seo_keywords',
         'featured',
         'coming_soon',
         'sort_order',
@@ -19,6 +23,7 @@ class Capability extends Model
 
     protected $casts = [
         'details' => 'array',
+        'content' => 'array',
         'featured' => 'boolean',
         'coming_soon' => 'boolean',
         'is_active' => 'boolean',

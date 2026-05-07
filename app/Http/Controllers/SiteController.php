@@ -93,8 +93,10 @@ class SiteController extends Controller
         abort_unless($capability, 404);
 
         $data = $this->viewData($capability['name']);
-        $data['metaDescription'] = Str::limit(strip_tags((string) ($capability['description'] ?? config('colldett.company.description'))), 158);
-        $data['metaKeywords'] = $capability['name'].', debt recovery Kenya, asset tracing, Colldett Trace';
+        $company = $data['site']['company']['name'] ?? config('colldett.company.name', 'Colldett Trace Limited');
+        $data['metaTitle'] = (string) ($capability['seo_title'] ?? ($capability['name'].' | '.$company));
+        $data['metaDescription'] = Str::limit(strip_tags((string) ($capability['seo_description'] ?? $capability['description'] ?? config('colldett.company.description'))), 158);
+        $data['metaKeywords'] = (string) ($capability['seo_keywords'] ?? ($capability['name'].', debt recovery Kenya, asset tracing, investigations, Colldett Trace'));
         $data['canonicalUrl'] = route('capabilities.show', $slug, absolute: true);
         $data['ogImageAlt'] = $capability['name'].' — '.$data['site']['company']['name'];
         $data['capability'] = $capability;
@@ -495,6 +497,10 @@ class SiteController extends Controller
                 'slug',
                 'description',
                 'details',
+                'content',
+                'seo_title',
+                'seo_description',
+                'seo_keywords',
                 'featured',
                 'coming_soon',
             ]);
@@ -508,6 +514,10 @@ class SiteController extends Controller
             'slug' => $item->slug,
             'description' => $item->description,
             'details' => $item->details,
+            'content' => $item->content,
+            'seo_title' => $item->seo_title,
+            'seo_description' => $item->seo_description,
+            'seo_keywords' => $item->seo_keywords,
             'featured' => $item->featured,
             'coming_soon' => $item->coming_soon,
         ])->all();

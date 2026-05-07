@@ -44,6 +44,11 @@
                         <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Phone</label>
                         <input class="admin-input" name="company_phone" placeholder="Company Phone" value="{{ old('company_phone', $settings['company_phone'] ?? '') }}" />
                     </div>
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">KRA PIN</label>
+                        <input class="admin-input" name="company_kra_pin" placeholder="e.g. P051123456A" value="{{ old('company_kra_pin', $settings['company_kra_pin'] ?? '') }}" />
+                        <p class="text-xs text-admin-muted">Shown on invoices and receipts.</p>
+                    </div>
                     <div class="space-y-1.5 sm:col-span-2">
                         <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Address</label>
                         <textarea class="admin-input min-h-20" name="company_address" placeholder="Company Address" rows="3">{{ old('company_address', $settings['company_address'] ?? '') }}</textarea>

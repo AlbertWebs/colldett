@@ -17,7 +17,11 @@ class CapabilitySeeder extends Seeder
                 [
                     'name' => $service['name'],
                     'description' => $service['description'],
-                    'details' => null,
+                    'details' => $service['details'] ?? null,
+                    'content' => $service['content'] ?? null,
+                    'seo_title' => $service['seo_title'] ?? null,
+                    'seo_description' => $service['seo_description'] ?? null,
+                    'seo_keywords' => $service['seo_keywords'] ?? null,
                     'featured' => ! empty($service['featured']),
                     'coming_soon' => ! empty($service['coming_soon']),
                     'sort_order' => $index + 1,

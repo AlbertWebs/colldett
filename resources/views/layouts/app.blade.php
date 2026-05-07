@@ -276,6 +276,7 @@
             <a href="{{ route('home') }}">Home</a>
             <a href="{{ route('about') }}">Who we are</a>
             <a href="{{ route('services') }}">Our Capabilities</a>
+            <a href="{{ route('gallery') }}">Gallery</a>
             <a href="{{ route('industries') }}">Industries</a>
             <a href="{{ route('insights') }}">Insights</a>
             <a href="{{ route('contact') }}">Contact</a>

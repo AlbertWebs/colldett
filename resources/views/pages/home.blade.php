@@ -123,6 +123,10 @@
                         <h3>{{ $service['name'] }}</h3>
                         @if(!empty($service['coming_soon']))<span class="badge">COMING SOON</span>@endif
                         <p>{{ $service['description'] }}</p>
+                        <a class="service-card-cta" href="{{ route('capabilities.show', $service['slug']) }}">
+                            <span>Learn more</span>
+                            <i aria-hidden="true">→</i>
+                        </a>
                     </article>
                 @endif
             @endforeach
