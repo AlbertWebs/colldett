@@ -400,9 +400,17 @@
     @apply relative flex items-stretch;
   }
 
+  .admin-login-input-icon {
+    @apply pointer-events-none absolute left-4 top-1/2 z-[1] -translate-y-1/2 text-slate-500;
+  }
+
   .admin-login-input {
-    @apply w-full min-h-[52px] rounded-xl border border-slate-600/90 bg-slate-950/50 py-3 pl-4 pr-[4.25rem] text-[15px] text-white shadow-inner placeholder:text-slate-500;
+    @apply w-full min-h-[52px] rounded-xl border border-slate-600/90 bg-slate-950/50 py-3 pl-11 pr-[4.25rem] text-[15px] text-white shadow-inner placeholder:text-slate-500;
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  }
+
+  .admin-login-input.is-invalid {
+    @apply border-rose-400/60 ring-2 ring-rose-500/25 ring-offset-2 ring-offset-slate-900;
   }
 
   .admin-login-input::placeholder {

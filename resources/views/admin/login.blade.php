@@ -43,6 +43,12 @@
                         <div class="admin-login-field">
                             <label for="access_code" class="admin-login-label">Password or PIN</label>
                             <div class="admin-login-input-wrap">
+                                <span class="admin-login-input-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5" aria-hidden="true">
+                                        <path d="M7 11V8a5 5 0 0 1 10 0v3" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+                                        <path d="M6.5 11h11A2.5 2.5 0 0 1 20 13.5v5A2.5 2.5 0 0 1 17.5 21h-11A2.5 2.5 0 0 1 4 18.5v-5A2.5 2.5 0 0 1 6.5 11Z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/>
+                                    </svg>
+                                </span>
                                 <input
                                     id="access_code"
                                     name="access_code"
@@ -51,7 +57,7 @@
                                     autocomplete="current-password"
                                     required
                                     autofocus
-                                    class="admin-login-input"
+                                    class="admin-login-input {{ $errors->any() ? 'is-invalid' : '' }}"
                                     placeholder="Enter access code"
                                     aria-describedby="access-code-hint"
                                 />
@@ -68,7 +74,7 @@
                         </button>
                     </form>
 
-                    <p class="admin-login-meta">Session-based access · not linked to staff user accounts</p>
+                    <p class="admin-login-meta">Session-based access · supports staff PIN/passwords and master access code</p>
 
                     <a href="{{ route('home') }}" class="admin-login-backlink">
                         <span class="admin-login-backlink__icon" aria-hidden="true">←</span>
