@@ -12,9 +12,9 @@
 
     <article class="admin-card max-w-2xl p-6 space-y-4">
         <div class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-            You are about to delete <strong>{{ $user['name'] }}</strong> ({{ $user['email'] }}). This action cannot be undone.
+            You are about to delete <strong>{{ $user->name }}</strong> ({{ $user->email }}). This action cannot be undone.
         </div>
-        <form method="POST" action="{{ route('admin.users.destroy', $user['id']) }}" class="flex justify-end gap-2">
+        <form method="POST" action="{{ route('admin.users.destroy', $user) }}" class="flex justify-end gap-2">
             @csrf
             @method('DELETE')
             <a href="{{ route('admin.users') }}" class="admin-btn-soft">Cancel</a>

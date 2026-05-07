@@ -165,10 +165,16 @@
                         </div>
                         <div class="relative">
                             <button @click.stop="profileMenuOpen = !profileMenuOpen; notificationOpen = false" class="admin-profile-btn flex items-center gap-2 rounded-lg border border-admin-border bg-white px-3 py-2 text-sm">
-                                <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-admin-primary text-white">AD</span>
+                                @php
+                                    $adminName = (string) session('admin_user_name', 'Admin User');
+                                    $adminRole = (string) session('admin_user_role', 'Administrator');
+                                    $initials = collect(preg_split('/\s+/', trim($adminName)))->filter()->take(2)->map(fn ($p) => mb_substr((string) $p, 0, 1))->implode('');
+                                    $initials = $initials !== '' ? mb_strtoupper($initials) : 'AD';
+                                @endphp
+                                <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-admin-primary text-white">{{ $initials }}</span>
                                 <span class="hidden sm:block text-left leading-tight">
-                                    <strong class="block text-[13px] text-admin-ink">Admin User</strong>
-                                    <small class="block text-[11px] text-admin-muted">Administrator</small>
+                                    <strong class="block text-[13px] text-admin-ink">{{ $adminName }}</strong>
+                                    <small class="block text-[11px] text-admin-muted">{{ $adminRole }}</small>
                                 </span>
                             </button>
                             <div x-show="profileMenuOpen" x-transition class="absolute right-0 mt-2 w-52 admin-card p-2 text-sm">

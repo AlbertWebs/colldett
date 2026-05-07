@@ -3,181 +3,137 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class UserController extends Controller
 {
     public function index(Request $request): View
     {
-        $allUsers = collect($this->users());
         $search = trim((string) $request->query('q', ''));
         $role = trim((string) $request->query('role', ''));
-        $status = trim((string) $request->query('status', ''));
-
-        $users = $allUsers
-            ->when($search !== '', function ($collection) use ($search) {
-                $needle = mb_strtolower($search);
-
-                return $collection->filter(function (array $user) use ($needle) {
-                    return str_contains(mb_strtolower($user['name']), $needle)
-                        || str_contains(mb_strtolower($user['email']), $needle);
-                });
-            })
-            ->when($role !== '', fn ($collection) => $collection->where('role', $role))
-            ->when($status !== '', fn ($collection) => $collection->where('status', $status))
-            ->values()
-            ->all();
+        $status = trim((string) $request->query('status', '')); // Active | Suspended
 
         return view('admin.users', [
-            'users' => $users,
+            'users' => AdminUser::query()
+                ->when($search !== '', function ($q) use ($search) {
+                    $q->where(function ($qq) use ($search) {
+                        $qq->where('name', 'like', '%'.$search.'%')
+                            ->orWhere('email', 'like', '%'.$search.'%');
+                    });
+                })
+                ->when($role !== '', fn ($q) => $q->where('role', $role))
+                ->when($status !== '', fn ($q) => $q->where('is_active', $status === 'Active'))
+                ->orderBy('is_active', 'desc')
+                ->orderBy('name')
+                ->get(),
             'filters' => [
                 'q' => $search,
                 'role' => $role,
                 'status' => $status,
             ],
-            'totalUsers' => $allUsers->count(),
+            'totalUsers' => AdminUser::query()->count(),
         ]);
     }
 
-    public function show(int $id): View
+    public function create(): View
     {
-        $user = collect($this->users())->firstWhere('id', $id);
-        abort_unless($user, 404);
+        return view('admin.user-create');
+    }
 
+    public function store(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:admin_users,email'],
+            'role' => ['required', Rule::in(['Admin', 'Manager', 'Viewer'])],
+            'is_active' => ['nullable', 'boolean'],
+            'access_code' => ['required', 'string', 'min:4', 'max:200'],
+        ]);
+
+        $user = AdminUser::query()->create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'role' => $data['role'],
+            'is_active' => $request->boolean('is_active'),
+            'access_code_hash' => Hash::make($data['access_code']),
+        ]);
+
+        return redirect()
+            ->route('admin.users.show', $user)
+            ->with('status', "User '{$user->name}' created. Share their PIN/password securely.");
+    }
+
+    public function show(AdminUser $user): View
+    {
         return view('admin.user-show', compact('user'));
     }
 
-    public function toggleStatus(int $id): RedirectResponse
+    public function toggleStatus(AdminUser $user): RedirectResponse
     {
-        $user = collect($this->users())->firstWhere('id', $id);
-        abort_unless($user, 404);
-
-        $nextStatus = $user['status'] === 'Active' ? 'Suspended' : 'Active';
+        $user->is_active = ! $user->is_active;
+        $user->save();
 
         return redirect()
-            ->route('admin.users.show', $id)
-            ->with('status', "User '{$user['name']}' marked as {$nextStatus}.");
+            ->route('admin.users.show', $user)
+            ->with('status', "User '{$user->name}' marked as ".($user->is_active ? 'Active' : 'Suspended').'.');
     }
 
-    public function resetPassword(int $id): RedirectResponse
+    public function resetPassword(AdminUser $user): RedirectResponse
     {
-        $user = collect($this->users())->firstWhere('id', $id);
-        abort_unless($user, 404);
+        $newPin = (string) random_int(100000, 999999);
+        $user->access_code_hash = Hash::make($newPin);
+        $user->save();
 
         return redirect()
-            ->route('admin.users.show', $id)
-            ->with('status', "Password reset link sent to {$user['email']}.");
+            ->route('admin.users.show', $user)
+            ->with('status', "New access PIN for {$user->email}: {$newPin} (share securely).");
     }
 
-    public function edit(int $id): View
+    public function edit(AdminUser $user): View
     {
-        $user = collect($this->users())->firstWhere('id', $id);
-        abort_unless($user, 404);
-
-        $editableUser = array_merge([
-            'phone' => '+254 700 000000',
-            'department' => 'Operations',
-            'job_title' => $user['role'],
-            'employee_id' => 'EMP-'.str_pad((string) $id, 4, '0', STR_PAD_LEFT),
-            'timezone' => 'Africa/Nairobi',
-            'language' => 'English',
-            'two_factor_enabled' => false,
-            'email_verified' => true,
-            'can_manage_users' => $user['role'] === 'Admin',
-            'can_manage_billing' => $user['role'] !== 'Viewer',
-            'can_manage_cases' => true,
-            'can_publish_content' => $user['role'] !== 'Viewer',
-            'notes' => '',
-        ], $user);
-
-        return view('admin.user-edit', ['user' => $editableUser]);
+        return view('admin.user-edit', compact('user'));
     }
 
-    public function update(Request $request, int $id): RedirectResponse
+    public function update(Request $request, AdminUser $user): RedirectResponse
     {
-        $user = collect($this->users())->firstWhere('id', $id);
-        abort_unless($user, 404);
-
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:255'],
-            'department' => ['nullable', 'string', 'max:255'],
-            'job_title' => ['nullable', 'string', 'max:255'],
-            'employee_id' => ['nullable', 'string', 'max:255'],
-            'role' => ['required', 'in:Admin,Manager,Viewer'],
-            'status' => ['required', 'in:Active,Suspended'],
-            'timezone' => ['nullable', 'string', 'max:255'],
-            'language' => ['nullable', 'string', 'max:255'],
-            'two_factor_enabled' => ['nullable', 'in:0,1'],
-            'email_verified' => ['nullable', 'in:0,1'],
-            'can_manage_users' => ['nullable', 'in:0,1'],
-            'can_manage_billing' => ['nullable', 'in:0,1'],
-            'can_manage_cases' => ['nullable', 'in:0,1'],
-            'can_publish_content' => ['nullable', 'in:0,1'],
-            'notes' => ['nullable', 'string', 'max:2000'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('admin_users', 'email')->ignore($user->id)],
+            'role' => ['required', Rule::in(['Admin', 'Manager', 'Viewer'])],
+            'is_active' => ['nullable', 'boolean'],
+            'access_code' => ['nullable', 'string', 'min:4', 'max:200'],
         ]);
 
+        $user->name = $data['name'];
+        $user->email = $data['email'];
+        $user->role = $data['role'];
+        $user->is_active = $request->boolean('is_active');
+        if (! empty($data['access_code'])) {
+            $user->access_code_hash = Hash::make($data['access_code']);
+        }
+        $user->save();
+
         return redirect()
-            ->route('admin.users.edit', $id)
+            ->route('admin.users.edit', $user)
             ->with('status', "User '{$data['name']}' updated successfully.");
     }
 
-    public function deleteConfirm(int $id): View
+    public function deleteConfirm(AdminUser $user): View
     {
-        $user = collect($this->users())->firstWhere('id', $id);
-        abort_unless($user, 404);
-
         return view('admin.user-delete', compact('user'));
     }
 
-    public function destroy(int $id): RedirectResponse
+    public function destroy(AdminUser $user): RedirectResponse
     {
-        $user = collect($this->users())->firstWhere('id', $id);
-        abort_unless($user, 404);
+        $user->delete();
 
         return redirect()
             ->route('admin.users')
-            ->with('status', "User '{$user['name']}' deleted successfully.");
-    }
-
-    private function users(): array
-    {
-        return [
-            [
-                'id' => 1,
-                'name' => 'Finance Admin',
-                'email' => 'finance@company.com',
-                'role' => 'Admin',
-                'status' => 'Active',
-                'last_login' => '2 mins ago',
-            ],
-            [
-                'id' => 2,
-                'name' => 'Ops Admin',
-                'email' => 'ops@company.com',
-                'role' => 'Admin',
-                'status' => 'Active',
-                'last_login' => '1 hour ago',
-            ],
-            [
-                'id' => 3,
-                'name' => 'Collections Manager',
-                'email' => 'collections@company.com',
-                'role' => 'Manager',
-                'status' => 'Active',
-                'last_login' => 'Yesterday',
-            ],
-            [
-                'id' => 4,
-                'name' => 'Audit Viewer',
-                'email' => 'audit@company.com',
-                'role' => 'Viewer',
-                'status' => 'Suspended',
-                'last_login' => '2 weeks ago',
-            ],
-        ];
+            ->with('status', "User '{$user->name}' deleted successfully.");
     }
 }

@@ -14,7 +14,7 @@
                 <h2 class="text-2xl font-bold">User Management</h2>
                 <p class="text-sm text-admin-muted">Manage admin accounts, assign roles, and control access status.</p>
             </div>
-            <button class="admin-btn-primary">Create User</button>
+            <a class="admin-btn-primary" href="{{ route('admin.users.create') }}">Create User</a>
         </div>
     </div>
 
@@ -58,24 +58,34 @@
                 </thead>
                 <tbody>
                     @foreach(($users ?? []) as $user)
+                        @php
+                            $statusLabel = $user->is_active ? 'Active' : 'Suspended';
+                        @endphp
                         <tr>
                             <td>
-                                <div class="font-medium text-admin-ink">{{ $user['name'] }}</div>
-                                <div class="text-xs text-admin-muted">Last login: {{ $user['last_login'] }}</div>
+                                <div class="font-medium text-admin-ink">{{ $user->name }}</div>
+                                <div class="text-xs text-admin-muted">
+                                    Last login:
+                                    {{ $user->last_login_at ? $user->last_login_at->diffForHumans() : '—' }}
+                                </div>
                             </td>
-                            <td>{{ $user['email'] }}</td>
-                            <td>{{ $user['role'] }}</td>
-                            <td><span class="admin-status-chip admin-status-chip-active">{{ $user['status'] }}</span></td>
+                            <td>{{ $user->email }}</td>
+                            <td>{{ $user->role }}</td>
+                            <td>
+                                <span class="admin-status-chip {{ $user->is_active ? 'admin-status-chip-active' : 'admin-status-chip-draft' }}">
+                                    {{ $statusLabel }}
+                                </span>
+                            </td>
                             <td>
                                 <div class="admin-row-actions">
-                                    <a href="{{ route('admin.users.show', $user['id']) }}" class="admin-link-btn">View</a>
-                                    <a href="{{ route('admin.users.edit', $user['id']) }}" class="admin-link-btn">Edit</a>
-                                    <a href="{{ route('admin.users.delete-confirm', $user['id']) }}" class="admin-link-btn admin-link-btn-danger">Delete</a>
+                                    <a href="{{ route('admin.users.show', $user) }}" class="admin-link-btn">View</a>
+                                    <a href="{{ route('admin.users.edit', $user) }}" class="admin-link-btn">Edit</a>
+                                    <a href="{{ route('admin.users.delete-confirm', $user) }}" class="admin-link-btn admin-link-btn-danger">Delete</a>
                                 </div>
                             </td>
                         </tr>
                     @endforeach
-                    @if(empty($users))
+                    @if(($users ?? collect())->isEmpty())
                         <tr>
                             <td colspan="5" class="py-8 text-center text-sm text-admin-muted">No users match the selected filters.</td>
                         </tr>
@@ -85,7 +95,7 @@
         </div>
         <div>
             <div class="flex items-center justify-between p-4 text-sm text-admin-muted">
-                <span>Showing {{ count($users ?? []) }} of {{ $totalUsers ?? count($users ?? []) }} users</span>
+                <span>Showing {{ ($users ?? collect())->count() }} of {{ $totalUsers ?? ($users ?? collect())->count() }} users</span>
                 <div class="flex gap-2">
                     <button class="admin-btn-soft">Prev</button>
                     <button class="admin-btn-soft">Next</button>

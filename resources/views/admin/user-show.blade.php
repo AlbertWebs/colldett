@@ -15,7 +15,7 @@
         </div>
         <div class="flex items-center gap-2">
             <a href="{{ route('admin.users') }}" class="admin-btn-soft">Back to Users</a>
-            <a href="{{ route('admin.users.edit', $user['id']) }}" class="admin-btn-primary">Edit User</a>
+            <a href="{{ route('admin.users.edit', $user) }}" class="admin-btn-primary">Edit User</a>
         </div>
     </div>
 
@@ -24,20 +24,24 @@
             <div class="mb-5 flex items-start justify-between gap-3">
                 <div>
                     <p class="text-xs uppercase tracking-wide text-admin-muted">Account Summary</p>
-                    <h3 class="mt-1 text-lg font-semibold text-admin-ink">{{ $user['name'] }}</h3>
-                    <p class="text-sm text-admin-muted">{{ $user['email'] }}</p>
+                    <h3 class="mt-1 text-lg font-semibold text-admin-ink">{{ $user->name }}</h3>
+                    <p class="text-sm text-admin-muted">{{ $user->email }}</p>
                 </div>
-                <span class="admin-status-chip {{ $user['status'] === 'Active' ? 'admin-status-chip-active' : 'admin-status-chip-draft' }}">{{ $user['status'] }}</span>
+                <span class="admin-status-chip {{ $user->is_active ? 'admin-status-chip-active' : 'admin-status-chip-draft' }}">
+                    {{ $user->is_active ? 'Active' : 'Suspended' }}
+                </span>
             </div>
 
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
                     <p class="text-xs uppercase tracking-wide text-admin-muted">Role</p>
-                    <p class="mt-1 text-sm font-medium text-admin-ink">{{ $user['role'] }}</p>
+                    <p class="mt-1 text-sm font-medium text-admin-ink">{{ $user->role }}</p>
                 </div>
                 <div>
                     <p class="text-xs uppercase tracking-wide text-admin-muted">Last Login</p>
-                    <p class="mt-1 text-sm font-medium text-admin-ink">{{ $user['last_login'] }}</p>
+                    <p class="mt-1 text-sm font-medium text-admin-ink">
+                        {{ $user->last_login_at ? $user->last_login_at->diffForHumans() : '—' }}
+                    </p>
                 </div>
                 <div>
                     <p class="text-xs uppercase tracking-wide text-admin-muted">2FA</p>
@@ -61,18 +65,18 @@
 
         <aside class="admin-card p-5 space-y-3">
             <h3 class="admin-card-title">Actions</h3>
-            <form method="POST" action="{{ route('admin.users.toggle-status', $user['id']) }}">
+            <form method="POST" action="{{ route('admin.users.toggle-status', $user) }}">
                 @csrf
                 <button type="submit" class="admin-btn-soft w-full justify-center">
-                    {{ $user['status'] === 'Active' ? 'Suspend User' : 'Activate User' }}
+                    {{ $user->is_active ? 'Suspend User' : 'Activate User' }}
                 </button>
             </form>
-            <form method="POST" action="{{ route('admin.users.reset-password', $user['id']) }}">
+            <form method="POST" action="{{ route('admin.users.reset-password', $user) }}">
                 @csrf
-                <button type="submit" class="admin-btn-soft w-full justify-center">Send Password Reset</button>
+                <button type="submit" class="admin-btn-soft w-full justify-center">Reset Access PIN</button>
             </form>
-            <a href="{{ route('admin.users.edit', $user['id']) }}" class="admin-btn-soft w-full justify-center">Edit Profile</a>
-            <a href="{{ route('admin.users.delete-confirm', $user['id']) }}" class="admin-btn-soft w-full justify-center !border-rose-200 !text-rose-700 hover:!bg-rose-50">Delete User</a>
+            <a href="{{ route('admin.users.edit', $user) }}" class="admin-btn-soft w-full justify-center">Edit Profile</a>
+            <a href="{{ route('admin.users.delete-confirm', $user) }}" class="admin-btn-soft w-full justify-center !border-rose-200 !text-rose-700 hover:!bg-rose-50">Delete User</a>
         </aside>
     </div>
 </section>
