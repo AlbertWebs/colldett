@@ -262,6 +262,42 @@
             </div>
         </div>
     </form>
+
+    <article class="admin-card p-5 space-y-4 border-rose-200 bg-rose-50/40">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <h3 class="admin-card-title text-base text-rose-800">Danger Zone</h3>
+                <p class="mt-1 text-xs text-rose-800/80">
+                    Purge all test/management data (clients, cases, billing sequences) and wipe inbound inquiries.
+                    This cannot be undone.
+                </p>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ route('admin.settings.purge-test-data') }}" class="grid gap-3 md:grid-cols-12">
+            @csrf
+            <div class="md:col-span-4 space-y-1.5">
+                <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Type PURGE to confirm</label>
+                <input class="admin-input" name="confirm" value="{{ old('confirm') }}" placeholder="PURGE" required />
+            </div>
+            <div class="md:col-span-5 space-y-1.5">
+                <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Re-enter admin PIN / password</label>
+                <input class="admin-input" type="password" name="access_code" value="" placeholder="PIN or password" required />
+                @error('purge_access_code')
+                    <p class="text-sm text-rose-700">{{ $message }}</p>
+                @enderror
+            </div>
+            <div class="md:col-span-3 flex items-end justify-end">
+                <button
+                    type="submit"
+                    class="admin-btn-primary !bg-rose-600 hover:!bg-rose-700 w-full justify-center"
+                    onclick="return confirm('This will permanently delete test/management data. Continue?')"
+                >
+                    Purge test data
+                </button>
+            </div>
+        </form>
+    </article>
 </section>
 
 <script>

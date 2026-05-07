@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminUser;
 use App\Models\ContactDetail;
+use App\Models\Inquiry;
 use App\Support\AdminStoredSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -157,6 +160,72 @@ class SettingsController extends Controller
         return redirect()
             ->route('admin.settings')
             ->with('status', 'Settings saved successfully.');
+    }
+
+    public function purgeTestData(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'confirm' => ['required', 'string', 'in:PURGE'],
+            'access_code' => ['required', 'string', 'max:500'],
+        ]);
+
+        $provided = (string) ($data['access_code'] ?? '');
+        $secret = (string) config('colldett.admin.access_secret', '');
+        $pin = (string) config('colldett.admin.access_pin', '');
+
+        $authorized = ($secret !== '' && hash_equals($secret, $provided))
+            || ($pin !== '' && hash_equals($pin, $provided));
+
+        if (! $authorized) {
+            $adminUserId = (int) $request->session()->get('admin_user_id', 0);
+            if ($adminUserId > 0) {
+                $u = AdminUser::query()->whereKey($adminUserId)->first(['id', 'access_code_hash']);
+                if ($u && Hash::check($provided, (string) $u->access_code_hash)) {
+                    $authorized = true;
+                }
+            }
+        }
+
+        if (! $authorized) {
+            return redirect()
+                ->route('admin.settings')
+                ->withErrors(['purge_access_code' => 'Incorrect PIN/password.'])
+                ->withInput();
+        }
+
+        $deletedFiles = [];
+        $paths = [
+            // Operational / management stores (JSON)
+            'admin/clients.json',
+            'admin/cases.json',
+            'admin/billing_invoice_seq.json',
+            'admin/billing_invoices.json',
+            'admin/billing_quotation_seq.json',
+            'admin/billing_fee_note_seq.json',
+            'admin/billing_payment_seq.json',
+        ];
+
+        foreach ($paths as $path) {
+            if (Storage::disk('local')->exists($path)) {
+                Storage::disk('local')->delete($path);
+                $deletedFiles[] = $path;
+            }
+        }
+
+        $purged = [
+            'inquiries' => 0,
+        ];
+
+        if (Schema::hasTable('inquiries')) {
+            $purged['inquiries'] = Inquiry::query()->count();
+            Inquiry::query()->delete();
+        }
+
+        return redirect()
+            ->route('admin.settings')
+            ->with('status', 'Test data purged. Cleared: '
+                .count($deletedFiles).' management files and '
+                .$purged['inquiries'].' inquiries.');
     }
 
     private function readSettings(): array

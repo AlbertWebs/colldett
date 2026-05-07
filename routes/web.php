@@ -133,4 +133,5 @@ Route::middleware('admin.access')->prefix('admin')->name('admin.')->group(functi
     Route::view('/change-password', 'admin.change-password')->name('change-password');
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
     Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
+    Route::post('/settings/purge-test-data', [SettingsController::class, 'purgeTestData'])->name('settings.purge-test-data');
 });
