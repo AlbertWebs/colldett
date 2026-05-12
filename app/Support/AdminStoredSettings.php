@@ -201,4 +201,87 @@ final class AdminStoredSettings
 
         return $out;
     }
+
+    /**
+     * Bank remittance lines for fee notes — parsed from Admin Settings “Bank lines”
+     * (same source as invoice payment block).
+     *
+     * @return array{account_name: string, account_number: string, bank_name: string, branch: string, swift_code: string, bank_code: string, branch_code: string}
+     */
+    public static function feeNoteRemittanceDefaults(): array
+    {
+        $out = [
+            'account_name' => '',
+            'account_number' => '',
+            'bank_name' => '',
+            'branch' => '',
+            'swift_code' => '',
+            'bank_code' => '',
+            'branch_code' => '',
+        ];
+
+        $saved = self::all();
+        $raw = trim((string) ($saved['invoice_payment_bank_lines'] ?? ''));
+        if ($raw === '') {
+            $inv = self::invoice();
+            $lines = $inv['payment_details']['sections'][0]['lines'] ?? [];
+            $raw = is_array($lines) ? implode("\n", $lines) : '';
+        }
+
+        foreach (preg_split("/\r\n|\r|\n/", $raw) as $line) {
+            $line = trim($line);
+            if ($line === '' || ! str_contains($line, ':')) {
+                continue;
+            }
+            if (stripos($line, 'paybill') !== false) {
+                continue;
+            }
+            [$label, $value] = explode(':', $line, 2);
+            $labelNorm = strtolower(trim(preg_replace('/\s+/', ' ', $label)));
+            $value = trim($value);
+            if ($value === '') {
+                continue;
+            }
+            if (str_contains($labelNorm, 'reference')) {
+                continue;
+            }
+
+            $slot = match (true) {
+                str_contains($labelNorm, 'account name') => 'account_name',
+                str_contains($labelNorm, 'account number') => 'account_number',
+                str_contains($labelNorm, 'bank name') => 'bank_name',
+                $labelNorm === 'bank' || str_starts_with($labelNorm, 'bank ') => 'bank_name',
+                str_contains($labelNorm, 'branch code') => 'branch_code',
+                str_contains($labelNorm, 'bank code') => 'bank_code',
+                str_contains($labelNorm, 'swift') => 'swift_code',
+                $labelNorm === 'branch' || str_ends_with($labelNorm, ' branch') => 'branch',
+                default => null,
+            };
+
+            if ($slot !== null) {
+                $out[$slot] = $value;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Fill empty remittance keys on a fee note value set (stored row or preview payload).
+     *
+     * @param  array<string, mixed>  $values
+     * @return array<string, mixed>
+     */
+    public static function feeNoteFillRemittance(array $values): array
+    {
+        $defaults = self::feeNoteRemittanceDefaults();
+        foreach ($defaults as $key => $default) {
+            $current = $values[$key] ?? '';
+            if (! is_string($current) || trim($current) === '') {
+                $values[$key] = $default;
+            }
+        }
+
+        return $values;
+    }
 }

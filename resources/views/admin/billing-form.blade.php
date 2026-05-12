@@ -38,7 +38,8 @@
                         @if($module === 'fee-notes')
                             <p class="mt-2 rounded-lg border border-sky-200/80 bg-sky-50/80 px-3 py-2 text-sm text-sky-950">
                                 <strong>Save draft</strong> keeps all details without using the next FN number; finish later, then click <strong>Issue fee note (assign FN number)</strong> on the edit screen.
-                                Or click <strong>Issue fee note</strong> on create to assign FN-… immediately. Then fill top-to-bottom: <strong>reference details</strong> → <strong>client particulars</strong> → <strong>fee computation</strong> → <strong>remittance account details</strong>.
+                                Or click <strong>Issue fee note</strong> on create to assign FN-… immediately. Fill <strong>reference details</strong> → <strong>client particulars</strong> → <strong>fee computation</strong> → optional notes.
+                                Bank remittance lines on the printed fee note come from <a href="{{ route('admin.settings') }}#settings-invoice-payment" class="font-semibold underline decoration-sky-700/50 underline-offset-2 hover:text-sky-900">Admin → Settings → Invoices &amp; printable documents</a> (bank lines), so you do not re-enter them here.
                             </p>
                         @endif
                         @if($module === 'demand')
@@ -53,7 +54,7 @@
                             'number' => ['title' => 'Reference Details', 'desc' => 'Core identifiers and issuance details.'],
                             'address' => ['title' => 'Client Particulars', 'desc' => 'Use the full recipient block exactly as it should appear on the fee note.'],
                             'line_description' => ['title' => 'Fee Computation', 'desc' => 'Enter the rendered service and tax inputs used to compute totals.'],
-                            'account_name' => ['title' => 'Remittance Account Details', 'desc' => 'Bank instructions shown at the bottom of the fee note.'],
+                            'notes' => ['title' => 'Closing notes', 'desc' => 'Optional text at the foot of the fee note. Bank remittance details use Settings → bank lines (same as invoices).'],
                         ];
                         $feeNoteFieldHelp = [
                             'our_ref' => 'Internal office/matter reference.',
@@ -69,13 +70,6 @@
                             'line_description' => 'Professional fees for debt collection ...',
                             'amount' => 'e.g. 5321.60',
                             'vat_rate' => 'e.g. 0.16',
-                            'account_name' => 'e.g. TRIPLEOKLAW LLP',
-                            'account_number' => 'e.g. 3000070911',
-                            'bank_name' => 'e.g. PRIME BANK LTD',
-                            'branch' => 'e.g. Hurlingham',
-                            'swift_code' => 'e.g. PRIEKENX',
-                            'bank_code' => 'e.g. 10',
-                            'branch_code' => 'e.g. 010',
                         ];
                     @endphp
                     <div class="grid gap-3 md:grid-cols-2">

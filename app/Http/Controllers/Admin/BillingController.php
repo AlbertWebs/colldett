@@ -32,7 +32,10 @@ class BillingController extends Controller
             $values['number'] = $this->peekNextQuotationNumber();
         }
         if ($module === 'fee-notes') {
-            $values['number'] = $this->peekNextFeeNoteNumber();
+            $values = array_merge(
+                AdminStoredSettings::feeNoteRemittanceDefaults(),
+                ['number' => $this->peekNextFeeNoteNumber()]
+            );
         }
         if ($module === 'payments') {
             $values['payment_id'] = $this->peekNextPaymentId();
@@ -91,6 +94,7 @@ class BillingController extends Controller
         }
 
         if ($module === 'fee-notes') {
+            $data = AdminStoredSettings::feeNoteFillRemittance($data);
             if ($request->input('fee_note_action') === 'draft') {
                 $data['number'] = '';
                 $newId = $this->appendFeeNoteDraft($data);
@@ -269,6 +273,7 @@ class BillingController extends Controller
 
         $row['number'] = $this->generateNextFeeNoteNumber();
         $row['is_draft'] = false;
+        $row = AdminStoredSettings::feeNoteFillRemittance($row);
         $this->replaceFeeNoteRecord($row);
 
         return redirect()
@@ -292,6 +297,7 @@ class BillingController extends Controller
                 $merged['is_draft'] = false;
                 $merged['number'] = (string) ($existing['number'] ?? '');
             }
+            $merged = AdminStoredSettings::feeNoteFillRemittance($merged);
             $this->replaceFeeNoteRecord($merged);
 
             return redirect()
@@ -347,7 +353,7 @@ class BillingController extends Controller
             'fee-notes' => [
                 'title' => 'Fee Notes',
                 'singular' => 'Fee Note',
-                'description' => 'Create structured fee notes using the advocate-style format.',
+                'description' => 'Create structured fee notes using the advocate-style format. Bank remittance lines are taken from Admin → Settings (Invoices & printable documents → bank lines), same as invoices.',
                 'fields' => [
                     ['name' => 'number', 'label' => 'Fee Note Number'],
                     ['name' => 'our_ref', 'label' => 'Our Reference'],
@@ -359,13 +365,6 @@ class BillingController extends Controller
                     ['name' => 'line_description', 'label' => 'Particulars of Service Rendered', 'type' => 'textarea'],
                     ['name' => 'amount', 'label' => 'Professional Fee (before VAT)'],
                     ['name' => 'vat_rate', 'label' => 'VAT Rate (e.g. 0.16)'],
-                    ['name' => 'account_name', 'label' => 'Bank Account Name'],
-                    ['name' => 'account_number', 'label' => 'Bank Account Number'],
-                    ['name' => 'bank_name', 'label' => 'Bank Name'],
-                    ['name' => 'branch', 'label' => 'Branch'],
-                    ['name' => 'swift_code', 'label' => 'Swift Code'],
-                    ['name' => 'bank_code', 'label' => 'Bank Code'],
-                    ['name' => 'branch_code', 'label' => 'Branch Code'],
                     ['name' => 'notes', 'label' => 'Additional Notes', 'type' => 'textarea'],
                 ],
                 'list_fields' => [
@@ -445,7 +444,7 @@ class BillingController extends Controller
                 'notes' => 'Thank you for your business.',
             ],
             'quotations' => ['number' => 'QTN-2026-1001', 'client' => 'Apex Motors', 'valid_until' => '2026-04-30', 'amount' => '410000', 'scope' => 'Debt tracing and legal demand support'],
-            'fee-notes' => [
+            'fee-notes' => AdminStoredSettings::feeNoteFillRemittance([
                 'number' => 'FN-2026-1001',
                 'our_ref' => '7/4523/001',
                 'your_ref' => '4523',
@@ -456,15 +455,8 @@ class BillingController extends Controller
                 'line_description' => 'Professional fees for debt collection KES 53,216 at a commission rate of 10%.',
                 'amount' => '5321.60',
                 'vat_rate' => '0.16',
-                'account_name' => 'TRIPLEOKLAW LLP',
-                'account_number' => '3000070911',
-                'bank_name' => 'PRIME BANK LTD',
-                'branch' => 'Hurlingham',
-                'swift_code' => 'PRIEKENX',
-                'bank_code' => '10',
-                'branch_code' => '010',
                 'notes' => 'When replying please quote our reference.',
-            ],
+            ]),
             'sla' => ['client' => 'Metro Health', 'scope' => 'Portfolio recovery support', 'fees' => '8% success fee', 'start_date' => '2026-04-01', 'end_date' => '2027-03-31', 'terms' => 'Monthly reporting and weekly case updates'],
             'demand' => [
                 'client' => 'Apex Motors',
@@ -868,7 +860,7 @@ class BillingController extends Controller
             $out['number'] = 'Draft';
         }
 
-        return $out;
+        return AdminStoredSettings::feeNoteFillRemittance($out);
     }
 
     /** @return array<string, mixed> */

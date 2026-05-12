@@ -1,6 +1,8 @@
 @php
     use Illuminate\Support\Carbon;
 
+    $values = \App\Support\AdminStoredSettings::feeNoteFillRemittance($values);
+
     $number = trim((string) ($values['number'] ?? '—'));
     $ourRef = trim((string) ($values['our_ref'] ?? '—'));
     $yourRef = trim((string) ($values['your_ref'] ?? '—'));

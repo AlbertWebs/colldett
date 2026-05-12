@@ -125,7 +125,7 @@
                 </div>
             </article>
 
-            <article class="admin-card p-5 space-y-4 xl:col-span-12">
+            <article id="settings-invoice-payment" class="admin-card p-5 space-y-4 xl:col-span-12">
                 <div>
                     <h3 class="admin-card-title text-base">Invoices & printable documents</h3>
                     <p class="mt-1 text-xs text-admin-muted">These values populate invoice previews, PDFs, and letterhead-style documents. If a field is left empty, defaults from configuration are used where applicable.</p>
@@ -179,7 +179,8 @@
                         </div>
                         <div class="space-y-1.5">
                             <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Bank lines (one per line)</label>
-                            <textarea class="admin-input min-h-28" name="invoice_payment_bank_lines" placeholder="Bank name&#10;Account name&#10;Account number">{{ old('invoice_payment_bank_lines', $settings['invoice_payment_bank_lines'] ?? '') }}</textarea>
+                            <p class="text-xs text-admin-muted">Use <code class="rounded bg-slate-100 px-1 py-0.5 text-[11px]">Label: value</code> pairs (for example <code class="rounded bg-slate-100 px-1 py-0.5 text-[11px]">Account Name: …</code>). These lines also supply the remittance block on fee notes.</p>
+                            <textarea class="admin-input min-h-28" name="invoice_payment_bank_lines" placeholder="Bank name: …&#10;Account name: …&#10;Account number: …">{{ old('invoice_payment_bank_lines', $settings['invoice_payment_bank_lines'] ?? '') }}</textarea>
                         </div>
                         <div class="space-y-1.5">
                             <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Other payments heading (optional)</label>
