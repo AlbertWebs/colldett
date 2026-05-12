@@ -1,11 +1,20 @@
 @extends('admin.layouts.app')
 
 @section('content')
+@php
+    $cols = $meta['list_fields'] ?? $meta['fields'];
+@endphp
 <section class="space-y-6">
     <div class="flex items-center justify-between">
         <div>
             <h2 class="text-2xl font-bold">{{ $meta['title'] }}</h2>
-            <p class="text-sm text-admin-muted">View all {{ strtolower($meta['title']) }} records.</p>
+            <p class="text-sm text-admin-muted">
+                @if($module === 'fee-notes')
+                    Issued fee notes show their FN number; drafts stay editable until you issue an official number.
+                @else
+                    View all {{ strtolower($meta['title']) }} records.
+                @endif
+            </p>
         </div>
         <div class="flex gap-2">
             <a href="{{ route('admin.billing') }}" class="admin-btn-soft">Back to Management</a>
@@ -18,25 +27,55 @@
             <table class="admin-table">
                 <thead>
                     <tr>
-                        @foreach($meta['fields'] as $field)
+                        @foreach($cols as $field)
                             <th>{{ $field['label'] }}</th>
                         @endforeach
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($rows as $index => $row)
+                    @if($module === 'fee-notes' && ($rows ?? []) === [])
                         <tr>
-                            @foreach($meta['fields'] as $field)
-                                <td>{{ $row[$field['name']] ?? '—' }}</td>
+                            <td colspan="{{ count($cols) + 1 }}" class="py-10 text-center text-sm text-admin-muted">
+                                No fee notes yet. Use <strong>Create Fee Note</strong> to add your first record (save a draft or issue immediately).
+                            </td>
+                        </tr>
+                    @else
+                    @foreach($rows as $index => $row)
+                        @php
+                            $recordId = (int) ($row['id'] ?? ($index + 1));
+                        @endphp
+                        <tr>
+                            @foreach($cols as $field)
+                                <td class="align-top text-sm @if(! empty($field['truncate'])) max-w-[11rem] truncate @endif" title="{{ ($field['name'] ?? '') !== '__fee_note_status' ? (string) ($row[$field['name']] ?? '') : '' }}">
+                                    @if(($field['name'] ?? '') === '__fee_note_status')
+                                        @if(! empty($row['is_draft']))
+                                            <span class="admin-status-chip admin-status-chip-pending">Draft</span>
+                                        @else
+                                            <span class="admin-status-chip admin-status-chip-active">Issued</span>
+                                        @endif
+                                    @elseif(($field['name'] ?? '') === 'number')
+                                        @if(! empty($row['is_draft']) && trim((string) ($row['number'] ?? '')) === '')
+                                            <span class="text-admin-muted">—</span>
+                                        @else
+                                            {{ $row['number'] ?? '—' }}
+                                        @endif
+                                    @else
+                                        {{ $row[$field['name']] ?? '—' }}
+                                    @endif
+                                </td>
                             @endforeach
                             <td>
                                 <div class="admin-row-actions">
-                                    <a class="admin-link-btn" href="{{ route('admin.billing.module.edit', [$module, $index + 1]) }}">Edit</a>
+                                    @if($module === 'fee-notes')
+                                        <a class="admin-link-btn" href="{{ route('admin.billing.module.preview', [$module, $recordId]) }}">View</a>
+                                    @endif
+                                    <a class="admin-link-btn" href="{{ route('admin.billing.module.edit', [$module, $recordId]) }}">Edit</a>
                                 </div>
                             </td>
                         </tr>
                     @endforeach
+                    @endif
                 </tbody>
             </table>
         </div>

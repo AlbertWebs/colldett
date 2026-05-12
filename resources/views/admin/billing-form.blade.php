@@ -37,7 +37,8 @@
                         <p class="mt-1 text-xs text-admin-muted">Fill all required fields to generate a complete {{ strtolower($meta['singular']) }} record.</p>
                         @if($module === 'fee-notes')
                             <p class="mt-2 rounded-lg border border-sky-200/80 bg-sky-50/80 px-3 py-2 text-sm text-sky-950">
-                                Fill this top-to-bottom: <strong>reference details</strong>, then <strong>client particulars</strong>, then <strong>fee computation</strong>, then <strong>remittance account details</strong>.
+                                <strong>Save draft</strong> keeps all details without using the next FN number; finish later, then click <strong>Issue fee note (assign FN number)</strong> on the edit screen.
+                                Or click <strong>Issue fee note</strong> on create to assign FN-… immediately. Then fill top-to-bottom: <strong>reference details</strong> → <strong>client particulars</strong> → <strong>fee computation</strong> → <strong>remittance account details</strong>.
                             </p>
                         @endif
                         @if($module === 'demand')
@@ -156,7 +157,7 @@
                                         @endforeach
                                     </select>
                                     <p class="mt-1 text-xs text-admin-muted">Choose the invoice this payment applies to (number, client, and amount from issued invoices).</p>
-                                @elseif(in_array($module, ['invoices', 'quotations', 'fee-notes'], true) && $field['name'] === 'number' && $mode === 'create')
+                                @elseif(in_array($module, ['invoices', 'quotations'], true) && $field['name'] === 'number' && $mode === 'create')
                                     <input
                                         class="admin-input cursor-not-allowed bg-slate-50 text-admin-ink"
                                         type="text"
@@ -168,10 +169,36 @@
                                     <p class="mt-1 text-xs text-admin-muted">
                                         @if($module === 'invoices')
                                             Auto-generated on save (INV-YEAR-####). Shown here as the next available number.
-                                        @elseif($module === 'fee-notes')
-                                            Auto-generated on save (FN-YEAR-####). Shown here as the next available number.
                                         @else
                                             Auto-generated on save (QTN-YEAR-####). Shown here as the next available number.
+                                        @endif
+                                    </p>
+                                @elseif($module === 'fee-notes' && $field['name'] === 'number' && $mode === 'create')
+                                    <input
+                                        class="admin-input cursor-not-allowed bg-slate-50 text-admin-ink"
+                                        type="text"
+                                        name="{{ $field['name'] }}"
+                                        value="{{ old($field['name'], $values[$field['name']] ?? '') }}"
+                                        readonly
+                                        data-no-autolabel="true"
+                                    />
+                                    <p class="mt-1 text-xs text-admin-muted">
+                                        <strong>Save draft</strong> does not use this number yet. <strong>Issue fee note</strong> assigns the next FN-YEAR-#### and opens your printable fee note.
+                                    </p>
+                                @elseif($module === 'fee-notes' && $field['name'] === 'number' && $mode === 'edit')
+                                    <input
+                                        class="admin-input cursor-not-allowed bg-slate-50 text-admin-ink"
+                                        type="text"
+                                        name="{{ $field['name'] }}"
+                                        value="{{ old($field['name'], $values[$field['name']] ?? '') }}"
+                                        readonly
+                                        data-no-autolabel="true"
+                                    />
+                                    <p class="mt-1 text-xs text-admin-muted">
+                                        @if($feeNoteIsDraft ?? false)
+                                            No official number yet. Click <strong>Issue fee note</strong> below to assign FN-YEAR-#### and open the document.
+                                        @else
+                                            Official fee note number (locked).
                                         @endif
                                     </p>
                                 @elseif(($field['type'] ?? 'text') === 'textarea')
@@ -208,6 +235,9 @@
                         @else
                             <li class="rounded-lg border border-admin-border bg-slate-50 px-3 py-2">Confirm client details before creating legal/financial documents.</li>
                         @endif
+                        @if($module === 'fee-notes')
+                            <li class="rounded-lg border border-admin-border bg-slate-50 px-3 py-2">Use <strong>Save draft</strong> to record details before you are ready for an official FN number.</li>
+                        @endif
                         <li class="rounded-lg border border-admin-border bg-slate-50 px-3 py-2">Add concise notes for future audit and reconciliation.</li>
                     </ul>
                     <div class="rounded-lg border border-dashed border-admin-border bg-slate-50 p-3 text-xs text-admin-muted">
@@ -223,12 +253,26 @@
                 </div>
             @endif
 
-            <div class="sticky bottom-3 z-10 flex justify-end gap-2">
-                <div class="flex gap-2 rounded-xl border border-admin-border bg-white/95 p-2 shadow-lg backdrop-blur">
+            <div class="sticky bottom-3 z-10 flex flex-wrap justify-end gap-2">
+                <div class="flex flex-wrap items-center gap-2 rounded-xl border border-admin-border bg-white/95 p-2 shadow-lg backdrop-blur">
                     <a href="{{ route('admin.billing') }}" class="admin-btn-soft">Cancel</a>
-                    <button type="submit" class="admin-btn-primary">{{ $mode === 'create' ? 'Create' : 'Update' }} {{ $meta['singular'] }}</button>
+                    @if($module === 'fee-notes' && $mode === 'create')
+                        <button type="submit" name="fee_note_action" value="issue" class="admin-btn-primary">Issue fee note</button>
+                        <button type="submit" name="fee_note_action" value="draft" class="admin-btn-soft">Save draft</button>
+                    @else
+                        <button type="submit" class="admin-btn-primary">{{ $mode === 'create' ? 'Create' : 'Update' }} {{ $meta['singular'] }}</button>
+                    @endif
                 </div>
             </div>
     </form>
+
+    @if($module === 'fee-notes' && $mode === 'edit' && ($feeNoteIsDraft ?? false))
+        <div class="sticky bottom-16 z-10 flex justify-end">
+            <form method="POST" action="{{ route('admin.billing.fee-notes.finalize', $recordId) }}" class="rounded-xl border border-admin-border bg-white/95 p-2 shadow-lg backdrop-blur" onsubmit="return confirm('Assign the next official fee note number (FN-…)? This cannot be undone.')">
+                @csrf
+                <button type="submit" class="admin-btn-primary">Issue fee note (assign FN number)</button>
+            </form>
+        </div>
+    @endif
 </section>
 @endsection

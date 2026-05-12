@@ -27,12 +27,15 @@ class DashboardController extends Controller
 
         $inquiriesTotal = (Schema::hasTable('inquiries')) ? (int) Inquiry::query()->count() : 0;
 
+        $feeNotesTotal = count($this->readJsonList('admin/billing_fee_notes.json'));
+
         return view('admin.dashboard', [
             'kpis' => [
                 ['Total Clients', number_format($clientsCount)],
                 ['Total Cases', number_format($casesTotal)],
                 ['Pending Cases', number_format($pendingCases)],
                 ['Total Invoices', number_format($invoicesTotal)],
+                ['Fee notes', number_format($feeNotesTotal)],
                 ['Payment receipts issued', number_format($paymentsTotal)],
                 ['Inbound inquiries', number_format($inquiriesTotal)],
             ],

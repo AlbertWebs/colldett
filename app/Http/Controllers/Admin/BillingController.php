@@ -47,6 +47,7 @@ class BillingController extends Controller
             'clients' => $this->clients(),
             'caseReferences' => $module === 'demand' ? $this->caseReferences() : [],
             'invoiceOptions' => $module === 'payments' ? $this->invoiceOptionsForPayments() : [],
+            'feeNoteIsDraft' => false,
         ]);
     }
 
@@ -54,10 +55,14 @@ class BillingController extends Controller
     {
         $meta = $this->moduleMeta($module);
 
+        $rows = $module === 'fee-notes'
+            ? $this->readFeeNoteIndexSorted()
+            : [$this->sampleValues($module, 1)];
+
         return view('admin.billing-module-list', [
             'module' => $module,
             'meta' => $meta,
-            'rows' => [$this->sampleValues($module, 1)],
+            'rows' => $rows,
         ]);
     }
 
@@ -86,12 +91,22 @@ class BillingController extends Controller
         }
 
         if ($module === 'fee-notes') {
+            if ($request->input('fee_note_action') === 'draft') {
+                $data['number'] = '';
+                $newId = $this->appendFeeNoteDraft($data);
+
+                return redirect()
+                    ->route('admin.billing.module.edit', [$module, $newId])
+                    ->with('status', 'Fee note saved as draft. You can issue an official number when you are ready.');
+            }
+
             $data['number'] = $this->generateNextFeeNoteNumber();
+            $data['is_draft'] = false;
+            $newId = $this->appendFeeNoteRecord($data);
 
             return redirect()
-                ->route('admin.billing.module.preview', [$module, 1])
-                ->with('status', $meta['singular'].' created successfully.')
-                ->with('preview_values', $data);
+                ->route('admin.billing.module.preview', [$module, $newId])
+                ->with('status', $meta['singular'].' created successfully.');
         }
 
         if ($module === 'payments') {
@@ -111,9 +126,13 @@ class BillingController extends Controller
     public function preview(Request $request, string $module, int $id): View
     {
         $meta = $this->moduleMeta($module);
-        $values = $request->session()->get('preview_values');
-        if (! is_array($values) || empty($values)) {
-            $values = $this->sampleValues($module, $id);
+        if ($module === 'fee-notes') {
+            $values = $this->feeNoteValuesForDocument($id);
+        } else {
+            $values = $request->session()->get('preview_values');
+            if (! is_array($values) || empty($values)) {
+                $values = $this->sampleValues($module, $id);
+            }
         }
 
         return view('admin.billing-preview', [
@@ -131,9 +150,13 @@ class BillingController extends Controller
     public function printPreview(Request $request, string $module, int $id): View
     {
         $meta = $this->moduleMeta($module);
-        $values = $request->session()->get('preview_values');
-        if (! is_array($values) || empty($values)) {
-            $values = $this->sampleValues($module, $id);
+        if ($module === 'fee-notes') {
+            $values = $this->feeNoteValuesForDocument($id);
+        } else {
+            $values = $request->session()->get('preview_values');
+            if (! is_array($values) || empty($values)) {
+                $values = $this->sampleValues($module, $id);
+            }
         }
 
         return view('admin.billing-print', [
@@ -147,9 +170,13 @@ class BillingController extends Controller
     public function downloadPreviewPdf(Request $request, string $module, int $id)
     {
         $meta = $this->moduleMeta($module);
-        $values = $request->session()->get('preview_values');
-        if (! is_array($values) || empty($values)) {
-            $values = $this->sampleValues($module, $id);
+        if ($module === 'fee-notes') {
+            $values = $this->feeNoteValuesForDocument($id);
+        } else {
+            $values = $request->session()->get('preview_values');
+            if (! is_array($values) || empty($values)) {
+                $values = $this->sampleValues($module, $id);
+            }
         }
 
         $docRef = '#'.($values['number'] ?? ($values['payment_id'] ?? ('REC-'.$id)));
@@ -211,21 +238,67 @@ class BillingController extends Controller
     {
         $meta = $this->moduleMeta($module);
 
+        $values = $module === 'fee-notes'
+            ? $this->feeNoteValuesForForm($id)
+            : $this->sampleValues($module, $id);
+
+        $feeNoteIsDraft = false;
+        if ($module === 'fee-notes') {
+            $feeRow = $this->findFeeNoteById($id);
+            $feeNoteIsDraft = (bool) ($feeRow['is_draft'] ?? false);
+        }
+
         return view('admin.billing-form', [
             'meta' => $meta,
             'module' => $module,
             'mode' => 'edit',
             'recordId' => $id,
-            'values' => $this->sampleValues($module, $id),
+            'values' => $values,
             'clients' => $this->clients(),
             'caseReferences' => $module === 'demand' ? $this->caseReferences() : [],
             'invoiceOptions' => $module === 'payments' ? $this->invoiceOptionsForPayments() : [],
+            'feeNoteIsDraft' => $feeNoteIsDraft,
         ]);
+    }
+
+    public function finalizeFeeNote(int $id): RedirectResponse
+    {
+        $row = $this->findFeeNoteById($id);
+        abort_unless($row, 404);
+        abort_unless((bool) ($row['is_draft'] ?? false), 403, 'This fee note is already issued.');
+
+        $row['number'] = $this->generateNextFeeNoteNumber();
+        $row['is_draft'] = false;
+        $this->replaceFeeNoteRecord($row);
+
+        return redirect()
+            ->route('admin.billing.module.preview', ['fee-notes', $id])
+            ->with('status', 'Fee note issued. Official number assigned — you can print or download the PDF from here.');
     }
 
     public function update(Request $request, string $module, int $id): RedirectResponse
     {
         $meta = $this->moduleMeta($module);
+
+        if ($module === 'fee-notes') {
+            $existing = $this->findFeeNoteById($id);
+            abort_unless($existing, 404);
+            $data = $request->validate($this->rules($module));
+            $merged = array_merge($existing, $data, ['id' => $id]);
+            if (($existing['is_draft'] ?? false) === true) {
+                $merged['is_draft'] = true;
+                $merged['number'] = '';
+            } else {
+                $merged['is_draft'] = false;
+                $merged['number'] = (string) ($existing['number'] ?? '');
+            }
+            $this->replaceFeeNoteRecord($merged);
+
+            return redirect()
+                ->route('admin.billing.module.edit', [$module, $id])
+                ->with('status', $meta['singular'].' updated successfully.');
+        }
+
         $request->validate($this->rules($module));
 
         return redirect()
@@ -294,6 +367,14 @@ class BillingController extends Controller
                     ['name' => 'bank_code', 'label' => 'Bank Code'],
                     ['name' => 'branch_code', 'label' => 'Branch Code'],
                     ['name' => 'notes', 'label' => 'Additional Notes', 'type' => 'textarea'],
+                ],
+                'list_fields' => [
+                    ['name' => '__fee_note_status', 'label' => 'Status'],
+                    ['name' => 'number', 'label' => 'Number', 'truncate' => true],
+                    ['name' => 'client', 'label' => 'Client', 'truncate' => true],
+                    ['name' => 'issued_date', 'label' => 'Issue date'],
+                    ['name' => 'amount', 'label' => 'Fee (ex VAT)'],
+                    ['name' => 'payment_terms', 'label' => 'Terms', 'truncate' => true],
                 ],
             ],
             'sla' => [
@@ -440,6 +521,11 @@ class BillingController extends Controller
 
     private const QUOTATION_SEQ_PATH = 'admin/billing_quotation_seq.json';
     private const FEE_NOTE_SEQ_PATH = 'admin/billing_fee_note_seq.json';
+
+    /** @var string Persisted fee note rows (full field set + id). */
+    private const FEE_NOTE_INDEX_PATH = 'admin/billing_fee_notes.json';
+
+    private const PAYMENT_SEQ_PATH = 'admin/billing_payment_seq.json';
 
     private function peekNextInvoiceNumber(): string
     {
@@ -663,7 +749,138 @@ class BillingController extends Controller
         return (int) ($data['last'] ?? 1000);
     }
 
-    private const PAYMENT_SEQ_PATH = 'admin/billing_payment_seq.json';
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function readFeeNoteIndex(): array
+    {
+        if (! Storage::disk('local')->exists(self::FEE_NOTE_INDEX_PATH)) {
+            return [];
+        }
+        $decoded = json_decode(Storage::disk('local')->get(self::FEE_NOTE_INDEX_PATH), true);
+        if (! is_array($decoded)) {
+            return [];
+        }
+        $out = [];
+        foreach (array_values($decoded) as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $row['is_draft'] = (bool) ($row['is_draft'] ?? false);
+            $out[] = $row;
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function readFeeNoteIndexSorted(): array
+    {
+        $rows = $this->readFeeNoteIndex();
+        usort($rows, static function (array $a, array $b): int {
+            return ((int) ($b['id'] ?? 0)) <=> ((int) ($a['id'] ?? 0));
+        });
+
+        return $rows;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $rows
+     */
+    private function writeFeeNoteIndex(array $rows): void
+    {
+        Storage::disk('local')->put(
+            self::FEE_NOTE_INDEX_PATH,
+            json_encode(array_values($rows), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+        );
+    }
+
+    /** @return array<string, mixed>|null */
+    private function findFeeNoteById(int $id): ?array
+    {
+        foreach ($this->readFeeNoteIndex() as $row) {
+            if ((int) ($row['id'] ?? 0) === $id) {
+                return $row;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function appendFeeNoteRecord(array $data): int
+    {
+        $rows = $this->readFeeNoteIndex();
+        $nextId = $rows === [] ? 1 : max(array_map(static fn (array $r): int => (int) ($r['id'] ?? 0), $rows)) + 1;
+        $rows[] = array_merge($data, ['id' => $nextId, 'is_draft' => false]);
+        $this->writeFeeNoteIndex($rows);
+
+        return $nextId;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function appendFeeNoteDraft(array $data): int
+    {
+        $data['number'] = '';
+        $data['is_draft'] = true;
+        $rows = $this->readFeeNoteIndex();
+        $nextId = $rows === [] ? 1 : max(array_map(static fn (array $r): int => (int) ($r['id'] ?? 0), $rows)) + 1;
+        $rows[] = array_merge($data, ['id' => $nextId, 'number' => '', 'is_draft' => true]);
+        $this->writeFeeNoteIndex($rows);
+
+        return $nextId;
+    }
+
+    /**
+     * @param  array<string, mixed>  $row  Must include id
+     */
+    private function replaceFeeNoteRecord(array $row): void
+    {
+        $id = (int) ($row['id'] ?? 0);
+        abort_unless($id > 0, 404);
+        $rows = $this->readFeeNoteIndex();
+        $found = false;
+        foreach ($rows as $i => $existing) {
+            if ((int) ($existing['id'] ?? 0) === $id) {
+                $rows[$i] = $row;
+                $found = true;
+                break;
+            }
+        }
+        abort_unless($found, 404);
+        $this->writeFeeNoteIndex($rows);
+    }
+
+    /** @return array<string, mixed> */
+    private function feeNoteValuesForDocument(int $id): array
+    {
+        $row = $this->findFeeNoteById($id);
+        abort_unless($row, 404);
+        $out = $row;
+        unset($out['id'], $out['is_draft']);
+        if (($row['is_draft'] ?? false) === true && trim((string) ($out['number'] ?? '')) === '') {
+            $out['number'] = 'Draft';
+        }
+
+        return $out;
+    }
+
+    /** @return array<string, mixed> */
+    private function feeNoteValuesForForm(int $id): array
+    {
+        $row = $this->findFeeNoteById($id);
+        abort_unless($row, 404);
+        $out = $row;
+        unset($out['id'], $out['is_draft']);
+
+        return $out;
+    }
 
     private function peekNextPaymentId(): string
     {

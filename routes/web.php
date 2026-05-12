@@ -109,6 +109,9 @@ Route::middleware('admin.access')->prefix('admin')->name('admin.')->group(functi
     /* Legacy "Receipts" module merged into payment receipts */
     Route::redirect('billing/receipts', 'billing/payments', 301);
     Route::redirect('billing/receipts/create', 'billing/payments/create', 301);
+    Route::post('/billing/fee-notes/{id}/finalize', [BillingController::class, 'finalizeFeeNote'])
+        ->whereNumber('id')
+        ->name('billing.fee-notes.finalize');
     Route::get('/billing/{module}', [BillingController::class, 'moduleIndex'])->name('billing.module.index');
     Route::get('/billing/{module}/create', [BillingController::class, 'create'])->name('billing.module.create');
     Route::post('/billing/{module}', [BillingController::class, 'store'])->name('billing.module.store');
