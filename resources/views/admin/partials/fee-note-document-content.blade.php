@@ -1,26 +1,39 @@
 @php
+    use App\Support\DocumentPlainText;
     use Illuminate\Support\Carbon;
 
     $values = \App\Support\AdminStoredSettings::feeNoteFillRemittance($values);
 
-    $number = trim((string) ($values['number'] ?? '—'));
-    $ourRef = trim((string) ($values['our_ref'] ?? '—'));
-    $yourRef = trim((string) ($values['your_ref'] ?? '—'));
-    $client = trim((string) ($values['client'] ?? '—'));
-    $addressRaw = trim((string) ($values['address'] ?? ''));
+    $plain = static fn (?string $s, string $fallback = '—'): string => DocumentPlainText::fromHtml($s) ?: $fallback;
+
+    $number = $plain((string) ($values['number'] ?? ''), '—');
+    $ourRef = $plain((string) ($values['our_ref'] ?? ''), '—');
+    $yourRef = $plain((string) ($values['your_ref'] ?? ''), '—');
+    $client = $plain((string) ($values['client'] ?? ''), '—');
+    $addressRaw = DocumentPlainText::fromHtml(trim((string) ($values['address'] ?? '')));
     $addressLines = $addressRaw !== '' ? preg_split("/\r\n|\r|\n/", $addressRaw) : ['—'];
     $issueDate = ! empty($values['issued_date'])
         ? Carbon::parse((string) $values['issued_date'])->format('jS F, Y')
         : Carbon::now()->format('jS F, Y');
-    $paymentTerms = trim((string) ($values['payment_terms'] ?? 'IMMEDIATE'));
-    $description = trim((string) ($values['line_description'] ?? 'Professional fee note.'));
+    $paymentTerms = $plain((string) ($values['payment_terms'] ?? ''), 'IMMEDIATE');
+    $description = DocumentPlainText::fromHtml(trim((string) ($values['line_description'] ?? '')));
+    if ($description === '') {
+        $description = 'Professional fee note.';
+    }
+    $notesPlain = DocumentPlainText::fromHtml(trim((string) ($values['notes'] ?? '')));
     $currency = \App\Support\AdminStoredSettings::invoice()['currency'] ?? 'KES';
     $amountRaw = (string) ($values['amount'] ?? '0');
     $amount = is_numeric($amountRaw) ? (float) $amountRaw : (float) preg_replace('/[^\d.]/', '', $amountRaw);
     $vatRateRaw = (string) ($values['vat_rate'] ?? '0.16');
     $vatRate = is_numeric($vatRateRaw) ? (float) $vatRateRaw : 0.16;
-    if ($vatRate > 1) {
+    if ($vatRate > 1 && $vatRate <= 100) {
         $vatRate /= 100;
+    }
+    if ($vatRate > 1 || $vatRate < 0) {
+        $vatRate = (float) (\App\Support\AdminStoredSettings::invoice()['vat_rate'] ?? 0.16);
+        if ($vatRate > 1) {
+            $vatRate /= 100;
+        }
     }
     $vat = round($amount * $vatRate, 2);
     $total = round($amount + $vat, 2);
@@ -55,7 +68,7 @@
         </thead>
         <tbody>
             <tr>
-                <td>{{ $description }}</td>
+                <td>{!! nl2br(e($description)) !!}</td>
                 <td class="colldett-fee-note__num">{{ $fmtMoney($amount) }}</td>
             </tr>
             <tr>
@@ -72,17 +85,17 @@
     <section class="colldett-fee-note__bank">
         <h4>Please direct remittance to the following account details;</h4>
         <div class="colldett-fee-note__bank-grid">
-            <div>Account Name:</div><div>{{ $values['account_name'] ?? '—' }}</div>
-            <div>Account Number:</div><div>{{ $values['account_number'] ?? '—' }}</div>
-            <div>Bank:</div><div>{{ $values['bank_name'] ?? '—' }}</div>
-            <div>Branch:</div><div>{{ $values['branch'] ?? '—' }}</div>
-            <div>Swift Code:</div><div>{{ $values['swift_code'] ?? '—' }}</div>
-            <div>Bank Code:</div><div>{{ $values['bank_code'] ?? '—' }}</div>
-            <div>Branch Code:</div><div>{{ $values['branch_code'] ?? '—' }}</div>
+            <div>Account Name:</div><div>{{ $plain($values['account_name'] ?? null) }}</div>
+            <div>Account Number:</div><div>{{ $plain($values['account_number'] ?? null) }}</div>
+            <div>Bank:</div><div>{{ $plain($values['bank_name'] ?? null) }}</div>
+            <div>Branch:</div><div>{{ $plain($values['branch'] ?? null) }}</div>
+            <div>Swift Code:</div><div>{{ $plain($values['swift_code'] ?? null) }}</div>
+            <div>Bank Code:</div><div>{{ $plain($values['bank_code'] ?? null) }}</div>
+            <div>Branch Code:</div><div>{{ $plain($values['branch_code'] ?? null) }}</div>
         </div>
     </section>
 
-    @if(!empty(trim((string) ($values['notes'] ?? ''))))
-        <p class="colldett-fee-note__note">{{ $values['notes'] }}</p>
+    @if($notesPlain !== '')
+        <p class="colldett-fee-note__note">{!! nl2br(e($notesPlain)) !!}</p>
     @endif
 </article>

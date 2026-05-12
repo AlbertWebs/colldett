@@ -8,6 +8,7 @@
 
 @php
     use App\Support\AdminStoredSettings;
+    use App\Support\DocumentPlainText;
     $theme = AdminStoredSettings::documentTheme();
     $letterhead = $theme['letterhead_image'] ?? null;
     $letterheadPath = $letterhead ? public_path($letterhead) : null;
@@ -31,7 +32,7 @@
         </div>
         <address class="colldett-document__address">
             @foreach($addressLines as $line)
-                <div>{{ $line }}</div>
+                <div>{{ DocumentPlainText::fromHtml(is_string($line) ? $line : (string) $line) }}</div>
             @endforeach
         </address>
     </header>
