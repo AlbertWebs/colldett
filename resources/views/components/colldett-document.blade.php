@@ -47,7 +47,7 @@
                 @endif
             </h2>
         @endif
-        {{ $slot }}
+        {!! $slot !!}
     </main>
 
     <div class="colldett-document__footer-wrap">
