@@ -4,6 +4,7 @@
     'showDocTitle' => true,
     'logoUrl' => null,
     'forPdf' => false,
+    'showFooterKra' => true,
 ])
 
 @php
@@ -97,7 +98,7 @@
                     </span>
                 </div>
             </div>
-            @if($companyKraPin !== '')
+            @if($showFooterKra && $companyKraPin !== '')
                 <p class="colldett-document__footer-kra">KRA PIN: {{ $companyKraPin }}</p>
             @endif
         </footer>

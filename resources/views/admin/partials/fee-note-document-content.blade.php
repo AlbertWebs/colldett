@@ -3,6 +3,7 @@
     use Illuminate\Support\Carbon;
 
     $values = \App\Support\AdminStoredSettings::feeNoteFillRemittance($values);
+    $bankLines = \App\Support\AdminStoredSettings::feeNoteBankDisplayLines($values);
 
     $plain = static fn (?string $s, string $fallback = '—'): string => DocumentPlainText::fromHtml($s) ?: $fallback;
 
@@ -88,15 +89,15 @@
 
     <section class="colldett-fee-note__bank">
         <h4>Please direct remittance to the following account details;</h4>
-        <div class="colldett-fee-note__bank-grid">
-            <div>Account Name:</div><div>{{ $plain($values['account_name'] ?? null) }}</div>
-            <div>Account Number:</div><div>{{ $plain($values['account_number'] ?? null) }}</div>
-            <div>Bank:</div><div>{{ $plain($values['bank_name'] ?? null) }}</div>
-            <div>Branch:</div><div>{{ $plain($values['branch'] ?? null) }}</div>
-            <div>Swift Code:</div><div>{{ $plain($values['swift_code'] ?? null) }}</div>
-            <div>Bank Code:</div><div>{{ $plain($values['bank_code'] ?? null) }}</div>
-            <div>Branch Code:</div><div>{{ $plain($values['branch_code'] ?? null) }}</div>
-        </div>
+        @if($bankLines !== [])
+            <div class="colldett-fee-note__bank-lines">
+                @foreach($bankLines as $line)
+                    <div class="colldett-fee-note__bank-line">{{ e($line) }}</div>
+                @endforeach
+            </div>
+        @else
+            <p class="colldett-fee-note__bank-empty">Configure bank lines under Admin → Settings (invoice payment details) to show remittance information here.</p>
+        @endif
     </section>
 
     @if($notesPlain !== '')

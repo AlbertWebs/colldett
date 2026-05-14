@@ -398,14 +398,21 @@
   color: #1f2937;
 }
 
-.colldett-fee-note__bank-grid {
-  display: grid;
-  grid-template-columns: 10rem minmax(0, 1fr);
-  gap: 0.12rem 0.65rem;
+.colldett-fee-note__bank-lines {
+  margin: 0;
+  color: #1f2937;
+  font-size: 0.78rem;
+  line-height: 1.45;
 }
 
-.colldett-fee-note__bank-grid > div:nth-child(odd) {
-  color: #374151;
+.colldett-fee-note__bank-line {
+  margin: 0;
+}
+
+.colldett-fee-note__bank-empty {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #64748b;
 }
 
 .colldett-fee-note__note {
@@ -414,8 +421,7 @@
 }
 
 @media (max-width: 42rem) {
-  .colldett-fee-note__meta-grid,
-  .colldett-fee-note__bank-grid {
+  .colldett-fee-note__meta-grid {
     grid-template-columns: 1fr;
   }
 }

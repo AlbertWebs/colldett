@@ -13,6 +13,7 @@
     :document-title="$docTitle"
     :reference="$isInvoice || $isQuotation || $isPayment ? null : $docRef"
     :show-doc-title="$showLetterheadDocTitle"
+    :show-footer-kra="! $isFeeNote"
 >
     @if($isInvoice)
         @include('admin.partials.invoice-document-content', ['values' => $values])

@@ -203,6 +203,101 @@ final class AdminStoredSettings
     }
 
     /**
+     * Merge "Label:" lines where the value is on the following line (common in pasted bank blocks).
+     */
+    private static function normalizeBankLinesForColonParse(string $raw): string
+    {
+        $parts = preg_split("/\r\n|\r|\n/", $raw);
+        if ($parts === false) {
+            return $raw;
+        }
+        $merged = [];
+        $pendingLabel = null;
+        foreach ($parts as $line) {
+            $line = trim((string) $line);
+            if ($line === '') {
+                continue;
+            }
+            if ($pendingLabel !== null) {
+                $merged[] = $pendingLabel.': '.$line;
+                $pendingLabel = null;
+
+                continue;
+            }
+            if (! str_contains($line, ':')) {
+                continue;
+            }
+            [$left, $right] = explode(':', $line, 2);
+            $right = trim((string) $right);
+            if ($right === '') {
+                $pendingLabel = trim((string) $left);
+                if ($pendingLabel === '') {
+                    $pendingLabel = null;
+                }
+
+                continue;
+            }
+            $merged[] = $line;
+        }
+
+        return implode("\n", $merged);
+    }
+
+    private static function feeNoteRemittanceValueIsPlaceholder(string $value): bool
+    {
+        $t = trim($value);
+        if ($t === '' || $t === '—' || $t === '-' || $t === '–') {
+            return true;
+        }
+
+        return match (strtolower($t)) {
+            '(configure)', 'configure', 'n/a', 'na', 'tbd', 'pending', 'todo' => true,
+            default => false,
+        };
+    }
+
+    /**
+     * Human-readable bank lines for the fee note (same order as the remittance grid; omits blanks / placeholders).
+     *
+     * @param  array<string, mixed>  $values
+     * @return list<string>
+     */
+    public static function feeNoteBankDisplayLines(array $values): array
+    {
+        $filled = self::feeNoteFillRemittance($values);
+        $rows = [
+            'Account Name' => (string) ($filled['account_name'] ?? ''),
+            'Account Number' => (string) ($filled['account_number'] ?? ''),
+            'Bank' => (string) ($filled['bank_name'] ?? ''),
+            'Branch' => (string) ($filled['branch'] ?? ''),
+            'Swift Code' => (string) ($filled['swift_code'] ?? ''),
+            'Bank Code' => (string) ($filled['bank_code'] ?? ''),
+            'Branch Code' => (string) ($filled['branch_code'] ?? ''),
+        ];
+        $lines = [];
+        foreach ($rows as $label => $v) {
+            $v = trim($v);
+            if ($v === '' || self::feeNoteRemittanceValueIsPlaceholder($v)) {
+                continue;
+            }
+            $lines[] = $label.': '.$v;
+        }
+        if ($lines !== []) {
+            return $lines;
+        }
+        $inv = self::invoice();
+        $fallback = $inv['payment_details']['sections'][0]['lines'] ?? [];
+
+        if (! is_array($fallback)) {
+            return [];
+        }
+
+        $trimmed = array_map(static fn (mixed $s): string => trim((string) $s), $fallback);
+
+        return array_values(array_filter($trimmed, static fn (string $s): bool => $s !== ''));
+    }
+
+    /**
      * Bank remittance lines for fee notes — parsed from Admin Settings “Bank lines”
      * (same source as invoice payment block).
      *
@@ -228,6 +323,8 @@ final class AdminStoredSettings
             $raw = is_array($lines) ? implode("\n", $lines) : '';
         }
 
+        $raw = self::normalizeBankLinesForColonParse($raw);
+
         foreach (preg_split("/\r\n|\r|\n/", $raw) as $line) {
             $line = trim($line);
             if ($line === '' || ! str_contains($line, ':')) {
@@ -239,7 +336,7 @@ final class AdminStoredSettings
             [$label, $value] = explode(':', $line, 2);
             $labelNorm = strtolower(trim(preg_replace('/\s+/', ' ', $label)));
             $value = trim($value);
-            if ($value === '') {
+            if ($value === '' || self::feeNoteRemittanceValueIsPlaceholder($value)) {
                 continue;
             }
             if (str_contains($labelNorm, 'reference')) {
@@ -277,7 +374,13 @@ final class AdminStoredSettings
         $defaults = self::feeNoteRemittanceDefaults();
         foreach ($defaults as $key => $default) {
             $current = $values[$key] ?? '';
-            if (! is_string($current) || trim($current) === '') {
+            if (! is_string($current)) {
+                $values[$key] = $default;
+
+                continue;
+            }
+            $t = trim($current);
+            if ($t === '' || self::feeNoteRemittanceValueIsPlaceholder($t)) {
                 $values[$key] = $default;
             }
         }

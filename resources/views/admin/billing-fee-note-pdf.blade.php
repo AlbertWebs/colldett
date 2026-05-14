@@ -41,6 +41,7 @@
         :reference="null"
         :show-doc-title="false"
         :for-pdf="true"
+        :show-footer-kra="false"
         :logo-url="$logoUrl"
     >
         @include('admin.partials.fee-note-document-content', ['values' => $values, 'pdfMode' => true])
