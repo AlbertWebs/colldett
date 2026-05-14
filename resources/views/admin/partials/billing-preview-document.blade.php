@@ -34,10 +34,8 @@
             </thead>
             <tbody>
                 @php
-                    use App\Support\AdminStoredSettings;
-                    use App\Support\ClientDirectory;
-                    $__companyKra = AdminStoredSettings::companyKraPin();
-                    $__clientKra = ClientDirectory::clientTaxPinForDocument($values);
+                    $__companyKra = \App\Support\AdminStoredSettings::companyKraPin();
+                    $__clientKra = \App\Support\ClientDirectory::clientTaxPinForDocument($values);
                 @endphp
                 <tr>
                     <td>Company KRA PIN</td>
