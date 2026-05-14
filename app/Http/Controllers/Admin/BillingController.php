@@ -51,6 +51,7 @@ class BillingController extends Controller
             'caseReferences' => $module === 'demand' ? $this->caseReferences() : [],
             'invoiceOptions' => $module === 'payments' ? $this->invoiceOptionsForPayments() : [],
             'feeNoteIsDraft' => false,
+            'feeNoteAddressByClient' => $module === 'fee-notes' ? ClientDirectory::feeNoteAddressesForForm() : [],
         ]);
     }
 
@@ -95,6 +96,7 @@ class BillingController extends Controller
 
         if ($module === 'fee-notes') {
             $data = AdminStoredSettings::feeNoteFillRemittance($data);
+            ClientDirectory::rememberFeeNoteAddress((string) ($data['client'] ?? ''), (string) ($data['address'] ?? ''));
             if ($request->input('fee_note_action') === 'draft') {
                 $data['number'] = '';
                 $newId = $this->appendFeeNoteDraft($data);
@@ -262,6 +264,7 @@ class BillingController extends Controller
             'caseReferences' => $module === 'demand' ? $this->caseReferences() : [],
             'invoiceOptions' => $module === 'payments' ? $this->invoiceOptionsForPayments() : [],
             'feeNoteIsDraft' => $feeNoteIsDraft,
+            'feeNoteAddressByClient' => $module === 'fee-notes' ? ClientDirectory::feeNoteAddressesForForm() : [],
         ]);
     }
 
@@ -274,6 +277,7 @@ class BillingController extends Controller
         $row['number'] = $this->generateNextFeeNoteNumber();
         $row['is_draft'] = false;
         $row = AdminStoredSettings::feeNoteFillRemittance($row);
+        ClientDirectory::rememberFeeNoteAddress((string) ($row['client'] ?? ''), (string) ($row['address'] ?? ''));
         $this->replaceFeeNoteRecord($row);
 
         return redirect()
@@ -298,6 +302,7 @@ class BillingController extends Controller
                 $merged['number'] = (string) ($existing['number'] ?? '');
             }
             $merged = AdminStoredSettings::feeNoteFillRemittance($merged);
+            ClientDirectory::rememberFeeNoteAddress((string) ($merged['client'] ?? ''), (string) ($merged['address'] ?? ''));
             $this->replaceFeeNoteRecord($merged);
 
             return redirect()

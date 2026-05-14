@@ -62,6 +62,7 @@
                             'payment_terms' => 'Example: IMMEDIATE, 7 DAYS, 14 DAYS.',
                             'line_description' => 'This text appears in the particulars row in the table.',
                             'vat_rate' => 'Use decimal form (0.16) or percentage (16).',
+                            'address' => 'After you save a fee note, this address is remembered for the same client — pick the client again on a new fee note to auto-fill.',
                         ];
                         $feeNotePlaceholders = [
                             'our_ref' => 'e.g. 7/4523/001',
@@ -201,6 +202,7 @@
                                         name="{{ $field['name'] }}"
                                         placeholder="{{ $module === 'demand' && $field['name'] === 'body' ? 'Full letter text: recipient, address, salutation, and paragraphs as needed.' : ($module === 'fee-notes' ? ($feeNotePlaceholders[$field['name']] ?? 'Enter '.strtolower($field['label'])) : 'Enter '.strtolower($field['label'])) }}"
                                         data-no-autolabel="true"
+                                        @if($module === 'fee-notes') data-no-editor="true" @endif
                                     >{{ old($field['name'], $values[$field['name']] ?? '') }}</textarea>
                                 @else
                                     <input
@@ -269,4 +271,34 @@
         </div>
     @endif
 </section>
+@if($module === 'fee-notes')
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const map = @json($feeNoteAddressByClient ?? []);
+                const clientSel = document.querySelector('select[name="client"]');
+                const addr = document.querySelector('textarea[name="address"]');
+                if (!clientSel || !addr || typeof map !== 'object' || map === null) {
+                    return;
+                }
+                const fillFor = function (company) {
+                    if (!company || !Object.prototype.hasOwnProperty.call(map, company)) {
+                        return;
+                    }
+                    const next = map[company];
+                    if (typeof next !== 'string' || next.trim() === '') {
+                        return;
+                    }
+                    addr.value = next;
+                };
+                clientSel.addEventListener('change', function () {
+                    fillFor((clientSel.value || '').trim());
+                });
+                if ((addr.value || '').trim() === '') {
+                    fillFor((clientSel.value || '').trim());
+                }
+            });
+        </script>
+    @endpush
+@endif
 @endsection

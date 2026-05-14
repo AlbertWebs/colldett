@@ -56,7 +56,7 @@ final class AdminStoredSettings
     {
         $saved = self::all();
 
-        return trim((string) ($saved['company_kra_pin'] ?? ''));
+        return trim((string) ($saved['company_kra_pin'] ?? '')) ?: trim((string) (config('colldett.company.kra_pin', '') ?? ''));
     }
 
     /**

@@ -39,6 +39,7 @@
             <div class="colldett-invoice__dates">
                 <div><span class="colldett-invoice__date-label">Quotation Date:</span> {{ $qDate->format('l, F jS, Y') }}</div>
                 <div><span class="colldett-invoice__date-label">Valid Until:</span> {{ $valid->format('l, F jS, Y') }}</div>
+                @include('admin.partials.document-tax-identifiers-invoice', ['values' => $values])
             </div>
             <div class="colldett-invoice__to">
                 <div class="colldett-invoice__to-title">Quoted To</div>

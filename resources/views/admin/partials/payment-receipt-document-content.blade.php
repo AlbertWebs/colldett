@@ -2,7 +2,6 @@
     use App\Support\AdminStoredSettings;
     use Illuminate\Support\Carbon;
     $inv = AdminStoredSettings::invoice();
-    $kraPin = AdminStoredSettings::companyKraPin();
     $currency = $inv['currency'] ?? 'Ksh';
     $rawAmount = $values['amount'] ?? 0;
     $amountNum = is_numeric($rawAmount)
@@ -31,9 +30,7 @@
                 <div><span class="colldett-invoice__date-label">Payment Date:</span> {{ $payDate->format('l, F jS, Y') }}</div>
                 <div><span class="colldett-invoice__date-label">Invoice reference:</span> {{ $values['invoice'] ?? '—' }}</div>
                 <div><span class="colldett-invoice__date-label">Payment method:</span> {{ $values['method'] ?? '—' }}</div>
-                @if($kraPin !== '')
-                    <div><span class="colldett-invoice__date-label">KRA PIN:</span> {{ $kraPin }}</div>
-                @endif
+                @include('admin.partials.document-tax-identifiers-invoice', ['values' => $values])
             </div>
             <div class="colldett-invoice__to">
                 <div class="colldett-invoice__to-title">Received From</div>

@@ -33,6 +33,20 @@
                 </tr>
             </thead>
             <tbody>
+                @php
+                    use App\Support\AdminStoredSettings;
+                    use App\Support\ClientDirectory;
+                    $__companyKra = AdminStoredSettings::companyKraPin();
+                    $__clientKra = ClientDirectory::clientTaxPinForDocument($values);
+                @endphp
+                <tr>
+                    <td>Company KRA PIN</td>
+                    <td>{{ $__companyKra !== '' ? $__companyKra : '—' }}</td>
+                </tr>
+                <tr>
+                    <td>Client KRA PIN / Tax ID</td>
+                    <td>{{ $__clientKra !== '' ? $__clientKra : '—' }}</td>
+                </tr>
                 @foreach($meta['fields'] as $field)
                     @php
                         $value = $values[$field['name']] ?? '—';

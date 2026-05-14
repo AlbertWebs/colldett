@@ -203,6 +203,7 @@ class SettingsController extends Controller
             'admin/billing_quotation_seq.json',
             'admin/billing_fee_note_seq.json',
             'admin/billing_fee_notes.json',
+            'admin/fee_note_client_addresses.json',
             'admin/billing_payment_seq.json',
         ];
 

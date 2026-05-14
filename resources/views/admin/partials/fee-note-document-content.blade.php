@@ -38,6 +38,8 @@
     $vat = round($amount * $vatRate, 2);
     $total = round($amount + $vat, 2);
     $fmtMoney = fn (float $n): string => number_format($n, 2, '.', ',');
+    $companyKra = \App\Support\AdminStoredSettings::companyKraPin();
+    $clientKra = \App\Support\ClientDirectory::clientTaxPinForDocument($values);
 @endphp
 
 <article class="colldett-fee-note">
@@ -56,6 +58,8 @@
             <p class="colldett-fee-note__meta-line"><strong>Your Ref:</strong> {{ $yourRef }}</p>
             <p class="colldett-fee-note__meta-line"><strong>Date:</strong> {{ $issueDate }}</p>
             <p class="colldett-fee-note__meta-line"><strong>Payment Terms:</strong> {{ $paymentTerms }}</p>
+            <p class="colldett-fee-note__meta-line"><strong>Company KRA PIN:</strong> {{ $companyKra !== '' ? $companyKra : '—' }}</p>
+            <p class="colldett-fee-note__meta-line"><strong>Client KRA PIN / Tax ID:</strong> {{ $clientKra !== '' ? $clientKra : '—' }}</p>
         </div>
     </div>
 

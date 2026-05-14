@@ -8,6 +8,7 @@ return [
         'phone' => '+254 700 000 000',
         'email' => 'info@colldetttrace.com',
         'address' => "St George's House 4th Flr, Suite 404, Nairobi, Kenya",
+        'kra_pin' => '',
         'map_embed_url' => 'https://www.google.com/maps?q=Nairobi%20Kenya&output=embed',
         'affiliate_law_firm' => [
             'name' => "Bridget Achieng' and Associates",
@@ -44,9 +45,13 @@ return [
                 [
                     'heading' => 'Bank',
                     'lines' => [
-                        'Account Name: Colldett Trace',
-                        'Account Number: 1351221760',
-                        'Reference: your invoice number',
+                        'Account Name: Colldett Trace Limited',
+                        'Account Number: (8080678)',
+                        'Bank: (Kenya Commercial Bank)',
+                        'Branch: Haile Selassie',
+                        'Swift Code: KCBLKENX',
+                        'Bank Code: 01',
+                        'Branch Code: 288',
                     ],
                 ],
                 [

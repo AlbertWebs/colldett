@@ -198,6 +198,7 @@
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+@stack('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const toLabelText = (field) => {

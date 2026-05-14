@@ -1,5 +1,9 @@
 @php
+    use App\Support\AdminStoredSettings;
+    use App\Support\ClientDirectory;
     $v = fn (string $key): string => trim((string) ($values[$key] ?? ''));
+    $companyKra = AdminStoredSettings::companyKraPin();
+    $clientKra = ClientDirectory::clientTaxPinForDocument($values);
     $fmtMoney = function (string $raw): string {
         if ($raw === '') {
             return '—';
@@ -29,6 +33,16 @@
             <div>
                 <span class="colldett-demand-letter__meta-label">Deadline</span>
                 <span class="colldett-demand-letter__meta-value">{{ $v('deadline') !== '' ? $v('deadline') : '—' }}</span>
+            </div>
+        </div>
+        <div class="colldett-demand-letter__meta-row colldett-demand-letter__meta-row--grid colldett-demand-letter__meta-row--tax2">
+            <div>
+                <span class="colldett-demand-letter__meta-label">Company KRA PIN</span>
+                <span class="colldett-demand-letter__meta-value">{{ $companyKra !== '' ? $companyKra : '—' }}</span>
+            </div>
+            <div>
+                <span class="colldett-demand-letter__meta-label">Client KRA PIN / Tax ID</span>
+                <span class="colldett-demand-letter__meta-value">{{ $clientKra !== '' ? $clientKra : '—' }}</span>
             </div>
         </div>
     </div>
