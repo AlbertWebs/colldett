@@ -260,14 +260,16 @@ final class AdminStoredSettings
     }
 
     /**
-     * Human-readable bank lines for the fee note (same order as the remittance grid; omits blanks / placeholders).
+     * Human-readable bank lines for the fee note (omits blanks / placeholders).
+     * Always reflects current Admin → Settings remittance fields, not data stored on the fee note row.
      *
-     * @param  array<string, mixed>  $values
+     * @param  array<string, mixed>  $_values  unused; kept for call-site compatibility
      * @return list<string>
      */
-    public static function feeNoteBankDisplayLines(array $values): array
+    public static function feeNoteBankDisplayLines(array $_values = []): array
     {
-        $filled = self::feeNoteFillRemittance($values);
+        // Always use current Settings — never frozen per-record bank lines (legacy JSON snapshots).
+        $filled = self::feeNoteRemittanceDefaults();
         $rows = [
             'Account Name' => (string) ($filled['account_name'] ?? ''),
             'Account Number' => (string) ($filled['account_number'] ?? ''),
@@ -549,6 +551,22 @@ final class AdminStoredSettings
         }
 
         return $out;
+    }
+
+    /**
+     * Keys persisted on fee note rows in older versions; bank details always come from Admin → Settings.
+     * Strip these before save / before fill so previews and PDFs track current remittance settings.
+     *
+     * @param  array<string, mixed>  $row
+     * @return array<string, mixed>
+     */
+    public static function feeNoteStripStoredRemittance(array $row): array
+    {
+        foreach (['account_name', 'account_number', 'bank_name', 'branch', 'swift_code', 'bank_code', 'branch_code'] as $k) {
+            unset($row[$k]);
+        }
+
+        return $row;
     }
 
     /**

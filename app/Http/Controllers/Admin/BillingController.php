@@ -361,7 +361,7 @@ class BillingController extends Controller
             'fee-notes' => [
                 'title' => 'Fee Notes',
                 'singular' => 'Fee Note',
-                'description' => 'Create structured fee notes using the advocate-style format. Bank remittance lines are taken from Admin → Settings (Invoices & printable documents → bank lines), same as invoices.',
+                'description' => 'Create structured fee notes using the advocate-style format. Bank remittance lines always follow Admin → Settings (Invoices & printable documents → bank remittance fields), same as invoices — they are not frozen per fee note.',
                 'fields' => [
                     ['name' => 'number', 'label' => 'Fee Note Number'],
                     ['name' => 'our_ref', 'label' => 'Our Reference'],
@@ -520,6 +520,7 @@ class BillingController extends Controller
     private const INVOICE_INDEX_PATH = 'admin/billing_invoices.json';
 
     private const QUOTATION_SEQ_PATH = 'admin/billing_quotation_seq.json';
+
     private const FEE_NOTE_SEQ_PATH = 'admin/billing_fee_note_seq.json';
 
     /** @var string Persisted fee note rows (full field set + id). */
@@ -814,6 +815,7 @@ class BillingController extends Controller
      */
     private function appendFeeNoteRecord(array $data): int
     {
+        $data = AdminStoredSettings::feeNoteStripStoredRemittance($data);
         $rows = $this->readFeeNoteIndex();
         $nextId = $rows === [] ? 1 : max(array_map(static fn (array $r): int => (int) ($r['id'] ?? 0), $rows)) + 1;
         $rows[] = array_merge($data, ['id' => $nextId, 'is_draft' => false]);
@@ -827,6 +829,7 @@ class BillingController extends Controller
      */
     private function appendFeeNoteDraft(array $data): int
     {
+        $data = AdminStoredSettings::feeNoteStripStoredRemittance($data);
         $data['number'] = '';
         $data['is_draft'] = true;
         $rows = $this->readFeeNoteIndex();
@@ -842,6 +845,7 @@ class BillingController extends Controller
      */
     private function replaceFeeNoteRecord(array $row): void
     {
+        $row = AdminStoredSettings::feeNoteStripStoredRemittance($row);
         $id = (int) ($row['id'] ?? 0);
         abort_unless($id > 0, 404);
         $rows = $this->readFeeNoteIndex();
@@ -862,7 +866,7 @@ class BillingController extends Controller
     {
         $row = $this->findFeeNoteById($id);
         abort_unless($row, 404);
-        $out = $row;
+        $out = AdminStoredSettings::feeNoteStripStoredRemittance($row);
         unset($out['id'], $out['is_draft']);
         if (($row['is_draft'] ?? false) === true && trim((string) ($out['number'] ?? '')) === '') {
             $out['number'] = 'Draft';
@@ -876,7 +880,7 @@ class BillingController extends Controller
     {
         $row = $this->findFeeNoteById($id);
         abort_unless($row, 404);
-        $out = $row;
+        $out = AdminStoredSettings::feeNoteStripStoredRemittance($row);
         unset($out['id'], $out['is_draft']);
 
         return $this->feeNotePlainTextFields($out);
