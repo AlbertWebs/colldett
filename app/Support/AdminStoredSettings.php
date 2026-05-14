@@ -171,6 +171,9 @@ final class AdminStoredSettings
 
         $bankHeading = trim((string) ($saved['invoice_bank_heading'] ?? '')) ?: 'Bank';
         $bankRaw = trim((string) ($saved['invoice_payment_bank_lines'] ?? ''));
+        if ($bankRaw === '') {
+            $bankRaw = self::composeInvoicePaymentBankLinesFromRemittanceFields($saved);
+        }
         if ($bankRaw !== '') {
             $lines = array_values(array_filter(array_map('trim', preg_split("/\r\n|\r|\n/", $bankRaw))));
             if ($lines !== []) {
@@ -298,8 +301,188 @@ final class AdminStoredSettings
     }
 
     /**
-     * Bank remittance lines for fee notes — parsed from Admin Settings “Bank lines”
-     * (same source as invoice payment block).
+     * Keys stored in settings.json for the structured bank / remittance form (admin).
+     *
+     * @return list<string>
+     */
+    public static function remittanceSettingKeys(): array
+    {
+        return [
+            'remittance_account_name',
+            'remittance_account_number',
+            'remittance_bank',
+            'remittance_branch',
+            'remittance_swift_code',
+            'remittance_bank_code',
+            'remittance_branch_code',
+            'remittance_reference_line',
+        ];
+    }
+
+    /**
+     * Default remittance field values (KCB Haile Selassie — used for new installs and form fallbacks).
+     *
+     * @return array<string, string>
+     */
+    public static function remittanceFormDefaults(): array
+    {
+        return [
+            'remittance_account_name' => 'Colldett Trace Limited',
+            'remittance_account_number' => '1351221760',
+            'remittance_bank' => 'KENYA COMMERCIAL BANK',
+            'remittance_branch' => 'HAILE SELASSIE',
+            'remittance_swift_code' => 'KCBLKENX',
+            'remittance_bank_code' => '01',
+            'remittance_branch_code' => '288',
+            'remittance_reference_line' => 'your invoice number',
+        ];
+    }
+
+    /**
+     * Values for the admin settings form (saved remittance fields, else parsed bank lines, else defaults).
+     *
+     * @param  array<string, mixed>  $saved
+     * @return array<string, string>
+     */
+    public static function remittanceFormValuesForAdmin(array $saved): array
+    {
+        $defaults = self::remittanceFormDefaults();
+        if (array_key_exists('remittance_account_name', $saved)) {
+            $out = [];
+            foreach (self::remittanceSettingKeys() as $key) {
+                $out[$key] = trim((string) ($saved[$key] ?? ''));
+            }
+
+            return $out;
+        }
+
+        $parsed = self::parseBankLinesIntoRemittanceFields((string) ($saved['invoice_payment_bank_lines'] ?? ''));
+        $out = [];
+        foreach (self::remittanceSettingKeys() as $key) {
+            $v = $parsed[$key] ?? '';
+            $out[$key] = $v !== '' ? $v : ($defaults[$key] ?? '');
+        }
+
+        return $out;
+    }
+
+    /**
+     * Build invoice "bank lines" text from structured remittance fields (also used for fee note parsing).
+     *
+     * @param  array<string, mixed>  $fields  keys remittance_* or plain POST names
+     */
+    public static function composeInvoicePaymentBankLinesFromRemittanceFields(array $fields): string
+    {
+        $g = static fn (string $k): string => trim((string) ($fields[$k] ?? ''));
+
+        $pairs = [
+            'Account Name' => $g('remittance_account_name'),
+            'Account Number' => $g('remittance_account_number'),
+            'Bank' => $g('remittance_bank'),
+            'Branch' => $g('remittance_branch'),
+            'Swift Code' => $g('remittance_swift_code'),
+            'Bank Code' => $g('remittance_bank_code'),
+            'Branch Code' => $g('remittance_branch_code'),
+            'Reference' => $g('remittance_reference_line'),
+        ];
+        $lines = [];
+        foreach ($pairs as $label => $val) {
+            if ($val !== '') {
+                $lines[] = $label.': '.$val;
+            }
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * @param  array<string, mixed>  $saved
+     * @return array{account_name: string, account_number: string, bank_name: string, branch: string, swift_code: string, bank_code: string, branch_code: string}|null
+     */
+    private static function feeNoteSlotsFromRemittanceSettings(array $saved): ?array
+    {
+        if (! array_key_exists('remittance_account_name', $saved)) {
+            return null;
+        }
+
+        $out = [
+            'account_name' => trim((string) ($saved['remittance_account_name'] ?? '')),
+            'account_number' => trim((string) ($saved['remittance_account_number'] ?? '')),
+            'bank_name' => trim((string) ($saved['remittance_bank'] ?? '')),
+            'branch' => trim((string) ($saved['remittance_branch'] ?? '')),
+            'swift_code' => trim((string) ($saved['remittance_swift_code'] ?? '')),
+            'bank_code' => trim((string) ($saved['remittance_bank_code'] ?? '')),
+            'branch_code' => trim((string) ($saved['remittance_branch_code'] ?? '')),
+        ];
+        foreach ($out as $v) {
+            if ($v !== '') {
+                return $out;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Parse stored bank lines (HTML allowed) into remittance_*-shaped keys for the admin form.
+     *
+     * @return array<string, string>
+     */
+    private static function parseBankLinesIntoRemittanceFields(string $raw): array
+    {
+        $empty = array_fill_keys(self::remittanceSettingKeys(), '');
+        $plain = trim(DocumentPlainText::fromHtml($raw));
+        if ($plain === '') {
+            return $empty;
+        }
+
+        $norm = self::normalizeBankLinesForColonParse($plain);
+        $out = $empty;
+
+        foreach (preg_split("/\r\n|\r|\n/", $norm) as $line) {
+            $line = trim($line);
+            if ($line === '' || ! str_contains($line, ':')) {
+                continue;
+            }
+            if (stripos($line, 'paybill') !== false) {
+                continue;
+            }
+            [$label, $value] = explode(':', $line, 2);
+            $labelNorm = strtolower(trim(preg_replace('/\s+/', ' ', $label)));
+            $value = trim($value);
+            if ($value === '' || self::feeNoteRemittanceValueIsPlaceholder($value)) {
+                continue;
+            }
+
+            if (str_contains($labelNorm, 'reference')) {
+                $out['remittance_reference_line'] = $value;
+
+                continue;
+            }
+
+            $slot = match (true) {
+                str_contains($labelNorm, 'account name') => 'remittance_account_name',
+                str_contains($labelNorm, 'account number') => 'remittance_account_number',
+                str_contains($labelNorm, 'bank name') => 'remittance_bank',
+                $labelNorm === 'bank' || str_starts_with($labelNorm, 'bank ') => 'remittance_bank',
+                str_contains($labelNorm, 'branch code') => 'remittance_branch_code',
+                str_contains($labelNorm, 'bank code') => 'remittance_bank_code',
+                str_contains($labelNorm, 'swift') => 'remittance_swift_code',
+                $labelNorm === 'branch' || str_ends_with($labelNorm, ' branch') => 'remittance_branch',
+                default => null,
+            };
+
+            if ($slot !== null) {
+                $out[$slot] = $value;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Bank remittance slots for fee notes — prefers structured Admin remittance fields, else parses
+     * {@see invoice_payment_bank_lines} / config invoice bank section.
      *
      * @return array{account_name: string, account_number: string, bank_name: string, branch: string, swift_code: string, bank_code: string, branch_code: string}
      */
@@ -316,6 +499,11 @@ final class AdminStoredSettings
         ];
 
         $saved = self::all();
+        $fromSettings = self::feeNoteSlotsFromRemittanceSettings($saved);
+        if ($fromSettings !== null) {
+            return $fromSettings;
+        }
+
         $raw = trim((string) ($saved['invoice_payment_bank_lines'] ?? ''));
         if ($raw === '') {
             $inv = self::invoice();
@@ -323,7 +511,7 @@ final class AdminStoredSettings
             $raw = is_array($lines) ? implode("\n", $lines) : '';
         }
 
-        $raw = self::normalizeBankLinesForColonParse($raw);
+        $raw = self::normalizeBankLinesForColonParse(DocumentPlainText::fromHtml($raw));
 
         foreach (preg_split("/\r\n|\r|\n/", $raw) as $line) {
             $line = trim($line);

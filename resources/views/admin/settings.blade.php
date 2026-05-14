@@ -128,7 +128,7 @@
             <article id="settings-invoice-payment" class="admin-card p-5 space-y-4 xl:col-span-12">
                 <div>
                     <h3 class="admin-card-title text-base">Invoices & printable documents</h3>
-                    <p class="mt-1 text-xs text-admin-muted">These values populate invoice previews, PDFs, and letterhead-style documents. If a field is left empty, defaults from configuration are used where applicable. Company <strong>KRA PIN</strong> is set under <a href="#settings-general" class="font-semibold underline decoration-slate-400 underline-offset-2 hover:text-admin-ink">General Settings</a> above.</p>
+                    <p class="mt-1 text-xs text-admin-muted">These values populate invoice previews, PDFs, and letterhead-style documents. Bank remittance fields below feed both the invoice payment block and fee note remittance text. If a field is left empty, defaults from configuration are used where applicable. Company <strong>KRA PIN</strong> is set under <a href="#settings-general" class="font-semibold underline decoration-slate-400 underline-offset-2 hover:text-admin-ink">General Settings</a> above.</p>
                 </div>
                 <div class="grid gap-4 lg:grid-cols-2">
                     <div class="space-y-3">
@@ -177,10 +177,45 @@
                             <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Bank section heading</label>
                             <input class="admin-input" name="invoice_bank_heading" value="{{ old('invoice_bank_heading', $settings['invoice_bank_heading'] ?? '') }}" />
                         </div>
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Bank lines (one per line)</label>
-                            <p class="text-xs text-admin-muted">Use <code class="rounded bg-slate-100 px-1 py-0.5 text-[11px]">Label: value</code> pairs (for example <code class="rounded bg-slate-100 px-1 py-0.5 text-[11px]">Account Name: …</code>). These lines also supply the remittance block on fee notes.</p>
-                            <textarea class="admin-input min-h-28" name="invoice_payment_bank_lines" placeholder="Bank name: …&#10;Account name: …&#10;Account number: …">{{ old('invoice_payment_bank_lines', $settings['invoice_payment_bank_lines'] ?? '') }}</textarea>
+                        <div class="rounded-lg border border-admin-border bg-white p-3 space-y-3">
+                            <div>
+                                <p class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Bank remittance (invoice &amp; fee note)</p>
+                                <p class="mt-1 text-xs text-admin-muted">These lines appear under <strong class="text-admin-ink">Payment Details</strong> on invoices and under “Please direct remittance…” on fee notes. Leave a field blank to omit that line.</p>
+                            </div>
+                            <div class="grid gap-3 sm:grid-cols-2">
+                                <div class="space-y-1.5">
+                                    <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Account name</label>
+                                    <input class="admin-input" name="remittance_account_name" value="{{ old('remittance_account_name', $settings['remittance_account_name'] ?? '') }}" autocomplete="off" />
+                                </div>
+                                <div class="space-y-1.5">
+                                    <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Account number</label>
+                                    <input class="admin-input" name="remittance_account_number" value="{{ old('remittance_account_number', $settings['remittance_account_number'] ?? '') }}" autocomplete="off" />
+                                </div>
+                                <div class="space-y-1.5">
+                                    <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Bank</label>
+                                    <input class="admin-input" name="remittance_bank" value="{{ old('remittance_bank', $settings['remittance_bank'] ?? '') }}" autocomplete="off" />
+                                </div>
+                                <div class="space-y-1.5">
+                                    <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Branch</label>
+                                    <input class="admin-input" name="remittance_branch" value="{{ old('remittance_branch', $settings['remittance_branch'] ?? '') }}" autocomplete="off" />
+                                </div>
+                                <div class="space-y-1.5">
+                                    <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Swift code</label>
+                                    <input class="admin-input" name="remittance_swift_code" value="{{ old('remittance_swift_code', $settings['remittance_swift_code'] ?? '') }}" autocomplete="off" />
+                                </div>
+                                <div class="space-y-1.5">
+                                    <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Bank code</label>
+                                    <input class="admin-input" name="remittance_bank_code" value="{{ old('remittance_bank_code', $settings['remittance_bank_code'] ?? '') }}" autocomplete="off" />
+                                </div>
+                                <div class="space-y-1.5">
+                                    <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Branch code</label>
+                                    <input class="admin-input" name="remittance_branch_code" value="{{ old('remittance_branch_code', $settings['remittance_branch_code'] ?? '') }}" autocomplete="off" />
+                                </div>
+                                <div class="space-y-1.5 sm:col-span-2">
+                                    <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Payment reference note</label>
+                                    <input class="admin-input" name="remittance_reference_line" placeholder="e.g. your invoice number" value="{{ old('remittance_reference_line', $settings['remittance_reference_line'] ?? '') }}" autocomplete="off" />
+                                </div>
+                            </div>
                         </div>
                         <div class="space-y-1.5">
                             <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Other payments heading (optional)</label>

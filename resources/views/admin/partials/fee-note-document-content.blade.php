@@ -12,7 +12,12 @@
     $yourRef = $plain((string) ($values['your_ref'] ?? ''), '—');
     $client = $plain((string) ($values['client'] ?? ''), '—');
     $addressRaw = DocumentPlainText::fromHtml(trim((string) ($values['address'] ?? '')));
+    $clientKra = \App\Support\ClientDirectory::clientTaxPinForDocument($values);
     $addressLines = $addressRaw !== '' ? preg_split("/\r\n|\r|\n/", $addressRaw) : ['—'];
+    $addressLines = \App\Support\ClientDirectory::feeNoteAddressLinesOmitDuplicateClientPin($addressLines, $clientKra);
+    if ($addressLines === []) {
+        $addressLines = ['—'];
+    }
     $issueDate = ! empty($values['issued_date'])
         ? Carbon::parse((string) $values['issued_date'])->format('jS F, Y')
         : Carbon::now()->format('jS F, Y');
@@ -40,7 +45,6 @@
     $total = round($amount + $vat, 2);
     $fmtMoney = fn (float $n): string => number_format($n, 2, '.', ',');
     $companyKra = \App\Support\AdminStoredSettings::companyKraPin();
-    $clientKra = \App\Support\ClientDirectory::clientTaxPinForDocument($values);
 @endphp
 
 <article class="colldett-fee-note">

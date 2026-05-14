@@ -75,6 +75,8 @@ class SettingsController extends Controller
             ),
         ];
 
+        $settings = array_merge($settings, AdminStoredSettings::remittanceFormValuesForAdmin($saved));
+
         return view('admin.settings', compact('settings'));
     }
 
@@ -90,10 +92,17 @@ class SettingsController extends Controller
             'invoice_currency' => ['nullable', 'string', 'max:32'],
             'invoice_payment_title' => ['nullable', 'string', 'max:255'],
             'invoice_bank_heading' => ['nullable', 'string', 'max:128'],
-            'invoice_payment_bank_lines' => ['nullable', 'string', 'max:5000'],
             'invoice_other_heading' => ['nullable', 'string', 'max:128'],
             'invoice_payment_other_lines' => ['nullable', 'string', 'max:2000'],
             'invoice_payment_note' => ['nullable', 'string', 'max:2000'],
+            'remittance_account_name' => ['nullable', 'string', 'max:255'],
+            'remittance_account_number' => ['nullable', 'string', 'max:128'],
+            'remittance_bank' => ['nullable', 'string', 'max:255'],
+            'remittance_branch' => ['nullable', 'string', 'max:255'],
+            'remittance_swift_code' => ['nullable', 'string', 'max:64'],
+            'remittance_bank_code' => ['nullable', 'string', 'max:32'],
+            'remittance_branch_code' => ['nullable', 'string', 'max:32'],
+            'remittance_reference_line' => ['nullable', 'string', 'max:500'],
             'company_name' => ['nullable', 'string', 'max:255'],
             'company_tagline' => ['nullable', 'string', 'max:255'],
             'company_email' => ['nullable', 'email', 'max:255'],
@@ -124,6 +133,11 @@ class SettingsController extends Controller
         $saved = $this->readSettings();
         $settings = array_merge($saved, $data);
         $settings['show_reports_nav'] = $request->boolean('show_reports_nav');
+
+        foreach (AdminStoredSettings::remittanceSettingKeys() as $key) {
+            $settings[$key] = trim((string) ($settings[$key] ?? ''));
+        }
+        $settings['invoice_payment_bank_lines'] = AdminStoredSettings::composeInvoicePaymentBankLinesFromRemittanceFields($settings);
 
         $mapEmbedUrl = $settings['company_map_embed_url'] ?? null;
         unset($settings['company_map_embed_url']);

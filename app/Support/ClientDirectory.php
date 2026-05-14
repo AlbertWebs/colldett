@@ -154,6 +154,44 @@ final class ClientDirectory
     }
 
     /**
+     * Drop address lines that repeat the client tax PIN already shown as “Client KRA PIN / Tax ID”
+     * (e.g. “Customer Pin: P000…” with the same value).
+     *
+     * @param  list<string>  $lines
+     * @return list<string>
+     */
+    public static function feeNoteAddressLinesOmitDuplicateClientPin(array $lines, string $clientTaxPin): array
+    {
+        $pin = trim($clientTaxPin);
+        if ($pin === '') {
+            return array_values(array_filter(array_map(static fn (mixed $s): string => trim((string) $s), $lines), static fn (string $s): bool => $s !== ''));
+        }
+
+        $cmpPin = strtoupper(preg_replace('/\s+/', '', $pin));
+        $out = [];
+        foreach ($lines as $line) {
+            $t = trim((string) $line);
+            if ($t === '') {
+                continue;
+            }
+            $lineCmp = strtoupper(preg_replace('/\s+/', '', $t));
+            if ($lineCmp === $cmpPin) {
+                continue;
+            }
+            if (preg_match('/^(.{1,56}?)\s*:\s*(.+)$/u', $t, $m)) {
+                $label = strtolower($m[1]);
+                $valueCmp = strtoupper(preg_replace('/\s+/', '', trim($m[2])));
+                if ($valueCmp === $cmpPin && preg_match('/\b(pin|kra|tax\s*id|customer)/', $label)) {
+                    continue;
+                }
+            }
+            $out[] = $t;
+        }
+
+        return $out;
+    }
+
+    /**
      * Company name → last saved fee note recipient address (plain text, newlines preserved).
      *
      * @return array<string, string>

@@ -46,9 +46,10 @@ return [
                     'heading' => 'Bank',
                     'lines' => [
                         'Account Name: Colldett Trace Limited',
-                        'Account Number: (8080678)',
-                        'Bank: (Kenya Commercial Bank)',
-                        'Branch: Haile Selassie',
+                        'Account Number: 1351221760',
+                        'Bank: KENYA COMMERCIAL BANK',
+                        'Branch: HAILE SELASSIE',
+                        'Reference: your invoice number',
                         'Swift Code: KCBLKENX',
                         'Bank Code: 01',
                         'Branch Code: 288',
