@@ -203,7 +203,7 @@
                                         placeholder="{{ $module === 'demand' && $field['name'] === 'body' ? 'Full letter text: recipient, address, salutation, and paragraphs as needed.' : ($module === 'fee-notes' ? ($feeNotePlaceholders[$field['name']] ?? 'Enter '.strtolower($field['label'])) : 'Enter '.strtolower($field['label'])) }}"
                                         data-no-autolabel="true"
                                         @if($module === 'fee-notes') data-no-editor="true" @endif
-                                    >{{ old($field['name'], $values[$field['name']] ?? '') }}</textarea>
+                                    >@if($module === 'fee-notes'){{ \App\Support\DocumentPlainText::fromHtml((string) old($field['name'], $values[$field['name']] ?? '')) }}@else{{ old($field['name'], $values[$field['name']] ?? '') }}@endif</textarea>
                                 @else
                                     <input
                                         class="admin-input"

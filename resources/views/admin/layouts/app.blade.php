@@ -246,7 +246,7 @@
 
         const textareas = document.querySelectorAll('main form textarea');
         textareas.forEach((textarea, index) => {
-            if (textarea.dataset.noEditor === 'true') return;
+            if (textarea.getAttribute('data-no-editor') === 'true') return;
             if (textarea.dataset.quillReady === 'true') return;
 
             const wrapper = document.createElement('div');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Support\AdminStoredSettings;
 use App\Support\ClientDirectory;
+use App\Support\DocumentPlainText;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -95,6 +96,7 @@ class BillingController extends Controller
         }
 
         if ($module === 'fee-notes') {
+            $data = $this->feeNotePlainTextFields($data);
             $data = AdminStoredSettings::feeNoteFillRemittance($data);
             ClientDirectory::rememberFeeNoteAddress((string) ($data['client'] ?? ''), (string) ($data['address'] ?? ''));
             if ($request->input('fee_note_action') === 'draft') {
@@ -293,6 +295,7 @@ class BillingController extends Controller
             $existing = $this->findFeeNoteById($id);
             abort_unless($existing, 404);
             $data = $request->validate($this->rules($module));
+            $data = $this->feeNotePlainTextFields($data);
             $merged = array_merge($existing, $data, ['id' => $id]);
             if (($existing['is_draft'] ?? false) === true) {
                 $merged['is_draft'] = true;
@@ -876,7 +879,23 @@ class BillingController extends Controller
         $out = $row;
         unset($out['id'], $out['is_draft']);
 
-        return $out;
+        return $this->feeNotePlainTextFields($out);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function feeNotePlainTextFields(array $data): array
+    {
+        foreach (['address', 'line_description', 'notes'] as $key) {
+            if (! array_key_exists($key, $data)) {
+                continue;
+            }
+            $data[$key] = DocumentPlainText::fromHtml((string) ($data[$key] ?? ''));
+        }
+
+        return $data;
     }
 
     private function peekNextPaymentId(): string
