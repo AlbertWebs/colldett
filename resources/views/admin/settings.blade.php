@@ -22,7 +22,7 @@
         @csrf
 
         <div class="grid gap-6 xl:grid-cols-12">
-            <article class="admin-card p-5 space-y-4 xl:col-span-7">
+            <article id="settings-general" class="admin-card p-5 space-y-4 xl:col-span-7">
                 <div>
                     <h3 class="admin-card-title text-base">General Settings</h3>
                     <p class="mt-1 text-xs text-admin-muted">Core business identity shown across the website and metadata.</p>
@@ -47,7 +47,7 @@
                     <div class="space-y-1.5">
                         <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">KRA PIN</label>
                         <input class="admin-input" name="company_kra_pin" placeholder="e.g. P051123456A" value="{{ old('company_kra_pin', $settings['company_kra_pin'] ?? '') }}" />
-                        <p class="text-xs text-admin-muted">Shown on invoices and receipts.</p>
+                        <p class="text-xs text-admin-muted">Your company’s tax identifier. It appears in the footer of every printable document (preview/PDF) and in billing documents alongside client tax IDs.</p>
                     </div>
                     <div class="space-y-1.5 sm:col-span-2">
                         <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Address</label>
@@ -128,7 +128,7 @@
             <article id="settings-invoice-payment" class="admin-card p-5 space-y-4 xl:col-span-12">
                 <div>
                     <h3 class="admin-card-title text-base">Invoices & printable documents</h3>
-                    <p class="mt-1 text-xs text-admin-muted">These values populate invoice previews, PDFs, and letterhead-style documents. If a field is left empty, defaults from configuration are used where applicable.</p>
+                    <p class="mt-1 text-xs text-admin-muted">These values populate invoice previews, PDFs, and letterhead-style documents. If a field is left empty, defaults from configuration are used where applicable. Company <strong>KRA PIN</strong> is set under <a href="#settings-general" class="font-semibold underline decoration-slate-400 underline-offset-2 hover:text-admin-ink">General Settings</a> above.</p>
                 </div>
                 <div class="grid gap-4 lg:grid-cols-2">
                     <div class="space-y-3">

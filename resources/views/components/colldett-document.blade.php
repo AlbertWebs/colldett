@@ -19,6 +19,7 @@
     $email = AdminStoredSettings::companyEmail();
     $websiteUrl = $website ? (str_starts_with($website, 'http') ? $website : 'https://' . ltrim($website, '/')) : '';
     $documentLogo = AdminStoredSettings::companyLogoRelativePath();
+    $companyKraPin = AdminStoredSettings::companyKraPin();
 @endphp
 
 <div
@@ -96,6 +97,9 @@
                     </span>
                 </div>
             </div>
+            @if($companyKraPin !== '')
+                <p class="colldett-document__footer-kra">KRA PIN: {{ $companyKraPin }}</p>
+            @endif
         </footer>
     </div>
 </div>

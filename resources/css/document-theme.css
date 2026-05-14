@@ -219,6 +219,18 @@
     text-decoration: underline;
   }
 
+  .colldett-document__footer-kra {
+    margin-top: 0.65rem;
+    padding-top: 0.65rem;
+    border-top: 1px solid rgb(226 232 240);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--colldett-doc-muted);
+  }
+
   .colldett-document-table {
     width: 100%;
     border-collapse: collapse;
