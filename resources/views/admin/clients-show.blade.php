@@ -103,7 +103,7 @@
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Website</p>
                         @if($web !== '' && $webHref !== '')
-                            <a href="{{ $webHref }}" target="_blank" rel="noopener noreferrer" class="mt-1 inline-flex items-center gap-1 text-sm font-medium text-admin-primary hover:underline">{{ $web }}<span class="text-xs opacity-70" aria-hidden="true">↗</span></a>
+                            <a href="{{ $webHref }}" target="_blank" rel="noopener noreferrer" class="mt-1 inline-flex items-center gap-1 text-sm font-medium text-admin-primary hover:underline">{{ $web }}<span class="text-xs opacity-70" aria-hidden="true">â†—</span></a>
                         @else
                             <p class="mt-1 text-sm text-admin-muted">Not set</p>
                         @endif
@@ -134,6 +134,69 @@
                 <div class="p-5">
                     <p class="text-xs font-semibold uppercase tracking-wide text-admin-muted">KRA PIN / tax ID</p>
                     <p class="mt-1 font-mono text-sm text-admin-ink">{{ ($c['tax_pin'] ?? '') !== '' ? $c['tax_pin'] : '-' }}</p>
+                </div>
+            </article>
+
+            <article class="admin-card overflow-hidden p-0" id="client-documents">
+                <div class="border-b border-admin-border bg-slate-50/80 px-5 py-3">
+                    <h3 class="text-sm font-semibold text-admin-ink">Generated documents</h3>
+                    <p class="text-xs text-admin-muted">Fee notes, invoices, and cases linked to this client.</p>
+                </div>
+                <div class="space-y-6 p-5">
+                    @php
+                        $docs = $clientDocuments ?? ['fee_notes' => [], 'invoices' => [], 'cases' => []];
+                    @endphp
+
+                    @if(! ($hasClientDocuments ?? false))
+                        <p class="text-sm text-admin-muted">No fee notes, invoices, or cases are linked to this client yet.</p>
+                        <div class="flex flex-wrap gap-2">
+                            <a href="{{ route('admin.billing.module.create', ['fee-notes', 'client' => $company]) }}" class="admin-btn-soft text-xs">New fee note</a>
+                            <a href="{{ route('admin.billing.module.create', ['invoices', 'client' => $company]) }}" class="admin-btn-soft text-xs">New invoice</a>
+                            <a href="{{ route('admin.cases.create') }}" class="admin-btn-soft text-xs">New case</a>
+                        </div>
+                    @else
+                        @foreach([
+                            'fee_notes' => ['label' => 'Fee notes', 'module' => 'fee-notes', 'show_pdf' => true],
+                            'invoices' => ['label' => 'Invoices', 'module' => 'invoices', 'show_pdf' => true],
+                            'cases' => ['label' => 'Cases', 'module' => null, 'show_pdf' => false],
+                        ] as $docKey => $docMeta)
+                            @if(($docs[$docKey] ?? []) !== [])
+                                <div>
+                                    <h4 class="mb-2 text-xs font-semibold uppercase tracking-wide text-admin-muted">{{ $docMeta['label'] }}</h4>
+                                    <ul class="divide-y divide-admin-border rounded-lg border border-admin-border">
+                                        @foreach($docs[$docKey] as $doc)
+                                            <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                                                <div class="min-w-0">
+                                                    <p class="truncate text-sm font-medium text-admin-ink">{{ $doc['reference'] }}</p>
+                                                    <p class="text-xs text-admin-muted">
+                                                        {{ $doc['date'] }}
+                                                        @if(($doc['amount'] ?? '') !== 'â€”' && ($doc['amount'] ?? '') !== '-')
+                                                            Â· {{ $doc['amount'] }}
+                                                        @endif
+                                                        @if(! empty($doc['status']))
+                                                            Â· {{ $doc['status'] }}
+                                                        @endif
+                                                    </p>
+                                                </div>
+                                                <div class="flex shrink-0 flex-wrap items-center gap-2">
+                                                    @if($docMeta['module'])
+                                                        <a href="{{ route('admin.billing.module.preview', [$docMeta['module'], $doc['id']]) }}" class="admin-btn-soft text-xs" target="_blank" rel="noopener noreferrer">Open</a>
+                                                        @if($docMeta['show_pdf'])
+                                                            <a href="{{ route('admin.billing.module.preview.pdf', [$docMeta['module'], $doc['id']]) }}" class="admin-btn-soft text-xs" target="_blank" rel="noopener noreferrer">PDF</a>
+                                                        @endif
+                                                        <a href="{{ route('admin.billing.module.edit', [$docMeta['module'], $doc['id']]) }}" class="admin-btn-soft text-xs">Edit</a>
+                                                    @else
+                                                        <a href="{{ route('admin.cases.show', $doc['id']) }}" class="admin-btn-soft text-xs">Open</a>
+                                                        <a href="{{ route('admin.cases.edit', $doc['id']) }}" class="admin-btn-soft text-xs">Edit</a>
+                                                    @endif
+                                                </div>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+                        @endforeach
+                    @endif
                 </div>
             </article>
 
@@ -174,7 +237,7 @@
                                 <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
                                     <div class="min-w-0">
                                         <p class="truncate text-sm font-medium text-admin-ink">{{ $file['name'] }}</p>
-                                        <p class="text-xs text-admin-muted">{{ $fmtSize((int) $file['size']) }} · {{ date('j M Y, H:i', (int) $file['modified']) }}</p>
+                                        <p class="text-xs text-admin-muted">{{ $fmtSize((int) $file['size']) }} Â· {{ date('j M Y, H:i', (int) $file['modified']) }}</p>
                                     </div>
                                     <div class="flex shrink-0 flex-wrap items-center gap-2">
                                         <a href="{{ route('admin.clients.files.download', [$c['id'], $file['name']]) }}" class="admin-btn-soft text-xs" target="_blank" rel="noopener noreferrer">Open</a>
@@ -195,7 +258,7 @@
                 <div class="flex flex-wrap items-center justify-between gap-2 border-b border-admin-border bg-amber-50/50 px-5 py-3">
                     <div>
                         <h3 class="text-sm font-semibold text-admin-ink">Internal notes</h3>
-                        <p class="text-xs text-admin-muted">Visible to admins only — not shown to the client.</p>
+                        <p class="text-xs text-admin-muted">Visible to admins only â€” not shown to the client.</p>
                     </div>
                     <a href="{{ route('admin.clients.edit', $c['id']) }}" class="text-xs font-semibold text-admin-primary hover:underline">Edit notes</a>
                 </div>
@@ -215,7 +278,9 @@
                 <div class="flex flex-col gap-2">
                     <a href="{{ route('admin.clients.edit', $c['id']) }}" class="admin-btn-primary w-full justify-center">Edit client</a>
                     <a href="{{ route('admin.billing.module.create', ['fee-notes', 'client' => $company]) }}" class="admin-btn-soft w-full justify-center">New fee note</a>
-                    <a href="#client-files" class="admin-btn-soft w-full justify-center">Client files</a>
+                    <a href="{{ route('admin.billing.module.create', ['invoices', 'client' => $company]) }}" class="admin-btn-soft w-full justify-center">New invoice</a>
+                    <a href="#client-documents" class="admin-btn-soft w-full justify-center">Generated documents</a>
+                    <a href="#client-files" class="admin-btn-soft w-full justify-center">Uploaded files</a>
                     @if($email !== '')
                         <a href="mailto:{{ $email }}" class="admin-btn-soft w-full justify-center">Send email</a>
                     @endif

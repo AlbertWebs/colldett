@@ -67,7 +67,7 @@
                             @endforeach
                             <td>
                                 <div class="admin-row-actions">
-                                    @if($module === 'fee-notes')
+                                    @if(in_array($module, ['fee-notes', 'invoices'], true))
                                         <a class="admin-link-btn" href="{{ route('admin.billing.module.preview', [$module, $recordId]) }}">View</a>
                                     @endif
                                     <a class="admin-link-btn" href="{{ route('admin.billing.module.edit', [$module, $recordId]) }}">Edit</a>

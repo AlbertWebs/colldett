@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Support\ClientBillingDocuments;
 use App\Support\ClientDirectory;
 use App\Support\ClientFiles;
 use App\Support\DocumentPlainText;
@@ -86,9 +87,14 @@ class ClientController extends Controller
 
         ClientFiles::ensureDirectory($id);
 
+        $company = trim((string) ($client['company'] ?? ''));
+        $clientDocuments = ClientBillingDocuments::forCompany($company);
+
         return view('admin.clients-show', [
             'client' => $this->clientForDisplay($client),
             'clientFiles' => ClientFiles::list($id),
+            'clientDocuments' => $clientDocuments,
+            'hasClientDocuments' => ClientBillingDocuments::hasAny($clientDocuments),
         ]);
     }
 

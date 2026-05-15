@@ -30,6 +30,10 @@ class BillingController extends Controller
         $values = [];
         if ($module === 'invoices') {
             $values['number'] = $this->peekNextInvoiceNumber();
+            $presetClient = trim((string) $request->query('client', ''));
+            if ($presetClient !== '') {
+                $values['client'] = $presetClient;
+            }
         }
         if ($module === 'quotations') {
             $values['number'] = $this->peekNextQuotationNumber();
@@ -71,9 +75,11 @@ class BillingController extends Controller
     {
         $meta = $this->moduleMeta($module);
 
-        $rows = $module === 'fee-notes'
-            ? $this->readFeeNoteIndexSorted()
-            : [$this->sampleValues($module, 1)];
+        $rows = match ($module) {
+            'fee-notes' => $this->readFeeNoteIndexSorted(),
+            'invoices' => $this->readInvoiceIndexSorted(),
+            default => [$this->sampleValues($module, 1)],
+        };
 
         return view('admin.billing-module-list', [
             'module' => $module,
@@ -89,12 +95,11 @@ class BillingController extends Controller
 
         if ($module === 'invoices') {
             $data['number'] = $this->generateNextInvoiceNumber();
-            $this->appendInvoiceRecord($data);
+            $newId = $this->appendInvoiceRecord($data);
 
             return redirect()
-                ->route('admin.billing.module.preview', [$module, 1])
-                ->with('status', $meta['singular'].' created successfully.')
-                ->with('preview_values', $data);
+                ->route('admin.billing.module.preview', [$module, $newId])
+                ->with('status', $meta['singular'].' created successfully.');
         }
 
         if ($module === 'quotations') {
@@ -149,6 +154,8 @@ class BillingController extends Controller
         $meta = $this->moduleMeta($module);
         if ($module === 'fee-notes') {
             $values = $this->feeNoteValuesForDocument($id);
+        } elseif ($module === 'invoices') {
+            $values = $this->invoiceValuesForDocument($id);
         } else {
             $values = $request->session()->get('preview_values');
             if (! is_array($values) || empty($values)) {
@@ -173,6 +180,8 @@ class BillingController extends Controller
         $meta = $this->moduleMeta($module);
         if ($module === 'fee-notes') {
             $values = $this->feeNoteValuesForDocument($id);
+        } elseif ($module === 'invoices') {
+            $values = $this->invoiceValuesForDocument($id);
         } else {
             $values = $request->session()->get('preview_values');
             if (! is_array($values) || empty($values)) {
@@ -193,6 +202,8 @@ class BillingController extends Controller
         $meta = $this->moduleMeta($module);
         if ($module === 'fee-notes') {
             $values = $this->feeNoteValuesForDocument($id);
+        } elseif ($module === 'invoices') {
+            $values = $this->invoiceValuesForDocument($id);
         } else {
             $values = $request->session()->get('preview_values');
             if (! is_array($values) || empty($values)) {
@@ -259,9 +270,11 @@ class BillingController extends Controller
     {
         $meta = $this->moduleMeta($module);
 
-        $values = $module === 'fee-notes'
-            ? $this->feeNoteValuesForForm($id)
-            : $this->sampleValues($module, $id);
+        $values = match ($module) {
+            'fee-notes' => $this->feeNoteValuesForForm($id),
+            'invoices' => $this->invoiceValuesForForm($id),
+            default => $this->sampleValues($module, $id),
+        };
 
         $feeNoteIsDraft = false;
         if ($module === 'fee-notes') {
@@ -325,6 +338,21 @@ class BillingController extends Controller
             $merged = AdminStoredSettings::feeNoteFillRemittance($merged);
             ClientDirectory::rememberFeeNoteAddress((string) ($merged['client'] ?? ''), (string) ($merged['address'] ?? ''));
             $this->replaceFeeNoteRecord($merged);
+
+            return redirect()
+                ->route('admin.billing.module.edit', [$module, $id])
+                ->with('status', $meta['singular'].' updated successfully.');
+        }
+
+        if ($module === 'invoices') {
+            $existing = $this->findInvoiceById($id);
+            abort_unless($existing, 404);
+            $data = $request->validate($this->rules($module));
+            $merged = array_merge($existing, $data, [
+                'id' => $id,
+                'number' => (string) ($existing['number'] ?? ''),
+            ]);
+            $this->replaceInvoiceRecord($merged);
 
             return redirect()
                 ->route('admin.billing.module.edit', [$module, $id])
@@ -626,22 +654,90 @@ class BillingController extends Controller
     /**
      * @param  array<string, mixed>  $data
      */
-    private function appendInvoiceRecord(array $data): void
+    private function appendInvoiceRecord(array $data): int
     {
         $num = trim((string) ($data['number'] ?? ''));
-        if ($num === '') {
-            return;
-        }
+        abort_unless($num !== '', 422);
         $rows = $this->readInvoiceIndex();
-        $rows = array_values(array_filter($rows, fn ($r) => is_array($r) && (string) ($r['number'] ?? '') !== $num));
-        $rows[] = [
-            'number' => $num,
-            'client' => trim((string) ($data['client'] ?? '')),
-            'amount' => trim((string) ($data['amount'] ?? '')),
-            'issued_date' => trim((string) ($data['issued_date'] ?? '')),
-        ];
-        usort($rows, fn ($a, $b): int => strcmp((string) ($a['number'] ?? ''), (string) ($b['number'] ?? '')));
-        Storage::disk('local')->put(self::INVOICE_INDEX_PATH, json_encode($rows, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        $rows = array_values(array_filter($rows, static fn ($r): bool => is_array($r) && (string) ($r['number'] ?? '') !== $num));
+        $nextId = $rows === [] ? 1 : max(array_map(static fn (array $r): int => (int) ($r['id'] ?? 0), $rows)) + 1;
+        $rows[] = array_merge($data, ['id' => $nextId]);
+        $this->writeInvoiceIndex($rows);
+
+        return $nextId;
+    }
+
+    private function writeInvoiceIndex(array $rows): void
+    {
+        Storage::disk('local')->put(
+            self::INVOICE_INDEX_PATH,
+            json_encode(array_values($rows), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+        );
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function readInvoiceIndexSorted(): array
+    {
+        $rows = $this->readInvoiceIndex();
+        usort($rows, static fn (array $a, array $b): int => ((int) ($b['id'] ?? 0)) <=> ((int) ($a['id'] ?? 0)));
+
+        return $rows;
+    }
+
+    /** @return array<string, mixed>|null */
+    private function findInvoiceById(int $id): ?array
+    {
+        foreach ($this->readInvoiceIndex() as $row) {
+            if ((int) ($row['id'] ?? 0) === $id) {
+                return $row;
+            }
+        }
+
+        return null;
+    }
+
+    /** @return array<string, mixed> */
+    private function invoiceValuesForDocument(int $id): array
+    {
+        $row = $this->findInvoiceById($id);
+        abort_unless($row, 404);
+        $out = $row;
+        unset($out['id']);
+
+        return $out;
+    }
+
+    /**
+     * @param  array<string, mixed>  $row  Must include id
+     */
+    private function replaceInvoiceRecord(array $row): void
+    {
+        $id = (int) ($row['id'] ?? 0);
+        abort_unless($id > 0, 404);
+        $rows = $this->readInvoiceIndex();
+        $found = false;
+        foreach ($rows as $i => $existing) {
+            if ((int) ($existing['id'] ?? 0) === $id) {
+                $rows[$i] = $row;
+                $found = true;
+                break;
+            }
+        }
+        abort_unless($found, 404);
+        $this->writeInvoiceIndex($rows);
+    }
+
+    /** @return array<string, mixed> */
+    private function invoiceValuesForForm(int $id): array
+    {
+        $out = $this->invoiceValuesForDocument($id);
+        foreach (['line_description', 'billing_address', 'notes'] as $key) {
+            if (array_key_exists($key, $out)) {
+                $out[$key] = DocumentPlainText::fromHtml((string) ($out[$key] ?? ''));
+            }
+        }
+
+        return $out;
     }
 
     /**
@@ -651,7 +747,7 @@ class BillingController extends Controller
     {
         if (! Storage::disk('local')->exists(self::INVOICE_INDEX_PATH)) {
             $defaults = $this->defaultInvoiceIndex();
-            Storage::disk('local')->put(self::INVOICE_INDEX_PATH, json_encode($defaults, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            $this->writeInvoiceIndex($defaults);
 
             return $defaults;
         }
@@ -660,7 +756,39 @@ class BillingController extends Controller
             return $this->defaultInvoiceIndex();
         }
 
-        return $decoded;
+        return $this->ensureInvoiceIds($decoded);
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $rows
+     * @return list<array<string, mixed>>
+     */
+    private function ensureInvoiceIds(array $rows): array
+    {
+        $max = 0;
+        foreach ($rows as $row) {
+            if (is_array($row)) {
+                $max = max($max, (int) ($row['id'] ?? 0));
+            }
+        }
+        $changed = false;
+        $out = [];
+        foreach ($rows as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            if ((int) ($row['id'] ?? 0) < 1) {
+                $max++;
+                $row['id'] = $max;
+                $changed = true;
+            }
+            $out[] = $row;
+        }
+        if ($changed) {
+            $this->writeInvoiceIndex($out);
+        }
+
+        return $out;
     }
 
     /**
@@ -669,12 +797,13 @@ class BillingController extends Controller
     private function defaultInvoiceIndex(): array
     {
         return [
-            [
+            array_merge($this->sampleValues('invoices', 1), [
+                'id' => 1,
                 'number' => 'INV-2026-1002',
                 'client' => 'Prime Foods Ltd',
                 'amount' => '250000',
                 'issued_date' => '2026-04-01',
-            ],
+            ]),
         ];
     }
 
