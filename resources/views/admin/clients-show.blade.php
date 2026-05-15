@@ -56,7 +56,7 @@
         <div class="space-y-6 xl:col-span-2">
             <article class="admin-card overflow-hidden p-0">
                 <div class="border-b border-admin-border bg-slate-50/80 px-5 py-3">
-                    <h3 class="text-sm font-semibold text-admin-ink">Contact &amp; communication</h3>
+                    <h3 class="text-sm font-semibold text-admin-ink">Contact & communication</h3>
                     <p class="text-xs text-admin-muted">Reach this client using the details below.</p>
                 </div>
                 <div class="grid gap-4 p-5 sm:grid-cols-2">
@@ -89,21 +89,21 @@
 
             <article class="admin-card overflow-hidden p-0">
                 <div class="border-b border-admin-border bg-slate-50/80 px-5 py-3">
-                    <h3 class="text-sm font-semibold text-admin-ink">Company &amp; online</h3>
+                    <h3 class="text-sm font-semibold text-admin-ink">Company & online</h3>
                 </div>
                 <div class="grid gap-4 p-5 sm:grid-cols-2">
                     <div class="sm:col-span-2">
                         <p class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Legal / trading name</p>
-                        <p class="mt-1 text-sm font-medium text-admin-ink">{{ $company !== '' ? $company : '—' }}</p>
+                        <p class="mt-1 text-sm font-medium text-admin-ink">{{ $company !== '' ? $company : '-' }}</p>
                     </div>
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Industry</p>
-                        <p class="mt-1 text-sm text-admin-ink">{{ ($c['industry'] ?? '') !== '' ? $c['industry'] : '—' }}</p>
+                        <p class="mt-1 text-sm text-admin-ink">{{ ($c['industry'] ?? '') !== '' ? $c['industry'] : '-' }}</p>
                     </div>
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Website</p>
                         @if($web !== '' && $webHref !== '')
-                            <a href="{{ $webHref }}" target="_blank" rel="noopener noreferrer" class="mt-1 inline-flex items-center gap-1 text-sm font-medium text-admin-primary hover:underline">{{ $web }}<span class="text-xs opacity-70" aria-hidden="true">â†—</span></a>
+                            <a href="{{ $webHref }}" target="_blank" rel="noopener noreferrer" class="mt-1 inline-flex items-center gap-1 text-sm font-medium text-admin-primary hover:underline">{{ $web }}<span class="text-xs opacity-70" aria-hidden="true">↗</span></a>
                         @else
                             <p class="mt-1 text-sm text-admin-muted">Not set</p>
                         @endif
@@ -122,18 +122,18 @@
                     @else
                         <p class="mt-1 text-sm text-admin-muted">Not set</p>
                     @endif
-                    <p class="mt-4 text-xs font-semibold uppercase tracking-wide text-admin-muted">City &amp; country</p>
-                    <p class="mt-1 text-sm text-admin-ink">{{ $locLine !== '' ? $locLine : '—' }}</p>
+                    <p class="mt-4 text-xs font-semibold uppercase tracking-wide text-admin-muted">City & country</p>
+                    <p class="mt-1 text-sm text-admin-ink">{{ $locLine !== '' ? $locLine : '-' }}</p>
                 </div>
             </article>
 
             <article class="admin-card overflow-hidden p-0">
                 <div class="border-b border-admin-border bg-slate-50/80 px-5 py-3">
-                    <h3 class="text-sm font-semibold text-admin-ink">Billing &amp; compliance</h3>
+                    <h3 class="text-sm font-semibold text-admin-ink">Billing & compliance</h3>
                 </div>
                 <div class="p-5">
                     <p class="text-xs font-semibold uppercase tracking-wide text-admin-muted">KRA PIN / tax ID</p>
-                    <p class="mt-1 font-mono text-sm text-admin-ink">{{ ($c['tax_pin'] ?? '') !== '' ? $c['tax_pin'] : '—' }}</p>
+                    <p class="mt-1 font-mono text-sm text-admin-ink">{{ ($c['tax_pin'] ?? '') !== '' ? $c['tax_pin'] : '-' }}</p>
                 </div>
             </article>
 
@@ -174,7 +174,7 @@
                                 <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
                                     <div class="min-w-0">
                                         <p class="truncate text-sm font-medium text-admin-ink">{{ $file['name'] }}</p>
-                                        <p class="text-xs text-admin-muted">{{ $fmtSize((int) $file['size']) }} Â· {{ date('j M Y, H:i', (int) $file['modified']) }}</p>
+                                        <p class="text-xs text-admin-muted">{{ $fmtSize((int) $file['size']) }} · {{ date('j M Y, H:i', (int) $file['modified']) }}</p>
                                     </div>
                                     <div class="flex shrink-0 flex-wrap items-center gap-2">
                                         <a href="{{ route('admin.clients.files.download', [$c['id'], $file['name']]) }}" class="admin-btn-soft text-xs" target="_blank" rel="noopener noreferrer">Open</a>

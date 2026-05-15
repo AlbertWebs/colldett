@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Support\ClientDirectory;
 use App\Support\ClientFiles;
+use App\Support\DocumentPlainText;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -86,7 +87,7 @@ class ClientController extends Controller
         ClientFiles::ensureDirectory($id);
 
         return view('admin.clients-show', [
-            'client' => $client,
+            'client' => $this->clientForDisplay($client),
             'clientFiles' => ClientFiles::list($id),
         ]);
     }
@@ -131,7 +132,7 @@ class ClientController extends Controller
         $client = ClientDirectory::find($id);
         abort_unless($client, 404);
 
-        return view('admin.clients-edit', ['client' => $this->mergeClientDefaults($client)]);
+        return view('admin.clients-edit', ['client' => $this->clientForDisplay($this->mergeClientDefaults($client))]);
     }
 
     public function update(Request $request, int $id): RedirectResponse
@@ -229,16 +230,36 @@ class ClientController extends Controller
             'email' => $data['email'],
             'phone' => $data['phone'] ?? '',
             'phone_alt' => $data['phone_alt'] ?? '',
-            'contact_title' => $data['contact_title'] ?? '',
-            'address' => $data['address'] ?? '',
-            'city' => $data['city'] ?? '',
-            'country' => $data['country'] ?? '',
+            'contact_title' => $this->plainClientField($data['contact_title'] ?? ''),
+            'address' => $this->plainClientField($data['address'] ?? ''),
+            'city' => $this->plainClientField($data['city'] ?? ''),
+            'country' => $this->plainClientField($data['country'] ?? ''),
             'tax_pin' => $data['tax_pin'] ?? '',
-            'industry' => $data['industry'] ?? '',
+            'industry' => $this->plainClientField($data['industry'] ?? ''),
             'website' => $data['website'] ?? '',
-            'notes' => $data['notes'] ?? '',
+            'notes' => $this->plainClientField($data['notes'] ?? ''),
             'status' => $data['status'],
         ];
+    }
+
+    private function plainClientField(string $value): string
+    {
+        return DocumentPlainText::fromHtml($value);
+    }
+
+    /**
+     * @param  array<string, mixed>  $client
+     * @return array<string, mixed>
+     */
+    private function clientForDisplay(array $client): array
+    {
+        foreach (['name', 'company', 'contact_title', 'address', 'city', 'country', 'industry', 'notes'] as $key) {
+            if (array_key_exists($key, $client)) {
+                $client[$key] = $this->plainClientField((string) $client[$key]);
+            }
+        }
+
+        return $client;
     }
 
     /** @return array<string, mixed> */

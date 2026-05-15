@@ -59,7 +59,7 @@
     <div class="grid gap-4 md:grid-cols-2">
         <div class="md:col-span-2">
             <label class="admin-label" for="address">Street / building / P.O. Box</label>
-            <textarea id="address" name="address" rows="3" class="admin-input min-h-[5rem] @error('address') border-rose-300 @enderror" placeholder="Postal or physical address">{{ old('address', $c['address'] ?? '') }}</textarea>
+            <textarea id="address" name="address" rows="3" class="admin-input min-h-[5rem] @error('address') border-rose-300 @enderror" placeholder="Postal or physical address" data-no-editor="true">{{ old('address', \App\Support\DocumentPlainText::fromHtml($c['address'] ?? '')) }}</textarea>
             @error('address') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
         </div>
         <div>
@@ -76,7 +76,7 @@
 </article>
 
 <article class="admin-card p-6">
-    <h3 class="admin-card-title mb-4 text-base">Billing &amp; compliance</h3>
+    <h3 class="admin-card-title mb-4 text-base">Billing & compliance</h3>
     <div class="grid gap-4 md:grid-cols-2">
         <div>
             <label class="admin-label" for="tax_pin">KRA PIN / tax ID</label>
@@ -87,7 +87,7 @@
 </article>
 
 <article class="admin-card p-6">
-    <h3 class="admin-card-title mb-4 text-base">Status &amp; notes</h3>
+    <h3 class="admin-card-title mb-4 text-base">Status & notes</h3>
     <div class="grid gap-4 md:grid-cols-2">
         <div>
             <label class="admin-label" for="status">Account status</label>
@@ -99,7 +99,7 @@
         </div>
         <div class="md:col-span-2">
             <label class="admin-label" for="notes">Internal notes</label>
-            <textarea id="notes" name="notes" rows="4" class="admin-input min-h-[6rem] @error('notes') border-rose-300 @enderror" placeholder="Engagement context, billing terms, cautions — internal use only">{{ old('notes', $c['notes'] ?? '') }}</textarea>
+            <textarea id="notes" name="notes" rows="4" class="admin-input min-h-[6rem] @error('notes') border-rose-300 @enderror" placeholder="Engagement context, billing terms, cautions — internal use only" data-no-editor="true">{{ old('notes', \App\Support\DocumentPlainText::fromHtml($c['notes'] ?? '')) }}</textarea>
             @error('notes') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
         </div>
     </div>
