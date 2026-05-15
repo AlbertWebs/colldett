@@ -26,6 +26,66 @@ final class ClientDirectory
         return null;
     }
 
+    /** @return array<string, mixed>|null */
+    public static function findByCompany(string $company): ?array
+    {
+        $company = trim($company);
+        if ($company === '') {
+            return null;
+        }
+        foreach (self::all() as $row) {
+            if (trim((string) ($row['company'] ?? '')) === $company) {
+                return $row;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Three-digit (or wider) segment from account number for fee note refs (AC-000001 → 001).
+     */
+    public static function accountRefSegment(?string $accountNumber): string
+    {
+        $accountNumber = trim((string) $accountNumber);
+        if (preg_match('/(\d+)/', $accountNumber, $m)) {
+            $num = (int) $m[1];
+            if ($num >= 1000) {
+                return (string) $num;
+            }
+
+            return str_pad((string) $num, 3, '0', STR_PAD_LEFT);
+        }
+
+        return '000';
+    }
+
+    public static function accountRefSegmentForCompany(string $company): string
+    {
+        $row = self::findByCompany($company);
+
+        return self::accountRefSegment($row['account_number'] ?? null);
+    }
+
+    /**
+     * Company name → account ref segment for fee note Our Ref autofill.
+     *
+     * @return array<string, string>
+     */
+    public static function accountRefByCompany(): array
+    {
+        $map = [];
+        foreach (self::all() as $row) {
+            $company = trim((string) ($row['company'] ?? ''));
+            if ($company === '') {
+                continue;
+            }
+            $map[$company] = self::accountRefSegment($row['account_number'] ?? null);
+        }
+
+        return $map;
+    }
+
     /** @return list<array<string, mixed>> */
     public static function all(): array
     {

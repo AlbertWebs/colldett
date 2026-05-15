@@ -21,7 +21,6 @@
         </div>
     @endif
 
-    {{-- Breadcrumb + title --}}
     <div class="space-y-3">
         <nav class="flex flex-wrap items-center gap-1.5 text-sm text-admin-muted" aria-label="Breadcrumb">
             <a href="{{ route('admin.clients') }}" class="font-medium text-admin-primary hover:underline">Clients</a>
@@ -54,9 +53,7 @@
     </div>
 
     <div class="grid gap-6 xl:grid-cols-3">
-        {{-- Main column --}}
         <div class="space-y-6 xl:col-span-2">
-            {{-- Contact --}}
             <article class="admin-card overflow-hidden p-0">
                 <div class="border-b border-admin-border bg-slate-50/80 px-5 py-3">
                     <h3 class="text-sm font-semibold text-admin-ink">Contact &amp; communication</h3>
@@ -90,7 +87,6 @@
                 </div>
             </article>
 
-            {{-- Company --}}
             <article class="admin-card overflow-hidden p-0">
                 <div class="border-b border-admin-border bg-slate-50/80 px-5 py-3">
                     <h3 class="text-sm font-semibold text-admin-ink">Company &amp; online</h3>
@@ -107,7 +103,7 @@
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Website</p>
                         @if($web !== '' && $webHref !== '')
-                            <a href="{{ $webHref }}" target="_blank" rel="noopener noreferrer" class="mt-1 inline-flex items-center gap-1 text-sm font-medium text-admin-primary hover:underline">{{ $web }}<span class="text-xs opacity-70" aria-hidden="true">↗</span></a>
+                            <a href="{{ $webHref }}" target="_blank" rel="noopener noreferrer" class="mt-1 inline-flex items-center gap-1 text-sm font-medium text-admin-primary hover:underline">{{ $web }}<span class="text-xs opacity-70" aria-hidden="true">â†—</span></a>
                         @else
                             <p class="mt-1 text-sm text-admin-muted">Not set</p>
                         @endif
@@ -115,7 +111,6 @@
                 </div>
             </article>
 
-            {{-- Location --}}
             <article class="admin-card overflow-hidden p-0">
                 <div class="border-b border-admin-border bg-slate-50/80 px-5 py-3">
                     <h3 class="text-sm font-semibold text-admin-ink">Location</h3>
@@ -132,7 +127,6 @@
                 </div>
             </article>
 
-            {{-- Compliance --}}
             <article class="admin-card overflow-hidden p-0">
                 <div class="border-b border-admin-border bg-slate-50/80 px-5 py-3">
                     <h3 class="text-sm font-semibold text-admin-ink">Billing &amp; compliance</h3>
@@ -143,7 +137,60 @@
                 </div>
             </article>
 
-            {{-- Notes --}}
+            <article class="admin-card overflow-hidden p-0" id="client-files">
+                <div class="border-b border-admin-border bg-slate-50/80 px-5 py-3">
+                    <h3 class="text-sm font-semibold text-admin-ink">Client files</h3>
+                    <p class="text-xs text-admin-muted">Upload correspondence, agreements, and case documents for this client.</p>
+                </div>
+                <div class="space-y-4 p-5">
+                    <form method="POST" action="{{ route('admin.clients.files.upload', $c['id']) }}" enctype="multipart/form-data" class="flex flex-wrap items-end gap-3">
+                        @csrf
+                        <div class="min-w-[12rem] flex-1">
+                            <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-admin-muted">Upload file</label>
+                            <input class="admin-input" type="file" name="file" required accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.webp,.zip" />
+                        </div>
+                        <button type="submit" class="admin-btn-primary shrink-0">Upload</button>
+                    </form>
+
+                    @php
+                        $files = $clientFiles ?? [];
+                        $fmtSize = static function (int $bytes): string {
+                            if ($bytes < 1024) {
+                                return $bytes.' B';
+                            }
+                            if ($bytes < 1048576) {
+                                return number_format($bytes / 1024, 1).' KB';
+                            }
+
+                            return number_format($bytes / 1048576, 1).' MB';
+                        };
+                    @endphp
+
+                    @if($files === [])
+                        <p class="text-sm text-admin-muted">No files yet. Upload PDFs, images, or office documents above.</p>
+                    @else
+                        <ul class="divide-y divide-admin-border rounded-lg border border-admin-border">
+                            @foreach($files as $file)
+                                <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                                    <div class="min-w-0">
+                                        <p class="truncate text-sm font-medium text-admin-ink">{{ $file['name'] }}</p>
+                                        <p class="text-xs text-admin-muted">{{ $fmtSize((int) $file['size']) }} Â· {{ date('j M Y, H:i', (int) $file['modified']) }}</p>
+                                    </div>
+                                    <div class="flex shrink-0 flex-wrap items-center gap-2">
+                                        <a href="{{ route('admin.clients.files.download', [$c['id'], $file['name']]) }}" class="admin-btn-soft text-xs" target="_blank" rel="noopener noreferrer">Open</a>
+                                        <form method="POST" action="{{ route('admin.clients.files.destroy', [$c['id'], $file['name']]) }}" onsubmit="return confirm('Remove this file?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="admin-btn-soft text-xs !border-rose-200 !text-rose-700 hover:!bg-rose-50">Delete</button>
+                                        </form>
+                                    </div>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </div>
+            </article>
+
             <article class="admin-card overflow-hidden p-0">
                 <div class="flex flex-wrap items-center justify-between gap-2 border-b border-admin-border bg-amber-50/50 px-5 py-3">
                     <div>
@@ -162,12 +209,13 @@
             </article>
         </div>
 
-        {{-- Sidebar CTAs --}}
         <aside class="space-y-4">
             <article class="admin-card p-5">
                 <h3 class="admin-card-title mb-3 text-sm">Quick actions</h3>
                 <div class="flex flex-col gap-2">
                     <a href="{{ route('admin.clients.edit', $c['id']) }}" class="admin-btn-primary w-full justify-center">Edit client</a>
+                    <a href="{{ route('admin.billing.module.create', ['fee-notes', 'client' => $company]) }}" class="admin-btn-soft w-full justify-center">New fee note</a>
+                    <a href="#client-files" class="admin-btn-soft w-full justify-center">Client files</a>
                     @if($email !== '')
                         <a href="mailto:{{ $email }}" class="admin-btn-soft w-full justify-center">Send email</a>
                     @endif

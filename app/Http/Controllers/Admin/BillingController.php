@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Support\AdminStoredSettings;
 use App\Support\ClientDirectory;
 use App\Support\DocumentPlainText;
+use App\Support\FeeNoteReference;
+use App\Support\ServiceCatalog;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,7 +24,7 @@ class BillingController extends Controller
         ]);
     }
 
-    public function create(string $module): View
+    public function create(Request $request, string $module): View
     {
         $meta = $this->moduleMeta($module);
         $values = [];
@@ -35,8 +37,15 @@ class BillingController extends Controller
         if ($module === 'fee-notes') {
             $values = array_merge(
                 AdminStoredSettings::feeNoteRemittanceDefaults(),
-                ['number' => $this->peekNextFeeNoteNumber()]
+                [
+                    'number' => $this->peekNextFeeNoteNumber(),
+                    'issued_date' => date('Y-m-d'),
+                ]
             );
+            $presetClient = trim((string) $request->query('client', ''));
+            if ($presetClient !== '') {
+                $values['client'] = $presetClient;
+            }
         }
         if ($module === 'payments') {
             $values['payment_id'] = $this->peekNextPaymentId();
@@ -53,6 +62,8 @@ class BillingController extends Controller
             'invoiceOptions' => $module === 'payments' ? $this->invoiceOptionsForPayments() : [],
             'feeNoteIsDraft' => false,
             'feeNoteAddressByClient' => $module === 'fee-notes' ? ClientDirectory::feeNoteAddressesForForm() : [],
+            'feeNoteServices' => $module === 'fee-notes' ? ServiceCatalog::optionsForSelect() : [],
+            'feeNoteClientAccountRefs' => $module === 'fee-notes' ? ClientDirectory::accountRefByCompany() : [],
         ]);
     }
 
@@ -97,6 +108,8 @@ class BillingController extends Controller
 
         if ($module === 'fee-notes') {
             $data = $this->feeNotePlainTextFields($data);
+            $data = $this->feeNoteNormalizeInput($data);
+            $data = FeeNoteReference::apply($data);
             $data = AdminStoredSettings::feeNoteFillRemittance($data);
             ClientDirectory::rememberFeeNoteAddress((string) ($data['client'] ?? ''), (string) ($data['address'] ?? ''));
             if ($request->input('fee_note_action') === 'draft') {
@@ -267,6 +280,8 @@ class BillingController extends Controller
             'invoiceOptions' => $module === 'payments' ? $this->invoiceOptionsForPayments() : [],
             'feeNoteIsDraft' => $feeNoteIsDraft,
             'feeNoteAddressByClient' => $module === 'fee-notes' ? ClientDirectory::feeNoteAddressesForForm() : [],
+            'feeNoteServices' => $module === 'fee-notes' ? ServiceCatalog::optionsForSelect() : [],
+            'feeNoteClientAccountRefs' => $module === 'fee-notes' ? ClientDirectory::accountRefByCompany() : [],
         ]);
     }
 
@@ -278,6 +293,7 @@ class BillingController extends Controller
 
         $row['number'] = $this->generateNextFeeNoteNumber();
         $row['is_draft'] = false;
+        $row = FeeNoteReference::apply($row);
         $row = AdminStoredSettings::feeNoteFillRemittance($row);
         ClientDirectory::rememberFeeNoteAddress((string) ($row['client'] ?? ''), (string) ($row['address'] ?? ''));
         $this->replaceFeeNoteRecord($row);
@@ -296,7 +312,9 @@ class BillingController extends Controller
             abort_unless($existing, 404);
             $data = $request->validate($this->rules($module));
             $data = $this->feeNotePlainTextFields($data);
+            $data = $this->feeNoteNormalizeInput($data);
             $merged = array_merge($existing, $data, ['id' => $id]);
+            $merged = FeeNoteReference::apply($merged);
             if (($existing['is_draft'] ?? false) === true) {
                 $merged['is_draft'] = true;
                 $merged['number'] = '';
@@ -364,6 +382,7 @@ class BillingController extends Controller
                 'description' => 'Create structured fee notes using the advocate-style format. Bank remittance lines always follow Admin → Settings (Invoices & printable documents → bank remittance fields), same as invoices — they are not frozen per fee note.',
                 'fields' => [
                     ['name' => 'number', 'label' => 'Fee Note Number'],
+                    ['name' => 'service_id', 'label' => 'Service'],
                     ['name' => 'our_ref', 'label' => 'Our Reference'],
                     ['name' => 'your_ref', 'label' => 'Your Reference'],
                     ['name' => 'client', 'label' => 'Client'],
@@ -434,6 +453,9 @@ class BillingController extends Controller
             $max = ($module === 'demand' && $field['name'] === 'body') ? 8000 : 2000;
             $rules[$field['name']] = ['nullable', 'string', 'max:'.$max];
         }
+        if ($module === 'fee-notes') {
+            $rules['service_id'] = ['nullable', 'integer', 'min:1'];
+        }
 
         return $rules;
     }
@@ -454,7 +476,8 @@ class BillingController extends Controller
             'quotations' => ['number' => 'QTN-2026-1001', 'client' => 'Apex Motors', 'valid_until' => '2026-04-30', 'amount' => '410000', 'scope' => 'Debt tracing and legal demand support'],
             'fee-notes' => AdminStoredSettings::feeNoteFillRemittance([
                 'number' => 'FN-2026-1001',
-                'our_ref' => '7/4523/001',
+                'service_id' => '1',
+                'our_ref' => '1/001/2026',
                 'your_ref' => '4523',
                 'client' => 'MORANI LIMITED',
                 'address' => "P.O BOX 3146-10400\nNYERI\nKENYA\nTel No: +254 721 385 891\nEmail: accounts@sirimon.co.ke",
@@ -872,7 +895,16 @@ class BillingController extends Controller
             $out['number'] = 'Draft';
         }
 
-        return AdminStoredSettings::feeNoteFillRemittance($out);
+        $out = AdminStoredSettings::feeNoteFillRemittance($out);
+        if (trim((string) ($out['our_ref'] ?? '')) === '') {
+            $out['our_ref'] = FeeNoteReference::build(
+                (int) ($out['service_id'] ?? 0),
+                (string) ($out['client'] ?? ''),
+                isset($out['issued_date']) ? (string) $out['issued_date'] : null
+            );
+        }
+
+        return $out;
     }
 
     /** @return array<string, mixed> */
@@ -883,7 +915,29 @@ class BillingController extends Controller
         $out = AdminStoredSettings::feeNoteStripStoredRemittance($row);
         unset($out['id'], $out['is_draft']);
 
-        return $this->feeNotePlainTextFields($out);
+        $out = $this->feeNotePlainTextFields($out);
+        if (trim((string) ($out['our_ref'] ?? '')) === '') {
+            $out['our_ref'] = FeeNoteReference::build(
+                (int) ($out['service_id'] ?? 0),
+                (string) ($out['client'] ?? ''),
+                isset($out['issued_date']) ? (string) $out['issued_date'] : null
+            );
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function feeNoteNormalizeInput(array $data): array
+    {
+        if (array_key_exists('service_id', $data)) {
+            $data['service_id'] = (string) max(0, (int) $data['service_id']);
+        }
+
+        return $data;
     }
 
     /**

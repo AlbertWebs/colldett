@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Support\ClientDirectory;
+use App\Support\ClientFiles;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ClientController extends Controller
 {
@@ -71,6 +73,7 @@ class ClientController extends Controller
         ]);
 
         ClientDirectory::save($items);
+        ClientFiles::ensureDirectory($nextId);
 
         return redirect()->route('admin.clients')->with('status', 'Client added successfully.');
     }
@@ -80,7 +83,47 @@ class ClientController extends Controller
         $client = ClientDirectory::find($id);
         abort_unless($client, 404);
 
-        return view('admin.clients-show', ['client' => $client]);
+        ClientFiles::ensureDirectory($id);
+
+        return view('admin.clients-show', [
+            'client' => $client,
+            'clientFiles' => ClientFiles::list($id),
+        ]);
+    }
+
+    public function uploadFile(Request $request, int $id): RedirectResponse
+    {
+        abort_unless(ClientDirectory::find($id), 404);
+
+        $data = $request->validate([
+            'file' => ['required', 'file', 'max:20480', 'mimes:pdf,doc,docx,xls,xlsx,csv,txt,jpg,jpeg,png,webp,zip'],
+        ]);
+
+        $filename = ClientFiles::storeUpload($id, $data['file']);
+
+        return redirect()
+            ->route('admin.clients.show', $id)
+            ->with('status', "File “{$filename}” uploaded.");
+    }
+
+    public function downloadFile(int $id, string $filename): BinaryFileResponse
+    {
+        abort_unless(ClientDirectory::find($id), 404);
+
+        $path = ClientFiles::absolutePath($id, $filename);
+        abort_unless($path && is_file($path), 404);
+
+        return response()->download($path, basename($path));
+    }
+
+    public function destroyFile(int $id, string $filename): RedirectResponse
+    {
+        abort_unless(ClientDirectory::find($id), 404);
+        abort_unless(ClientFiles::delete($id, $filename), 404);
+
+        return redirect()
+            ->route('admin.clients.show', $id)
+            ->with('status', 'File removed.');
     }
 
     public function edit(int $id): View

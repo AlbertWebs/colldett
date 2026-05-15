@@ -91,6 +91,9 @@ Route::middleware('admin.access')->prefix('admin')->name('admin.')->group(functi
     Route::get('/clients/create', [ClientController::class, 'create'])->name('clients.create');
     Route::post('/clients', [ClientController::class, 'store'])->name('clients.store');
     Route::get('/clients/{id}', [ClientController::class, 'show'])->name('clients.show')->whereNumber('id');
+    Route::post('/clients/{id}/files', [ClientController::class, 'uploadFile'])->name('clients.files.upload')->whereNumber('id');
+    Route::get('/clients/{id}/files/{filename}', [ClientController::class, 'downloadFile'])->name('clients.files.download')->whereNumber('id');
+    Route::delete('/clients/{id}/files/{filename}', [ClientController::class, 'destroyFile'])->name('clients.files.destroy')->whereNumber('id');
     Route::get('/clients/{id}/edit', [ClientController::class, 'edit'])->name('clients.edit')->whereNumber('id');
     Route::patch('/clients/{id}', [ClientController::class, 'update'])->name('clients.update')->whereNumber('id');
     Route::get('/clients/{id}/delete', [ClientController::class, 'deleteConfirm'])->name('clients.delete-confirm')->whereNumber('id');

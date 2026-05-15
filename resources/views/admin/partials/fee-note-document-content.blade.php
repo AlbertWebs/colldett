@@ -8,7 +8,17 @@
     $plain = static fn (?string $s, string $fallback = '—'): string => DocumentPlainText::fromHtml($s) ?: $fallback;
 
     $number = $plain((string) ($values['number'] ?? ''), '—');
-    $ourRef = $plain((string) ($values['our_ref'] ?? ''), '—');
+    $ourRef = $plain((string) ($values['our_ref'] ?? ''), '');
+    if ($ourRef === '') {
+        $ourRef = \App\Support\FeeNoteReference::build(
+            (int) ($values['service_id'] ?? 0),
+            (string) ($values['client'] ?? ''),
+            isset($values['issued_date']) ? (string) $values['issued_date'] : null
+        );
+    }
+    if ($ourRef === '') {
+        $ourRef = '—';
+    }
     $yourRef = $plain((string) ($values['your_ref'] ?? ''), '—');
     $client = $plain((string) ($values['client'] ?? ''), '—');
     $addressRaw = DocumentPlainText::fromHtml(trim((string) ($values['address'] ?? '')));

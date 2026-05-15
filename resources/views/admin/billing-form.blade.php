@@ -51,13 +51,14 @@
 
                     @php
                         $feeNoteSectionStarts = [
-                            'number' => ['title' => 'Reference Details', 'desc' => 'Core identifiers and issuance details.'],
+                            'number' => ['title' => 'Reference Details', 'desc' => 'Core identifiers and issuance details. Service + client auto-build Our Ref (e.g. 1/001/2026).'],
                             'address' => ['title' => 'Client Particulars', 'desc' => 'Use the full recipient block exactly as it should appear on the fee note.'],
                             'line_description' => ['title' => 'Fee Computation', 'desc' => 'Enter the rendered service and tax inputs used to compute totals.'],
                             'notes' => ['title' => 'Closing notes', 'desc' => 'Optional text at the foot of the fee note. Bank remittance details use Settings → bank lines (same as invoices).'],
                         ];
                         $feeNoteFieldHelp = [
-                            'our_ref' => 'Internal office/matter reference.',
+                            'service_id' => 'Service number is the first part of Our Ref (from Admin → Services).',
+                            'our_ref' => 'Auto-generated as {service}/{account}/{year} e.g. 1/001/2026 when service and client are selected.',
                             'your_ref' => 'Client reference if provided.',
                             'payment_terms' => 'Example: IMMEDIATE, 7 DAYS, 14 DAYS.',
                             'line_description' => 'This text appears in the particulars row in the table.',
@@ -65,7 +66,7 @@
                             'address' => 'After you save a fee note, this address is remembered for the same client — pick the client again on a new fee note to auto-fill.',
                         ];
                         $feeNotePlaceholders = [
-                            'our_ref' => 'e.g. 7/4523/001',
+                            'our_ref' => 'e.g. 1/001/2026',
                             'your_ref' => 'e.g. 4523',
                             'payment_terms' => 'e.g. IMMEDIATE',
                             'line_description' => 'Professional fees for debt collection ...',
@@ -83,8 +84,30 @@
                             @endif
                             <div class="{{ ($field['type'] ?? 'text') === 'textarea' ? 'md:col-span-2' : '' }}">
                                 <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-admin-muted">{{ $field['label'] }}</label>
-                                @if($field['name'] === 'client')
-                                    <select class="admin-select" name="{{ $field['name'] }}" data-no-autolabel="true">
+                                @elseif($module === 'fee-notes' && $field['name'] === 'service_id')
+                                    @php
+                                        $currentServiceId = (string) old('service_id', $values['service_id'] ?? '');
+                                        $serviceOptions = $feeNoteServices ?? [];
+                                    @endphp
+                                    <select class="admin-select" name="service_id" id="fee-note-service-id" data-no-autolabel="true">
+                                        <option value="">Select service</option>
+                                        @foreach($serviceOptions as $svc)
+                                            <option value="{{ $svc['id'] }}" @selected($currentServiceId === (string) $svc['id'])>{{ $svc['name'] }}</option>
+                                        @endforeach
+                                    </select>
+                                @elseif($module === 'fee-notes' && $field['name'] === 'our_ref')
+                                    <input
+                                        class="admin-input cursor-not-allowed bg-slate-50 font-mono text-admin-ink"
+                                        type="text"
+                                        name="our_ref"
+                                        id="fee-note-our-ref"
+                                        value="{{ old('our_ref', $values['our_ref'] ?? '') }}"
+                                        readonly
+                                        data-no-autolabel="true"
+                                        placeholder="Select service and client"
+                                    />
+                                @elseif($field['name'] === 'client')
+                                    <select class="admin-select" name="{{ $field['name'] }}" id="fee-note-client" data-no-autolabel="true">
                                         <option value="">
                                             {{ $module === 'demand' ? 'Select engaging client' : ($module === 'fee-notes' ? 'Select client organization' : 'Select client') }}
                                         </option>
@@ -276,27 +299,66 @@
         <script>
             document.addEventListener('DOMContentLoaded', function () {
                 const map = @json($feeNoteAddressByClient ?? []);
-                const clientSel = document.querySelector('select[name="client"]');
+                const accountRefs = @json($feeNoteClientAccountRefs ?? []);
+                const clientSel = document.getElementById('fee-note-client') || document.querySelector('select[name="client"]');
+                const serviceSel = document.getElementById('fee-note-service-id');
+                const ourRefInput = document.getElementById('fee-note-our-ref');
+                const issuedDateInput = document.querySelector('input[name="issued_date"]');
                 const addr = document.querySelector('textarea[name="address"]');
-                if (!clientSel || !addr || typeof map !== 'object' || map === null) {
-                    return;
-                }
-                const fillFor = function (company) {
-                    if (!company || !Object.prototype.hasOwnProperty.call(map, company)) {
+
+                const buildOurRef = function () {
+                    if (!ourRefInput || !serviceSel || !clientSel) {
                         return;
                     }
-                    const next = map[company];
-                    if (typeof next !== 'string' || next.trim() === '') {
+                    const serviceId = (serviceSel.value || '').trim();
+                    const company = (clientSel.value || '').trim();
+                    if (!serviceId || !company) {
+                        ourRefInput.value = '';
                         return;
                     }
-                    addr.value = next;
+                    const accountSeg = Object.prototype.hasOwnProperty.call(accountRefs, company)
+                        ? accountRefs[company]
+                        : '000';
+                    let year = new Date().getFullYear();
+                    if (issuedDateInput && issuedDateInput.value) {
+                        const parsed = new Date(issuedDateInput.value);
+                        if (!Number.isNaN(parsed.getTime())) {
+                            year = parsed.getFullYear();
+                        }
+                    }
+                    ourRefInput.value = serviceId + '/' + accountSeg + '/' + year;
                 };
-                clientSel.addEventListener('change', function () {
-                    fillFor((clientSel.value || '').trim());
-                });
-                if ((addr.value || '').trim() === '') {
-                    fillFor((clientSel.value || '').trim());
+
+                if (serviceSel) {
+                    serviceSel.addEventListener('change', buildOurRef);
                 }
+                if (issuedDateInput) {
+                    issuedDateInput.addEventListener('change', buildOurRef);
+                }
+
+                if (clientSel && addr && typeof map === 'object' && map !== null) {
+                    const fillAddressFor = function (company) {
+                        if (!company || !Object.prototype.hasOwnProperty.call(map, company)) {
+                            return;
+                        }
+                        const next = map[company];
+                        if (typeof next !== 'string' || next.trim() === '') {
+                            return;
+                        }
+                        addr.value = next;
+                    };
+                    clientSel.addEventListener('change', function () {
+                        fillAddressFor((clientSel.value || '').trim());
+                        buildOurRef();
+                    });
+                    if ((addr.value || '').trim() === '') {
+                        fillAddressFor((clientSel.value || '').trim());
+                    }
+                } else if (clientSel) {
+                    clientSel.addEventListener('change', buildOurRef);
+                }
+
+                buildOurRef();
             });
         </script>
     @endpush
