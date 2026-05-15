@@ -84,7 +84,7 @@
                             @endif
                             <div class="{{ ($field['type'] ?? 'text') === 'textarea' ? 'md:col-span-2' : '' }}">
                                 <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-admin-muted">{{ $field['label'] }}</label>
-                                @elseif($module === 'fee-notes' && $field['name'] === 'service_id')
+                                @if($module === 'fee-notes' && $field['name'] === 'service_id')
                                     @php
                                         $currentServiceId = (string) old('service_id', $values['service_id'] ?? '');
                                         $serviceOptions = $feeNoteServices ?? [];
