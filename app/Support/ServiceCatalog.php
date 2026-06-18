@@ -40,6 +40,18 @@ final class ServiceCatalog
         return null;
     }
 
+    public static function findBySlug(string $slug): ?array
+    {
+        $slug = trim($slug);
+        foreach (self::all() as $row) {
+            if (trim((string) ($row['slug'] ?? '')) === $slug) {
+                return $row;
+            }
+        }
+
+        return null;
+    }
+
     /** @return list<array{id: int, name: string}> */
     public static function optionsForSelect(): array
     {

@@ -1,6 +1,16 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    use App\Support\RichContentHtml;
+
+    $descriptionHtml = RichContentHtml::toParagraphHtml($capability['description'] ?? '');
+    $hasAdminDescription = RichContentHtml::hasVisibleContent($capability['description'] ?? '');
+    $heroIntro = RichContentHtml::plainExcerpt($capability['description'] ?? '', 240);
+    if ($heroIntro === '') {
+        $heroIntro = trim(strip_tags((string) ($capability['description'] ?? '')));
+    }
+@endphp
 <section class="page-hero">
     <div class="container">
         <p class="page-breadcrumb">
@@ -11,14 +21,20 @@
             <span>{{ $capability['name'] }}</span>
         </p>
         <h1>{{ $capability['name'] }}</h1>
-        <p>{{ $capability['description'] }}</p>
+        @if($heroIntro !== '')
+            <p>{{ $heroIntro }}</p>
+        @endif
     </div>
 </section>
 
 <section class="section capability-detail-section reveal">
     <div class="container capability-detail-grid">
         <article class="capability-detail-main">
-            @if(!empty($capability['content']))
+            @if($hasAdminDescription)
+                <div class="capability-detail-prose">
+                    {!! $descriptionHtml !!}
+                </div>
+            @elseif(!empty($capability['content']))
                 @php
                     $content = is_array($capability['content']) ? $capability['content'] : [];
                     $intro = (string) ($content['intro'] ?? '');
@@ -26,7 +42,7 @@
                 @endphp
                 @if($intro !== '')
                     @foreach(preg_split("/\r\n\r\n|\n\n/", trim($intro)) as $para)
-                        <p class="mb-4">{{ $para }}</p>
+                        <p class="capability-detail-para">{{ $para }}</p>
                     @endforeach
                 @endif
                 @foreach($sections as $section)
@@ -39,7 +55,7 @@
                         <h2 class="mt-6">{{ $title }}</h2>
                     @endif
                     @if($body !== '')
-                        <p class="mt-3">{{ $body }}</p>
+                        <p class="capability-detail-para mt-3">{{ $body }}</p>
                     @endif
                     @if($bullets !== [])
                         <ul class="checklist mt-4">
@@ -51,7 +67,7 @@
                 @endforeach
             @else
                 <h2>How this capability works</h2>
-                <p>We execute this capability through disciplined workflows, practical escalation controls, and outcome-focused case management aligned to institutional standards.</p>
+                <p class="capability-detail-para">We execute this capability through disciplined workflows, practical escalation controls, and outcome-focused case management aligned to institutional standards.</p>
                 <ul class="checklist">
                     @foreach($capabilityDetails as $item)
                         <li>{{ $item }}</li>
@@ -64,6 +80,13 @@
                 <p class="capability-pill">Featured Capability</p>
             @elseif(!empty($capability['coming_soon']))
                 <p class="capability-pill">Coming Soon</p>
+            @endif
+            @if(!empty($capability['image']))
+                @php
+                    $image = (string) $capability['image'];
+                    $imageUrl = str_starts_with($image, 'http') ? $image : asset(ltrim($image, '/'));
+                @endphp
+                <img src="{{ $imageUrl }}" alt="{{ $capability['name'] }}" class="mb-4 w-full rounded-xl border border-[#d5ded8] object-cover" loading="lazy" />
             @endif
             <h3>Need this capability?</h3>
             <p>Engage our team for a tailored execution plan based on your portfolio, timelines, and risk profile.</p>

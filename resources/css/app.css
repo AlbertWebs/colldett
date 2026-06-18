@@ -1788,6 +1788,31 @@ p { margin: 0; color: var(--muted); }
   font-size: 0.98rem;
   line-height: 1.7;
 }
+.capability-detail-prose p,
+.capability-detail-para {
+  margin: 0 0 1.25rem;
+}
+.capability-detail-prose p:last-child,
+.capability-detail-para:last-child {
+  margin-bottom: 0;
+}
+.capability-detail-prose p + p {
+  margin-top: 0.25rem;
+}
+.capability-detail-prose ul,
+.capability-detail-prose ol {
+  margin: 0 0 1.25rem 1.25rem;
+  padding: 0;
+}
+.capability-detail-prose li + li {
+  margin-top: 0.5rem;
+}
+.capability-detail-prose h2,
+.capability-detail-prose h3,
+.capability-detail-prose h4 {
+  margin: 1.5rem 0 0.75rem;
+  color: #1f4a1b;
+}
 .capability-detail-main .checklist {
   margin-top: 0.75rem;
 }

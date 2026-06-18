@@ -44,7 +44,7 @@
                         </div>
                         <div class="md:col-span-2">
                             <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-admin-muted">Description</label>
-                            <textarea class="admin-input min-h-40" name="description" placeholder="Describe service scope, value and delivery model...">{{ old('description', $item['description']) }}</textarea>
+                            <textarea class="admin-input min-h-40" name="description" placeholder="Describe service scope, value and delivery model..." data-no-editor="true">{{ old('description', \App\Support\DocumentPlainText::fromHtml($item['description'] ?? '')) }}</textarea>
                         </div>
                     </div>
                 </article>

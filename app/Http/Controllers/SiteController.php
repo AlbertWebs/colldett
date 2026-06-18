@@ -6,6 +6,7 @@ use App\Models\Capability;
 use App\Models\ContactDetail;
 use App\Models\Insight;
 use App\Support\AdminStoredSettings;
+use App\Support\ServiceCatalog;
 use App\Support\TeamDirectory;
 use Carbon\Carbon;
 use Illuminate\Http\Response;
@@ -484,43 +485,65 @@ class SiteController extends Controller
 
     private function getCapabilities(): array
     {
-        if (! Schema::hasTable('capabilities')) {
+        $configBySlug = collect(config('colldett.services', []))->keyBy('slug');
+        $dbBySlug = collect();
+
+        if (Schema::hasTable('capabilities')) {
+            $dbBySlug = Capability::query()
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get()
+                ->keyBy('slug');
+        }
+
+        $adminServices = ServiceCatalog::all();
+        if ($adminServices !== []) {
+            return collect($adminServices)
+                ->map(function (array $svc, int $index) use ($configBySlug, $dbBySlug): array {
+                    $slug = (string) ($svc['slug'] ?? '');
+                    $config = (array) ($configBySlug->get($slug) ?? []);
+                    $db = $dbBySlug->get($slug);
+
+                    return [
+                        'name' => (string) ($svc['name'] ?? ''),
+                        'slug' => $slug,
+                        'description' => (string) ($svc['description'] ?? ''),
+                        'image' => (string) ($svc['image'] ?? ''),
+                        'details' => $db?->details ?? ($config['details'] ?? null),
+                        'content' => $db?->content ?? ($config['content'] ?? null),
+                        'seo_title' => $db?->seo_title ?? ($config['seo_title'] ?? null),
+                        'seo_description' => $db?->seo_description ?? ($config['seo_description'] ?? null),
+                        'seo_keywords' => $db?->seo_keywords ?? ($config['seo_keywords'] ?? null),
+                        'featured' => (bool) ($db?->featured ?? ($config['featured'] ?? false)),
+                        'coming_soon' => (bool) ($db?->coming_soon ?? ($config['coming_soon'] ?? false)),
+                        'sort_order' => (int) ($db?->sort_order ?? ($index + 1)),
+                    ];
+                })
+                ->sortBy('sort_order')
+                ->values()
+                ->all();
+        }
+
+        if ($dbBySlug->isEmpty()) {
             return config('colldett.services');
         }
 
-        $rows = Capability::query()
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->get([
-                'name',
-                'slug',
-                'description',
-                'details',
-                'content',
-                'seo_title',
-                'seo_description',
-                'seo_keywords',
-                'featured',
-                'coming_soon',
-            ]);
-
-        if ($rows->isEmpty()) {
-            return config('colldett.services');
-        }
-
-        return $rows->map(fn (Capability $item) => [
-            'name' => $item->name,
-            'slug' => $item->slug,
-            'description' => $item->description,
-            'details' => $item->details,
-            'content' => $item->content,
-            'seo_title' => $item->seo_title,
-            'seo_description' => $item->seo_description,
-            'seo_keywords' => $item->seo_keywords,
-            'featured' => $item->featured,
-            'coming_soon' => $item->coming_soon,
-        ])->all();
+        return $dbBySlug
+            ->map(fn (Capability $item) => [
+                'name' => $item->name,
+                'slug' => $item->slug,
+                'description' => $item->description,
+                'details' => $item->details,
+                'content' => $item->content,
+                'seo_title' => $item->seo_title,
+                'seo_description' => $item->seo_description,
+                'seo_keywords' => $item->seo_keywords,
+                'featured' => $item->featured,
+                'coming_soon' => $item->coming_soon,
+            ])
+            ->values()
+            ->all();
     }
 
     private function getInsights(): array
