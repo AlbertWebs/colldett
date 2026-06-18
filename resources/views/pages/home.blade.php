@@ -122,7 +122,7 @@
                         <p class="service-kicker">{{ strtoupper(str_replace('-', ' ', $service['slug'])) }}</p>
                         <h3>{{ $service['name'] }}</h3>
                         @if(!empty($service['coming_soon']))<span class="badge">COMING SOON</span>@endif
-                        <p>{{ $service['description'] }}</p>
+                        <p class="service-card-desc">{{ trim(preg_replace('/\s+/u', ' ', strip_tags(\App\Support\DocumentPlainText::fromHtml($service['description'] ?? '')))) }}</p>
                         <a class="service-card-cta" href="{{ route('capabilities.show', $service['slug']) }}">
                             <span>Learn more</span>
                             <i aria-hidden="true">→</i>
