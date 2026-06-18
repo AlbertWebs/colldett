@@ -32,7 +32,7 @@ final class RichContentHtml
 
         $sanitized = self::sanitize($value);
         if (str_contains($sanitized, '<p')) {
-            return $sanitized;
+            return self::normalizeParagraphBlocks($sanitized);
         }
 
         $plain = DocumentPlainText::fromHtml($value);
@@ -49,11 +49,27 @@ final class RichContentHtml
         foreach ($chunks as $chunk) {
             $chunk = trim((string) $chunk);
             if ($chunk !== '') {
-                $html[] = '<p>'.e($chunk).'</p>';
+                $html[] = '<p class="capability-detail-para">'.e($chunk).'</p>';
             }
         }
 
         return implode("\n", $html);
+    }
+
+    /**
+     * Ensure stored HTML paragraphs carry spacing class and line breaks between blocks.
+     */
+    public static function normalizeParagraphBlocks(string $html): string
+    {
+        if ($html === '') {
+            return '';
+        }
+
+        $html = preg_replace('/<\/p>\s*<p>/i', "</p>\n<p>", $html) ?? $html;
+        $html = preg_replace('/<p>/i', '<p class="capability-detail-para">', $html) ?? $html;
+        $html = preg_replace('/<p class="capability-detail-para" class="capability-detail-para">/i', '<p class="capability-detail-para">', $html) ?? $html;
+
+        return trim($html);
     }
 
     public static function hasVisibleContent(?string $value): bool

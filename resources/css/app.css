@@ -1788,16 +1788,17 @@ p { margin: 0; color: var(--muted); }
   font-size: 0.98rem;
   line-height: 1.7;
 }
+.capability-detail-prose {
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+}
 .capability-detail-prose p,
 .capability-detail-para {
-  margin: 0 0 1.25rem;
-}
-.capability-detail-prose p:last-child,
-.capability-detail-para:last-child {
-  margin-bottom: 0;
+  margin: 0;
 }
 .capability-detail-prose p + p {
-  margin-top: 0.25rem;
+  margin-top: 0;
 }
 .capability-detail-prose ul,
 .capability-detail-prose ol {
