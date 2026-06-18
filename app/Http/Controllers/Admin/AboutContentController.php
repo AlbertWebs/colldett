@@ -23,7 +23,7 @@ class AboutContentController extends Controller
     {
         $data = $request->validate([
             'hero_title' => ['required', 'string', 'max:255'],
-            'hero_intro' => ['required', 'string', 'max:1500'],
+            'hero_intro' => ['required', 'string', 'max:5000'],
             'mission_text' => ['required', 'string', 'max:1500'],
             'vision_text' => ['required', 'string', 'max:1500'],
             'core_values_text' => ['required', 'string', 'max:3000'],
