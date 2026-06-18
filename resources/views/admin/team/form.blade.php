@@ -39,19 +39,19 @@
                     @if($mode === 'create')
                         <div class="md:col-span-2">
                             <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-admin-muted">URL slug</label>
-                            <input class="admin-input" name="slug" value="{{ old('slug', $member['slug']) }}" placeholder="e.g. evance-odhiambo" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" />
-                            <p class="mt-1 text-xs text-admin-muted">Lowercase, hyphens only. Used in /team/<strong>slug</strong>.</p>
+                            <input class="admin-input" name="slug" id="team-slug" value="{{ old('slug', $member['slug']) }}" placeholder="Auto-filled from name" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" />
+                            <p class="mt-1 text-xs text-admin-muted">Lowercase, hyphens only. Leave blank to generate from full name on save.</p>
                         </div>
                     @else
                         <div class="md:col-span-2">
                             <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-admin-muted">URL slug</label>
-                            <input class="admin-input bg-slate-50" type="text" value="{{ $member['slug'] }}" readonly disabled />
-                            <p class="mt-1 text-xs text-admin-muted">Slug cannot be changed here (stable public URL).</p>
+                            <input class="admin-input bg-slate-50" type="text" id="team-slug-preview" value="{{ $member['slug'] }}" readonly />
+                            <p class="mt-1 text-xs text-admin-muted">Regenerated from <strong>Full name</strong> when you save (public URL: /team/<span id="team-slug-path">{{ $member['slug'] }}</span>).</p>
                         </div>
                     @endif
                     <div class="md:col-span-2">
                         <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-admin-muted">Full name</label>
-                        <input class="admin-input" name="name" value="{{ old('name', $member['name']) }}" required />
+                        <input class="admin-input" name="name" id="team-member-name" value="{{ old('name', $member['name']) }}" required />
                     </div>
                     <div class="md:col-span-2">
                         <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-admin-muted">Role / title</label>
@@ -159,4 +159,47 @@
         </div>
     </form>
 </section>
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const nameInput = document.getElementById('team-member-name');
+            const slugInput = document.getElementById('team-slug');
+            const slugPreview = document.getElementById('team-slug-preview');
+            const slugPath = document.getElementById('team-slug-path');
+
+            const toSlug = function (value) {
+                return (value || '')
+                    .toLowerCase()
+                    .trim()
+                    .replace(/[^a-z0-9\s-]/g, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/-+/g, '-')
+                    .replace(/^-|-$/g, '');
+            };
+
+            if (!nameInput) {
+                return;
+            }
+
+            nameInput.addEventListener('input', function () {
+                const next = toSlug(nameInput.value);
+                if (slugInput && !slugInput.dataset.touched) {
+                    slugInput.value = next;
+                }
+                if (slugPreview) {
+                    slugPreview.value = next || slugPreview.value;
+                }
+                if (slugPath) {
+                    slugPath.textContent = next || slugPath.textContent;
+                }
+            });
+
+            if (slugInput) {
+                slugInput.addEventListener('input', function () {
+                    slugInput.dataset.touched = slugInput.value.trim() !== '' ? '1' : '';
+                });
+            }
+        });
+    </script>
+@endpush
 @endsection

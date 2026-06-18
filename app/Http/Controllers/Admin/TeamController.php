@@ -47,6 +47,9 @@ class TeamController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validated($request, null);
+        $data['slug'] = $this->resolveSlug(
+            trim((string) ($data['slug'] ?? '')) !== '' ? (string) $data['slug'] : (string) $data['name']
+        );
         $members = TeamDirectory::all();
         if (collect($members)->contains('slug', $data['slug'])) {
             return back()->withErrors(['slug' => 'This URL slug is already used.'])->withInput();
@@ -79,15 +82,18 @@ class TeamController extends Controller
         abort_if($index === false, 404);
 
         $data = $this->validated($request, $slug);
+        $newSlug = $this->resolveSlug((string) $data['name'], $slug);
         $merged = array_merge($members[$index], $data);
-        $merged['slug'] = $slug;
+        $merged['slug'] = $newSlug;
         $member = TeamDirectory::normalizeMember($merged);
-        $member['image'] = $this->resolveImageAfterUpload($request, $slug, $member['image']);
+        $member['image'] = $this->resolveImageAfterUpload($request, $newSlug, $member['image']);
 
         $members[$index] = $member;
         TeamDirectory::saveMembers(array_values($members));
 
-        return redirect()->route('admin.team')->with('status', 'Team member updated.');
+        return redirect()
+            ->route('admin.team.edit', $newSlug)
+            ->with('status', 'Team member updated.');
     }
 
     public function deleteConfirm(string $slug): View
@@ -133,14 +139,14 @@ class TeamController extends Controller
         ];
 
         if ($existingSlug === null) {
-            $rules['slug'] = ['required', 'string', 'max:120', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'];
+            $rules['slug'] = ['nullable', 'string', 'max:120', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'];
         }
 
         $validated = $request->validate($rules);
         $isActive = $request->boolean('is_active');
 
         return [
-            'slug' => $existingSlug ?? (string) $validated['slug'],
+            'slug' => $existingSlug ?? (string) ($validated['slug'] ?? ''),
             'name' => $validated['name'],
             'role' => $validated['role'],
             'department' => (string) ($validated['department'] ?? ''),
@@ -161,6 +167,35 @@ class TeamController extends Controller
     private function splitLines(?string $text): array
     {
         return array_values(array_filter(array_map('trim', preg_split("/\r\n|\r|\n/", (string) $text))));
+    }
+
+    private function resolveSlug(string $source, ?string $exceptSlug = null): string
+    {
+        $base = Str::slug($source);
+        if ($base === '') {
+            $base = 'team-member';
+        }
+
+        $slug = $base;
+        $suffix = 2;
+        while ($this->slugTaken($slug, $exceptSlug)) {
+            $slug = $base.'-'.$suffix;
+            $suffix++;
+        }
+
+        return $slug;
+    }
+
+    private function slugTaken(string $slug, ?string $exceptSlug): bool
+    {
+        foreach (TeamDirectory::all() as $member) {
+            $memberSlug = (string) ($member['slug'] ?? '');
+            if ($memberSlug === $slug && $memberSlug !== (string) $exceptSlug) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function resolveImageAfterUpload(Request $request, string $slug, string $currentImage): string
