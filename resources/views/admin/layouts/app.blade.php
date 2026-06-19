@@ -35,6 +35,8 @@
                 ['route' => 'admin.gallery.index', 'label' => 'Gallery', 'icon' => 'M4 7h16M4 17h16M8 11l2.5 3 3.5-4 4 6H6l2-5', 'active' => ['admin.gallery.*']],
                 ['route' => 'admin.industries.index', 'label' => 'Industries', 'icon' => 'M3 6h18M6 12h12M9 18h6', 'active' => ['admin.industries.*']],
                 ['route' => 'admin.insights.index', 'label' => 'Insights', 'icon' => 'M4 6h16M4 12h10M4 18h7', 'active' => ['admin.insights.*']],
+                ['route' => 'admin.careers.index', 'label' => 'Careers', 'icon' => 'M4 7h16M4 12h16M4 17h10', 'active' => ['admin.careers.*']],
+                ['route' => 'admin.career-applications.index', 'label' => 'Applications', 'icon' => 'M4 6h16M4 10h16M4 14h10', 'active' => ['admin.career-applications.*']],
                 ['route' => 'admin.team', 'label' => 'Team', 'icon' => 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 7a4 4 0 1 0 0.01 0', 'active' => ['admin.team', 'admin.team.*']],
             ],
         ],

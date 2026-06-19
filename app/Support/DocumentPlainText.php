@@ -17,7 +17,7 @@ final class DocumentPlainText
         $s = preg_replace('#<\s*br\s*/?>#i', "\n", $s) ?? $s;
         $s = preg_replace('#</\s*(p|div|li|tr|h[1-6])\s*>#i', "\n", $s) ?? $s;
         $s = strip_tags($s);
-        $s = html_entity_decode($s, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $s = RichContentHtml::decodeEntities($s);
         $s = preg_replace("/[\t\x0B\f]/u", ' ', $s) ?? $s;
         $s = preg_replace("/\n{3,}/", "\n\n", $s) ?? $s;
 

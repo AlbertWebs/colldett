@@ -3,6 +3,8 @@
 use App\Http\Controllers\Admin\AboutContentController;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\BillingController;
+use App\Http\Controllers\Admin\CareerApplicationController;
+use App\Http\Controllers\Admin\CareerCrudController;
 use App\Http\Controllers\Admin\CaseController;
 use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -14,6 +16,7 @@ use App\Http\Controllers\Admin\ServiceCrudController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\TeamController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\CareerController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\SiteController;
@@ -35,6 +38,9 @@ Route::get('/contact', [SiteController::class, 'contact'])->name('contact');
 Route::get('/privacy-policy', [SiteController::class, 'privacy'])->name('privacy');
 Route::get('/terms-and-conditions', [SiteController::class, 'terms'])->name('terms');
 Route::get('/compliance', [SiteController::class, 'compliance'])->name('compliance');
+Route::get('/careers', [CareerController::class, 'index'])->name('careers');
+Route::get('/careers/{slug}', [CareerController::class, 'show'])->name('careers.show')->where('slug', '[a-z0-9\-]+');
+Route::post('/careers/{slug}/apply', [CareerController::class, 'apply'])->middleware('throttle:5,1')->name('careers.apply')->where('slug', '[a-z0-9\-]+');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
 Route::prefix('admin')->name('admin.')->group(function (): void {
@@ -79,6 +85,20 @@ Route::middleware('admin.access')->prefix('admin')->name('admin.')->group(functi
     Route::patch('/insights/{id}', [InsightCrudController::class, 'update'])->name('insights.update');
     Route::get('/insights/{id}/delete', [InsightCrudController::class, 'deleteConfirm'])->name('insights.delete-confirm');
     Route::delete('/insights/{id}', [InsightCrudController::class, 'destroy'])->name('insights.destroy');
+
+    Route::get('/careers', [CareerCrudController::class, 'index'])->name('careers.index');
+    Route::get('/careers/create', [CareerCrudController::class, 'create'])->name('careers.create');
+    Route::post('/careers', [CareerCrudController::class, 'store'])->name('careers.store');
+    Route::get('/careers/{id}/edit', [CareerCrudController::class, 'edit'])->name('careers.edit')->whereNumber('id');
+    Route::patch('/careers/{id}', [CareerCrudController::class, 'update'])->name('careers.update')->whereNumber('id');
+    Route::get('/careers/{id}/delete', [CareerCrudController::class, 'deleteConfirm'])->name('careers.delete-confirm')->whereNumber('id');
+    Route::delete('/careers/{id}', [CareerCrudController::class, 'destroy'])->name('careers.destroy')->whereNumber('id');
+
+    Route::get('/career-applications', [CareerApplicationController::class, 'index'])->name('career-applications.index');
+    Route::get('/career-applications/{id}', [CareerApplicationController::class, 'show'])->name('career-applications.show')->whereNumber('id');
+    Route::patch('/career-applications/{id}', [CareerApplicationController::class, 'update'])->name('career-applications.update')->whereNumber('id');
+    Route::get('/career-applications/{id}/resume', [CareerApplicationController::class, 'downloadResume'])->name('career-applications.resume')->whereNumber('id');
+    Route::get('/career-applications/{id}/documents/{index}', [CareerApplicationController::class, 'downloadDocument'])->name('career-applications.document')->whereNumber('id')->whereNumber('index');
 
     Route::get('/team', [TeamController::class, 'index'])->name('team');
     Route::get('/team/create', [TeamController::class, 'create'])->name('team.create');

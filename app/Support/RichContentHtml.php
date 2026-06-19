@@ -15,7 +15,7 @@ final class RichContentHtml
             return '';
         }
 
-        $html = html_entity_decode((string) $value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $html = self::decodeEntities((string) $value);
         $html = strip_tags($html, self::ALLOWED);
 
         // Normalize empty paragraphs from rich editors.
@@ -321,5 +321,37 @@ final class RichContentHtml
         }
 
         return $blocks;
+    }
+
+    public static function toPublicHtml(?string $value): string
+    {
+        if ($value === null || trim($value) === '') {
+            return '';
+        }
+
+        $sanitized = self::sanitize($value);
+        if ($sanitized === '') {
+            return '';
+        }
+
+        if (preg_match('/<p\b/i', $sanitized)) {
+            return self::normalizeParagraphBlocks($sanitized);
+        }
+
+        return $sanitized;
+    }
+
+    public static function decodeEntities(string $value): string
+    {
+        $html = $value;
+        for ($i = 0; $i < 3; $i++) {
+            $decoded = html_entity_decode($html, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            if ($decoded === $html) {
+                break;
+            }
+            $html = $decoded;
+        }
+
+        return $html;
     }
 }

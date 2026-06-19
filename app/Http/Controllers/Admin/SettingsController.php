@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AdminUser;
+use App\Models\Career;
+use App\Models\CareerApplication;
 use App\Models\ContactDetail;
 use App\Models\Inquiry;
 use App\Support\AdminStoredSettings;
@@ -236,6 +238,7 @@ class SettingsController extends Controller
 
         $purged = [
             'inquiries' => 0,
+            'career_applications' => 0,
         ];
 
         if (Schema::hasTable('inquiries')) {
@@ -243,11 +246,26 @@ class SettingsController extends Controller
             Inquiry::query()->delete();
         }
 
+        if (Schema::hasTable('career_applications')) {
+            $applications = CareerApplication::query()->get();
+            $purged['career_applications'] = $applications->count();
+            foreach ($applications as $application) {
+                $application->deleteStoredFiles();
+            }
+            CareerApplication::query()->delete();
+            Storage::disk('local')->deleteDirectory('career-applications');
+        }
+
+        if (Schema::hasTable('careers')) {
+            Career::query()->delete();
+        }
+
         return redirect()
             ->route('admin.settings')
             ->with('status', 'Test data purged. Cleared: '
-                .count($deletedFiles).' management files and '
-                .$purged['inquiries'].' inquiries.');
+                .count($deletedFiles).' management files, '
+                .$purged['inquiries'].' inquiries, and '
+                .$purged['career_applications'].' career applications.');
     }
 
     private function readSettings(): array

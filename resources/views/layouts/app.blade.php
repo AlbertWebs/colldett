@@ -154,6 +154,7 @@
             </details>
             <a class="nav-link {{ request()->routeIs('industries') ? 'is-active' : '' }}" href="{{ route('industries') }}">Industries</a>
             <a class="nav-link {{ request()->routeIs('insights') || request()->routeIs('insights.show') ? 'is-active' : '' }}" href="{{ route('insights') }}">Insights</a>
+            <a class="nav-link {{ request()->routeIs('careers') || request()->routeIs('careers.show') ? 'is-active' : '' }}" href="{{ route('careers') }}">Careers</a>
             <a href="{{ route('contact') }}" class="btn btn-gold header-btn-primary">
                 <span>Request Service</span>
                 <i aria-hidden="true">→</i>
@@ -271,6 +272,7 @@
             </div>
         </div>
 
+        <div class="footer-links-grid">
         <div class="footer-links">
             <h4>Company</h4>
             <a href="{{ route('home') }}">Home</a>
@@ -279,6 +281,7 @@
             <a href="{{ route('gallery') }}">Gallery</a>
             <a href="{{ route('industries') }}">Industries</a>
             <a href="{{ route('insights') }}">Insights</a>
+            <a href="{{ route('careers') }}">Careers</a>
             <a href="{{ route('contact') }}">Contact</a>
         </div>
 
@@ -301,6 +304,7 @@
             <a href="{{ route('industries') }}">Insurance Companies</a>
             <a href="{{ route('industries') }}">Corporates</a>
             <a href="{{ route('industries') }}">Law Firms</a>
+        </div>
         </div>
 
         <div class="footer-links footer-contact">

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\CareerApplication;
 use App\Models\Inquiry;
 use App\Support\ClientDirectory;
 use Illuminate\Support\Facades\Schema;
@@ -26,6 +27,9 @@ class DashboardController extends Controller
         $paymentsTotal = $this->readSeqCounter('admin/billing_payment_seq.json');
 
         $inquiriesTotal = (Schema::hasTable('inquiries')) ? (int) Inquiry::query()->count() : 0;
+        $newApplications = (Schema::hasTable('career_applications'))
+            ? (int) CareerApplication::query()->where('status', 'new')->count()
+            : 0;
 
         $feeNotesTotal = count($this->readJsonList('admin/billing_fee_notes.json'));
 
@@ -38,6 +42,7 @@ class DashboardController extends Controller
                 ['Fee notes', number_format($feeNotesTotal)],
                 ['Payment receipts issued', number_format($paymentsTotal)],
                 ['Inbound inquiries', number_format($inquiriesTotal)],
+                ['New career applications', number_format($newApplications)],
             ],
         ]);
     }

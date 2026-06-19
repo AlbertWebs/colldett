@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Capability;
+use App\Models\Career;
 use App\Models\ContactDetail;
 use App\Models\Insight;
 use App\Support\AdminStoredSettings;
@@ -354,6 +355,7 @@ class SiteController extends Controller
         $push($base.'/services', 'weekly', '0.95');
         $push($base.'/industries', 'monthly', '0.85');
         $push($base.'/insights', 'weekly', '0.85');
+        $push($base.'/careers', 'weekly', '0.85');
         $push($base.'/contact', 'monthly', '0.9');
         $push($base.'/privacy-policy', 'yearly', '0.3');
         $push($base.'/terms-and-conditions', 'yearly', '0.3');
@@ -374,6 +376,14 @@ class SiteController extends Controller
         foreach (TeamDirectory::forPublicSite() as $member) {
             if (! empty($member['slug'])) {
                 $push($base.'/team/'.$member['slug'], 'monthly', '0.65');
+            }
+        }
+
+        if (\Illuminate\Support\Facades\Schema::hasTable('careers')) {
+            foreach (Career::query()->open()->get(['slug']) as $career) {
+                if ($career->slug !== '') {
+                    $push($base.'/careers/'.$career->slug, 'weekly', '0.7');
+                }
             }
         }
 
