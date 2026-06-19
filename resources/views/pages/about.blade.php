@@ -95,8 +95,8 @@
                     {!! RichContentHtml::toParagraphHtml($about['story_paragraph_3'] ?? 'With over 8 years of hands-on recovery experience, we bring a deep understanding of legal processes, financial systems, and debtor behavior.') !!}
                 </div>
                 <div class="about-points">
-                    @foreach(RichContentHtml::expandListItems($about['story_points'] ?? ['Legal intelligence', 'Financial insight', 'Human-centered negotiation', 'Data-driven recovery strategies']) as $point)
-                        <span>{!! RichContentHtml::renderInlineListItem($point) !!}</span>
+                    @foreach(RichContentHtml::expandChips($about['story_points'] ?? ['Legal intelligence', 'Financial insight', 'Human-centered negotiation', 'Data-driven recovery strategies']) as $point)
+                        <span>{{ $point }}</span>
                     @endforeach
                 </div>
                 <div class="about-story-actions">
@@ -157,8 +157,8 @@
                 <aside class="about-relations">
                     <p>We maintain strong working relationships with:</p>
                     <div class="about-points">
-                        @foreach(RichContentHtml::expandListItems($about['reach_relations'] ?? ['Legal Practitioners', 'Tracing Agents', 'Financial Institutions', 'Auctioneering Firms']) as $relation)
-                            <span>{!! RichContentHtml::renderInlineListItem($relation) !!}</span>
+                        @foreach(RichContentHtml::expandChips($about['reach_relations'] ?? ['Legal Practitioners', 'Tracing Agents', 'Financial Institutions', 'Auctioneering Firms']) as $relation)
+                            <span>{{ $relation }}</span>
                         @endforeach
                     </div>
                 </aside>
@@ -258,8 +258,8 @@
                         @endforeach
                     </ul>
                     <div class="about-points">
-                        @foreach(RichContentHtml::expandListItems($about['compliance_points'] ?? ['Confidentiality by design', 'Ethical collection practice', 'Transparent case records', 'Lawful debtor data handling']) as $point)
-                            <span>{!! RichContentHtml::renderInlineListItem($point) !!}</span>
+                        @foreach(RichContentHtml::expandChips($about['compliance_points'] ?? ['Confidentiality by design', 'Ethical collection practice', 'Transparent case records', 'Lawful debtor data handling']) as $point)
+                            <span>{{ $point }}</span>
                         @endforeach
                     </div>
                 </div>
@@ -325,8 +325,8 @@
                     <h3>Client Confidence Drivers</h3>
                     <p>Our framework is built to protect reputation, accelerate recovery cycles, and provide clear reporting throughout the engagement lifecycle.</p>
                     <div class="about-points">
-                        @foreach(RichContentHtml::expandListItems($about['confidence_points'] ?? ['Institutional quality standards', 'Risk-aware recovery workflows', 'Transparent reporting cadence']) as $point)
-                            <span>{!! RichContentHtml::renderInlineListItem($point) !!}</span>
+                        @foreach(RichContentHtml::expandChips($about['confidence_points'] ?? ['Institutional quality standards', 'Risk-aware recovery workflows', 'Transparent reporting cadence']) as $point)
+                            <span>{{ $point }}</span>
                         @endforeach
                     </div>
                     <a href="{{ route('contact') }}" class="btn btn-gold about-choose-btn">

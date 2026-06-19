@@ -179,6 +179,57 @@ final class RichContentHtml
         return $items;
     }
 
+    /**
+     * Plain-text chips for tag/pill UI (story points, relation tags, etc.).
+     *
+     * @param  array<int, string>|string|null  $value
+     * @return array<int, string>
+     */
+    public static function expandChips(array|string|null $value): array
+    {
+        $chips = [];
+
+        foreach (self::expandListItems($value) as $item) {
+            $plain = DocumentPlainText::fromHtml($item);
+            if ($plain === '') {
+                continue;
+            }
+
+            $lines = preg_split("/\r\n|\r|\n/", $plain) ?: [];
+            $lines = array_values(array_filter(array_map('trim', $lines)));
+
+            if ($lines === []) {
+                continue;
+            }
+
+            if (count($lines) === 1) {
+                $chips = array_merge($chips, self::splitChipPhrase($lines[0]));
+
+                continue;
+            }
+
+            foreach ($lines as $line) {
+                $chips = array_merge($chips, self::splitChipPhrase($line));
+            }
+        }
+
+        return $chips;
+    }
+
+    /** @return array<int, string> */
+    private static function splitChipPhrase(string $phrase): array
+    {
+        $phrase = trim($phrase);
+        if ($phrase === '') {
+            return [];
+        }
+
+        $parts = preg_split('/\s+(?=[A-Z][\w-])/', $phrase) ?: [];
+        $parts = array_values(array_filter(array_map('trim', $parts)));
+
+        return count($parts) > 1 ? $parts : [$phrase];
+    }
+
     public static function renderListItem(?string $item): string
     {
         if ($item === null || trim($item) === '') {

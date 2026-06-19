@@ -3096,6 +3096,11 @@ a.contact-detail-item:hover {
   gap: 8px;
 }
 .about-points span {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  white-space: nowrap;
   border: 1px solid #cdd9cf;
   background: #eef5ef;
   color: #2a4a2a;
@@ -3103,6 +3108,7 @@ a.contact-detail-item:hover {
   padding: .38rem .66rem;
   font-size: .78rem;
   font-weight: 600;
+  line-height: 1.35;
 }
 .about-story-actions {
   margin-top: 16px;
