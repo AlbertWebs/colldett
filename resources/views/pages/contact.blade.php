@@ -56,12 +56,6 @@
                 <span>Vehicle Tracking</span>
             </div>
 
-            @php
-                $mapEmbed = trim((string) ($site['company']['map_embed_url'] ?? ''));
-            @endphp
-            @if($mapEmbed !== '')
-                <iframe title="Office location map" loading="lazy" class="map" src="{{ $mapEmbed }}" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
-            @endif
         </aside>
 
         <div class="contact-form-card">
