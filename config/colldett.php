@@ -11,7 +11,7 @@ return [
         'kra_pin' => '',
         'map_embed_url' => 'https://www.google.com/maps?q=Nairobi%20Kenya&output=embed',
         'affiliate_law_firm' => [
-            'name' => "Bridget Achieng' and Associates",
+            'name' => 'Brigid Achieng and Company Advocates',
             'summary' => 'Our affiliate legal partner supports legal recovery actions, litigation, and enforcement where strategic legal intervention is required.',
         ],
     ],
