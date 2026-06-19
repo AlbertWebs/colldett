@@ -242,7 +242,7 @@
     $footerTagline = trim((string) ($site['company']['tagline'] ?? ''));
     $footerPhone = trim((string) ($site['company']['phone'] ?? ''));
     $footerEmail = trim((string) ($site['company']['email'] ?? ''));
-    $footerAddress = trim((string) ($site['company']['address'] ?? ''));
+    $footerAddress = \App\Support\DocumentPlainText::fromHtml($site['company']['address'] ?? '');
 @endphp
 <footer class="footer">
     <div class="container footer-main">
@@ -321,7 +321,7 @@
                 @if($footerAddress !== '')
                     <div class="footer-contact-block footer-contact-block--static">
                         <span class="footer-contact-label">Office</span>
-                        <span class="footer-contact-value">{{ $footerAddress }}</span>
+                        <span class="footer-contact-value footer-contact-value--multiline">{{ $footerAddress }}</span>
                     </div>
                 @endif
             </div>

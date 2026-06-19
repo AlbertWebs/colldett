@@ -2,7 +2,13 @@
 
 @section('content')
 @php
+    use App\Support\RichContentHtml;
+
     $about = $site['about'] ?? [];
+    $coreValuesSource = RichContentHtml::joinField($about['core_values'] ?? []);
+    $coreValuesProse = RichContentHtml::containsMarkup($coreValuesSource)
+        ? RichContentHtml::toParagraphHtml($coreValuesSource)
+        : '';
 @endphp
 <section class="page-hero">
     <div class="container">
@@ -12,7 +18,9 @@
             <span>About Us</span>
         </p>
         <h1>{{ $about['hero_title'] ?? 'About Colldett Trace Limited' }}</h1>
-        <p>{{ $about['hero_intro'] ?? 'Colldett Trace Limited is a dynamic and forward-thinking debt recovery firm formed by experienced professionals with strong backgrounds in financial institutions, legal practice, and corporate governance.' }}</p>
+        <div class="about-rich-text">
+            {!! RichContentHtml::toParagraphHtml($about['hero_intro'] ?? 'Colldett Trace Limited is a dynamic and forward-thinking debt recovery firm formed by experienced professionals with strong backgrounds in financial institutions, legal practice, and corporate governance.') !!}
+        </div>
     </div>
 </section>
 
@@ -25,19 +33,27 @@
             <div class="about-mvv-grid">
                 <article class="about-card">
                     <h3>Mission</h3>
-                    <p>{{ $about['mission_text'] ?? "To deliver innovative, ethical, and results-driven debt recovery solutions that enhance our clients' cash flow, reduce financial risk, and preserve business relationships." }}</p>
+                    <div class="about-rich-text">
+                        {!! RichContentHtml::toParagraphHtml($about['mission_text'] ?? "To deliver innovative, ethical, and results-driven debt recovery solutions that enhance our clients' cash flow, reduce financial risk, and preserve business relationships.") !!}
+                    </div>
                 </article>
                 <article class="about-card">
                     <h3>Vision</h3>
-                    <p>{{ $about['vision_text'] ?? 'To be a leading debt recovery firm in Africa and beyond, recognized for excellence, integrity, and a refined approach to recovery grounded in legal and financial expertise.' }}</p>
+                    <div class="about-rich-text">
+                        {!! RichContentHtml::toParagraphHtml($about['vision_text'] ?? 'To be a leading debt recovery firm in Africa and beyond, recognized for excellence, integrity, and a refined approach to recovery grounded in legal and financial expertise.') !!}
+                    </div>
                 </article>
                 <article class="about-card">
                     <h3>Core Values</h3>
-                    <ul class="about-icon-list">
-                        @foreach(($about['core_values'] ?? ['Integrity', 'Professionalism', 'Respect', 'Confidentiality', 'Accountability', 'Results-Driven Performance']) as $value)
-                            <li><span>●</span> {{ $value }}</li>
-                        @endforeach
-                    </ul>
+                    @if($coreValuesProse !== '')
+                        <div class="about-rich-text">{!! $coreValuesProse !!}</div>
+                    @else
+                        <ul class="about-icon-list">
+                            @foreach(($about['core_values'] ?? ['Integrity', 'Professionalism', 'Respect', 'Confidentiality', 'Accountability', 'Results-Driven Performance']) as $value)
+                                <li><span>●</span> {{ $value }}</li>
+                            @endforeach
+                        </ul>
+                    @endif
                 </article>
             </div>
         </div>
@@ -48,12 +64,14 @@
             <div>
                 <div class="brand-arrow-accent" aria-hidden="true"><span class="bar"></span><span class="chevrons"><i></i><i class="c2"></i><i class="c3"></i></span></div>
                 <h2>Our Story</h2>
-                <p>{{ $about['story_intro'] ?? 'Colldett Trace Limited was established to redefine the debt recovery landscape through a structured, ethical, and professional approach.' }}</p>
-                <p>{{ $about['story_paragraph_2'] ?? 'The firm was formed by a team of experienced professionals who transitioned from a structured law firm environment into an independent, specialized debt recovery practice.' }}</p>
-                <p>{{ $about['story_paragraph_3'] ?? 'With over 8 years of hands-on recovery experience, we bring a deep understanding of legal processes, financial systems, and debtor behavior.' }}</p>
+                <div class="about-rich-text">
+                    {!! RichContentHtml::toParagraphHtml($about['story_intro'] ?? 'Colldett Trace Limited was established to redefine the debt recovery landscape through a structured, ethical, and professional approach.') !!}
+                    {!! RichContentHtml::toParagraphHtml($about['story_paragraph_2'] ?? 'The firm was formed by a team of experienced professionals who transitioned from a structured law firm environment into an independent, specialized debt recovery practice.') !!}
+                    {!! RichContentHtml::toParagraphHtml($about['story_paragraph_3'] ?? 'With over 8 years of hands-on recovery experience, we bring a deep understanding of legal processes, financial systems, and debtor behavior.') !!}
+                </div>
                 <div class="about-points">
-                    @foreach(($about['story_points'] ?? ['Legal intelligence', 'Financial insight', 'Human-centered negotiation', 'Data-driven recovery strategies']) as $point)
-                        <span>{{ $point }}</span>
+                    @foreach(RichContentHtml::expandListItems($about['story_points'] ?? ['Legal intelligence', 'Financial insight', 'Human-centered negotiation', 'Data-driven recovery strategies']) as $point)
+                        <span>{!! RichContentHtml::renderInlineListItem($point) !!}</span>
                     @endforeach
                 </div>
                 <div class="about-story-actions">
@@ -102,18 +120,20 @@
             <h2>Our Reach</h2>
             <div class="about-reach-grid">
                 <article class="about-reach-panel">
-                    <p class="about-reach-lead">{{ $about['reach_lead'] ?? 'Our recovery network is designed for reliable, timely execution across local and regional jurisdictions.' }}</p>
+                    <div class="about-rich-text about-reach-lead">
+                        {!! RichContentHtml::toParagraphHtml($about['reach_lead'] ?? 'Our recovery network is designed for reliable, timely execution across local and regional jurisdictions.') !!}
+                    </div>
                     <div class="about-reach-row">
-                        @foreach(($about['reach_chips'] ?? ['Kenya - Nationwide Coverage', 'East Africa Region', 'International Clients']) as $chip)
-                            <div class="reach-chip">{{ $chip }}</div>
+                        @foreach(RichContentHtml::expandListItems($about['reach_chips'] ?? ['Kenya - Nationwide Coverage', 'East Africa Region', 'International Clients']) as $chip)
+                            <div class="reach-chip">{!! RichContentHtml::renderInlineListItem($chip) !!}</div>
                         @endforeach
                     </div>
                 </article>
                 <aside class="about-relations">
                     <p>We maintain strong working relationships with:</p>
                     <div class="about-points">
-                        @foreach(($about['reach_relations'] ?? ['Legal Practitioners', 'Tracing Agents', 'Financial Institutions', 'Auctioneering Firms']) as $relation)
-                            <span>{{ $relation }}</span>
+                        @foreach(RichContentHtml::expandListItems($about['reach_relations'] ?? ['Legal Practitioners', 'Tracing Agents', 'Financial Institutions', 'Auctioneering Firms']) as $relation)
+                            <span>{!! RichContentHtml::renderInlineListItem($relation) !!}</span>
                         @endforeach
                     </div>
                 </aside>
@@ -137,9 +157,11 @@
             <h2>What We Do</h2>
             <div class="about-do-grid">
                 <div class="about-do-content">
-                    <p class="about-intro">{{ $about['what_we_do_intro'] ?? 'We provide integrated recovery, tracing, and enforcement support designed for institutional performance and compliant execution.' }}</p>
+                    <div class="about-rich-text about-intro">
+                        {!! RichContentHtml::toParagraphHtml($about['what_we_do_intro'] ?? 'We provide integrated recovery, tracing, and enforcement support designed for institutional performance and compliant execution.') !!}
+                    </div>
                     <div class="about-services-grid">
-                        @foreach(($about['what_we_do_services'] ?? [
+                        @foreach(RichContentHtml::expandListItems($about['what_we_do_services'] ?? [
                             'Debt Recovery Advisory',
                             'Pre-Legal Collections',
                             'Legal Collections',
@@ -150,7 +172,7 @@
                             'Insurance Tracing',
                             'Car Tracking and Monitoring',
                         ]) as $service)
-                            <div class="about-service-card"><span>◉</span>{{ $service }}</div>
+                            <div class="about-service-card"><span>◉</span>{!! RichContentHtml::renderInlineListItem($service) !!}</div>
                         @endforeach
                     </div>
                 </div>
@@ -195,9 +217,11 @@
             <h2>Compliance and Regulatory Framework</h2>
             <div class="about-compliance-grid">
                 <div class="about-compliance-content">
-                    <p class="about-intro">{{ $about['compliance_intro'] ?? 'Our compliance model ensures that every recovery action is lawful, documented, and aligned with established regulatory requirements.' }}</p>
+                    <div class="about-rich-text about-intro">
+                        {!! RichContentHtml::toParagraphHtml($about['compliance_intro'] ?? 'Our compliance model ensures that every recovery action is lawful, documented, and aligned with established regulatory requirements.') !!}
+                    </div>
                     <ul class="about-icon-list about-compliance-list">
-                        @foreach(($about['compliance_list'] ?? [
+                        @foreach(RichContentHtml::expandListItems($about['compliance_list'] ?? [
                             'Central Bank of Kenya Guidelines',
                             'Data Protection Act 2019',
                             'Consumer Protection Act',
@@ -205,12 +229,12 @@
                             'Civil Procedure Act and Rules',
                             'Credit Reference Bureau Regulations',
                         ]) as $rule)
-                            <li><span>✓</span> {{ $rule }}</li>
+                            <li><span>✓</span> {!! RichContentHtml::renderListItem($rule) !!}</li>
                         @endforeach
                     </ul>
                     <div class="about-points">
-                        @foreach(($about['compliance_points'] ?? ['Confidentiality by design', 'Ethical collection practice', 'Transparent case records', 'Lawful debtor data handling']) as $point)
-                            <span>{{ $point }}</span>
+                        @foreach(RichContentHtml::expandListItems($about['compliance_points'] ?? ['Confidentiality by design', 'Ethical collection practice', 'Transparent case records', 'Lawful debtor data handling']) as $point)
+                            <span>{!! RichContentHtml::renderInlineListItem($point) !!}</span>
                         @endforeach
                     </div>
                 </div>
@@ -225,16 +249,20 @@
             <h2>Our Experience</h2>
             <div class="about-experience-grid">
                 <article class="about-experience-clients">
-                    <p class="about-intro">{{ $about['experience_intro'] ?? 'Selected organizations and institutions we have supported through structured recovery and tracing mandates.' }}</p>
+                    <div class="about-rich-text about-intro">
+                        {!! RichContentHtml::toParagraphHtml($about['experience_intro'] ?? 'Selected organizations and institutions we have supported through structured recovery and tracing mandates.') !!}
+                    </div>
                     <ul class="about-client-list">
-                        @foreach(($about['experience_clients'] ?? ['Style Industries','Watervale Limited','Hotpoint Appliances','Modern Lithographic','Dawa Lifesciences','Wellsprings International']) as $client)
-                            <li>{{ $client }}</li>
+                        @foreach(RichContentHtml::expandListItems($about['experience_clients'] ?? ['Style Industries','Watervale Limited','Hotpoint Appliances','Modern Lithographic','Dawa Lifesciences','Wellsprings International']) as $client)
+                            <li>{!! RichContentHtml::renderInlineListItem($client) !!}</li>
                         @endforeach
                     </ul>
                 </article>
                 <aside class="about-experience-summary">
                     <h3>Proven Delivery Standards</h3>
-                    <p>{{ $about['experience_summary'] ?? 'Our operating model is built around disciplined execution, practical escalation pathways, and transparent reporting for client decision-making.' }}</p>
+                    <div class="about-rich-text">
+                        {!! RichContentHtml::toParagraphHtml($about['experience_summary'] ?? 'Our operating model is built around disciplined execution, practical escalation pathways, and transparent reporting for client decision-making.') !!}
+                    </div>
                     <div class="about-points">
                         <span>Multi-sector case handling</span>
                         <span>Compliance-led execution</span>
@@ -252,9 +280,11 @@
             <h2>Why Clients Choose Colldett Trace Limited</h2>
             <div class="about-choose-grid">
                 <div class="about-choose-content">
-                    <p class="about-intro">{{ $about['why_choose_intro'] ?? 'Clients trust us for disciplined execution, strategic recovery insight, and a practical operating model that delivers measurable outcomes.' }}</p>
+                    <div class="about-rich-text about-intro">
+                        {!! RichContentHtml::toParagraphHtml($about['why_choose_intro'] ?? 'Clients trust us for disciplined execution, strategic recovery insight, and a practical operating model that delivers measurable outcomes.') !!}
+                    </div>
                     <div class="about-services-grid about-choose-cards">
-                        @foreach(($about['why_choose_reasons'] ?? [
+                        @foreach(RichContentHtml::expandListItems($about['why_choose_reasons'] ?? [
                             'Experienced team with legal and financial background',
                             'Proven track record in debt recovery',
                             'Strong regional and international network',
@@ -262,7 +292,7 @@
                             'Seamless integration with legal processes',
                             'Tailored recovery strategies',
                         ]) as $reason)
-                            <div class="about-service-card about-choose-card"><span>◆</span>{{ $reason }}</div>
+                            <div class="about-service-card about-choose-card"><span>◆</span>{!! RichContentHtml::renderInlineListItem($reason) !!}</div>
                         @endforeach
                     </div>
                 </div>
@@ -270,8 +300,8 @@
                     <h3>Client Confidence Drivers</h3>
                     <p>Our framework is built to protect reputation, accelerate recovery cycles, and provide clear reporting throughout the engagement lifecycle.</p>
                     <div class="about-points">
-                        @foreach(($about['confidence_points'] ?? ['Institutional quality standards', 'Risk-aware recovery workflows', 'Transparent reporting cadence']) as $point)
-                            <span>{{ $point }}</span>
+                        @foreach(RichContentHtml::expandListItems($about['confidence_points'] ?? ['Institutional quality standards', 'Risk-aware recovery workflows', 'Transparent reporting cadence']) as $point)
+                            <span>{!! RichContentHtml::renderInlineListItem($point) !!}</span>
                         @endforeach
                     </div>
                     <a href="{{ route('contact') }}" class="btn btn-gold about-choose-btn">
@@ -280,7 +310,9 @@
                     </a>
                 </aside>
             </div>
-            <p class="about-closing">{{ $about['closing_text'] ?? 'We do not merely collect debts. We create structured pathways to recovery.' }}</p>
+            <div class="about-rich-text about-closing">
+                {!! RichContentHtml::toParagraphHtml($about['closing_text'] ?? 'We do not merely collect debts. We create structured pathways to recovery.') !!}
+            </div>
         </div>
     </section>
 
@@ -288,7 +320,9 @@
         <div class="container">
             <div class="brand-arrow-accent" aria-hidden="true"><span class="bar"></span><span class="chevrons"><i></i><i class="c2"></i><i class="c3"></i></span></div>
             <h2>{{ $about['cta_title'] ?? 'Partner With a Trusted Recovery Firm' }}</h2>
-            <p>{{ $about['cta_text'] ?? 'Let us help you recover outstanding debts efficiently, professionally, and lawfully.' }}</p>
+            <div class="about-rich-text">
+                {!! RichContentHtml::toParagraphHtml($about['cta_text'] ?? 'Let us help you recover outstanding debts efficiently, professionally, and lawfully.') !!}
+            </div>
             <a href="{{ route('contact') }}" class="btn btn-gold">Contact Us</a>
         </div>
     </section>

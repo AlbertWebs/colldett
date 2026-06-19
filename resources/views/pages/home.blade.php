@@ -312,7 +312,7 @@
                 </a>
                 <div class="contact-mini-card">
                     <strong>Office</strong>
-                    <span>{{ $site['company']['address'] }}</span>
+                    <span class="contact-mini-address">{{ \App\Support\DocumentPlainText::fromHtml($site['company']['address'] ?? '') }}</span>
                 </div>
             </div>
         </div>

@@ -21,9 +21,11 @@
             </p>
 
             @php
+                use App\Support\DocumentPlainText;
+
                 $coPhone = trim((string) ($site['company']['phone'] ?? ''));
                 $coEmail = trim((string) ($site['company']['email'] ?? ''));
-                $coAddress = trim((string) ($site['company']['address'] ?? ''));
+                $coAddress = DocumentPlainText::fromHtml($site['company']['address'] ?? '');
                 $telHref = $coPhone !== '' ? 'tel:'.preg_replace('/\s+/', '', $coPhone) : '';
             @endphp
             <div class="contact-detail-list">
@@ -42,7 +44,7 @@
                 @if($coAddress !== '')
                     <div class="contact-detail-item">
                         <span>Office</span>
-                        <strong>{{ $coAddress }}</strong>
+                        <strong class="contact-detail-value contact-detail-value--multiline">{{ $coAddress }}</strong>
                     </div>
                 @endif
             </div>

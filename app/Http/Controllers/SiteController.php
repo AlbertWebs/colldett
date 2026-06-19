@@ -6,6 +6,7 @@ use App\Models\Capability;
 use App\Models\ContactDetail;
 use App\Models\Insight;
 use App\Support\AdminStoredSettings;
+use App\Support\DocumentPlainText;
 use App\Support\ServiceCatalog;
 use App\Support\TeamDirectory;
 use Carbon\Carbon;
@@ -234,7 +235,7 @@ class SiteController extends Controller
         return view('pages.compliance', $data);
     }
 
-    private function viewData(string $title): array
+    protected function viewData(string $title): array
     {
         $site = config('colldett');
         $saved = $this->readAdminSettings();
@@ -261,6 +262,7 @@ class SiteController extends Controller
         $site['team'] = TeamDirectory::forPublicSite();
         $site['about'] = $this->aboutContent();
         $site = $this->mergeContactDetailsFromDatabase($site);
+        $site['company']['address'] = DocumentPlainText::fromHtml($site['company']['address'] ?? '');
 
         return [
             'metaTitle' => $title.' | '.$site['company']['name'],

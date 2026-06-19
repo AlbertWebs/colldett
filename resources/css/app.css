@@ -1491,9 +1491,14 @@ p { margin: 0; color: var(--muted); }
   text-transform: uppercase;
   letter-spacing: .06em;
 }
-.contact-mini-card span {
+.contact-mini-card span,
+.contact-mini-address {
   color: #32443b;
   font-weight: 500;
+}
+.contact-mini-address {
+  white-space: pre-line;
+  line-height: 1.45;
 }
 .contact-home-right {
   display: grid;
@@ -1889,6 +1894,10 @@ p { margin: 0; color: var(--muted); }
 .contact-detail-item strong {
   color: #1a3d20;
   font-size: .95rem;
+}
+.contact-detail-value--multiline {
+  white-space: pre-line;
+  line-height: 1.45;
 }
 a.contact-detail-item:hover {
   border-color: #bfd0c3;
@@ -2286,6 +2295,9 @@ a.contact-detail-item:hover {
   color: #ecf4eb;
   line-height: 1.45;
   word-break: break-word;
+}
+.footer-contact-value--multiline {
+  white-space: pre-line;
 }
 .footer-inquiry-cta {
   display: inline-flex;
@@ -2969,6 +2981,34 @@ a.contact-detail-item:hover {
 .about-section h2 {
   color: #215e1d;
   margin-bottom: 14px;
+}
+.about-rich-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.about-rich-text p,
+.about-rich-text .capability-detail-para {
+  margin: 0;
+}
+.about-rich-text ul,
+.about-rich-text ol {
+  margin: 0 0 0.5rem 1.1rem;
+  padding: 0;
+}
+.about-rich-text li + li {
+  margin-top: 0.35rem;
+}
+.page-hero .about-rich-text {
+  max-width: 720px;
+  color: rgba(236, 244, 235, 0.92);
+  font-size: 1.02rem;
+  line-height: 1.65;
+}
+.about-card .about-rich-text {
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: #4f6358;
 }
 .about-intro {
   color: #4f6358;

@@ -7,6 +7,7 @@ use App\Models\AdminUser;
 use App\Models\ContactDetail;
 use App\Models\Inquiry;
 use App\Support\AdminStoredSettings;
+use App\Support\DocumentPlainText;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -36,7 +37,7 @@ class SettingsController extends Controller
             'company_email' => $siteEmail ?? '',
             'company_phone' => $saved['company_phone'] ?? ($company['phone'] ?? ''),
             'company_kra_pin' => $saved['company_kra_pin'] ?? '',
-            'company_address' => $saved['company_address'] ?? ($company['address'] ?? ''),
+            'company_address' => DocumentPlainText::fromHtml($saved['company_address'] ?? ($company['address'] ?? '')),
             'company_domain' => $saved['company_domain'] ?? $siteDomain,
             'company_description' => $saved['company_description'] ?? ($company['description'] ?? ''),
             'company_logo' => $this->resolveMediaUrl($saved['company_logo'] ?? 'uploads/logo.png'),
@@ -138,6 +139,11 @@ class SettingsController extends Controller
             $settings[$key] = trim((string) ($settings[$key] ?? ''));
         }
         $settings['invoice_payment_bank_lines'] = AdminStoredSettings::composeInvoicePaymentBankLinesFromRemittanceFields($settings);
+
+        if (isset($settings['company_address'])) {
+            $plainAddress = DocumentPlainText::fromHtml((string) $settings['company_address']);
+            $settings['company_address'] = $plainAddress !== '' ? $plainAddress : null;
+        }
 
         $mapEmbedUrl = $settings['company_map_embed_url'] ?? null;
         unset($settings['company_map_embed_url']);

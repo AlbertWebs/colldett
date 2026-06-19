@@ -89,4 +89,123 @@ final class RichContentHtml
             ? mb_substr($plain, 0, $limit - 1).'…'
             : $plain;
     }
+
+    public static function containsMarkup(?string $value): bool
+    {
+        return $value !== null && str_contains($value, '<');
+    }
+
+    /**
+     * @param  array<int, string>|string|null  $value
+     */
+    public static function joinField(array|string|null $value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+
+        if (is_string($value)) {
+            return $value;
+        }
+
+        return implode('', array_map('strval', $value));
+    }
+
+    /**
+     * Normalize admin list fields that may be plain lines or Quill HTML blobs.
+     *
+     * @param  array<int, string>|string|null  $value
+     * @return array<int, string>
+     */
+    public static function expandListItems(array|string|null $value): array
+    {
+        if ($value === null) {
+            return [];
+        }
+
+        $entries = is_array($value) ? $value : [(string) $value];
+        $items = [];
+
+        foreach ($entries as $entry) {
+            $entry = trim((string) $entry);
+            if ($entry === '') {
+                continue;
+            }
+
+            if (! self::containsMarkup($entry)) {
+                foreach (preg_split("/\r\n|\r|\n/", $entry) ?: [] as $line) {
+                    $line = trim($line);
+                    if ($line !== '') {
+                        $items[] = $line;
+                    }
+                }
+
+                continue;
+            }
+
+            $html = self::sanitize($entry);
+            if ($html === '') {
+                continue;
+            }
+
+            if (preg_match_all('#<li[^>]*>(.*?)</li>#is', $html, $matches) && $matches[1] !== []) {
+                foreach ($matches[1] as $li) {
+                    $piece = self::sanitize((string) $li);
+                    if (trim(strip_tags($piece)) !== '') {
+                        $items[] = $piece;
+                    }
+                }
+
+                continue;
+            }
+
+            if (preg_match_all('#<p[^>]*>(.*?)</p>#is', $html, $paras) && count($paras[1]) > 1) {
+                foreach ($paras[1] as $para) {
+                    $para = trim((string) $para);
+                    if ($para === '' || preg_match('/^\s*(?:<br\s*\/?>)?\s*$/i', $para)) {
+                        continue;
+                    }
+                    if (trim(strip_tags($para)) !== '') {
+                        $items[] = self::sanitize('<p>'.$para.'</p>');
+                    }
+                }
+
+                continue;
+            }
+
+            $items[] = $html;
+        }
+
+        return $items;
+    }
+
+    public static function renderListItem(?string $item): string
+    {
+        if ($item === null || trim($item) === '') {
+            return '';
+        }
+
+        return self::containsMarkup($item)
+            ? self::sanitize($item)
+            : e(trim($item));
+    }
+
+    /** Inline-safe list item output (unwraps a single paragraph wrapper). */
+    public static function renderInlineListItem(?string $item): string
+    {
+        if ($item === null || trim($item) === '') {
+            return '';
+        }
+
+        if (! self::containsMarkup($item)) {
+            return e(trim($item));
+        }
+
+        $html = self::sanitize($item);
+        if (preg_match('#^<p[^>]*>(.*)</p>$#is', trim($html), $match)) {
+            $html = trim((string) $match[1]);
+        }
+
+        return $html;
+    }
 }

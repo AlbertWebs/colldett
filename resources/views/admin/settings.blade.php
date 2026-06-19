@@ -51,7 +51,7 @@
                     </div>
                     <div class="space-y-1.5 sm:col-span-2">
                         <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Address</label>
-                        <textarea class="admin-input min-h-20" name="company_address" placeholder="Company Address" rows="3">{{ old('company_address', $settings['company_address'] ?? '') }}</textarea>
+                        <textarea class="admin-input min-h-20" name="company_address" placeholder="Company Address" rows="3" data-no-editor="true">{{ old('company_address', \App\Support\DocumentPlainText::fromHtml($settings['company_address'] ?? '')) }}</textarea>
                     </div>
                     <div class="space-y-1.5 sm:col-span-2">
                         <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Map embed URL</label>
