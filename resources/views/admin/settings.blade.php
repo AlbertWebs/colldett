@@ -41,8 +41,12 @@
                         <input class="admin-input" name="company_email" placeholder="Company Email" value="{{ old('company_email', $settings['company_email'] ?? '') }}" />
                     </div>
                     <div class="space-y-1.5">
-                        <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Phone</label>
-                        <input class="admin-input" name="company_phone" placeholder="Company Phone" value="{{ old('company_phone', $settings['company_phone'] ?? '') }}" />
+                        <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Primary phone</label>
+                        <input class="admin-input" name="company_phone" placeholder="+254 720 …" value="{{ old('company_phone', $settings['company_phone'] ?? '') }}" />
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Alternate phone</label>
+                        <input class="admin-input" name="company_phone_alt" placeholder="+254 712 …" value="{{ old('company_phone_alt', $settings['company_phone_alt'] ?? '') }}" />
                     </div>
                     <div class="space-y-1.5">
                         <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">KRA PIN</label>

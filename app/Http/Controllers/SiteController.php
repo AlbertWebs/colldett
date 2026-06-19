@@ -244,6 +244,7 @@ class SiteController extends Controller
         $site['company']['tagline'] = $saved['company_tagline'] ?? $site['company']['tagline'];
         $site['company']['email'] = $saved['company_email'] ?? $site['company']['email'];
         $site['company']['phone'] = $saved['company_phone'] ?? $site['company']['phone'];
+        $site['company']['phone_alt'] = $saved['company_phone_alt'] ?? ($site['company']['phone_alt'] ?? '');
         $site['company']['address'] = $saved['company_address'] ?? $site['company']['address'];
         $site['company']['description'] = $saved['company_description'] ?? $site['company']['description'];
         $site['branding'] = [
@@ -309,6 +310,9 @@ class SiteController extends Controller
 
         if (filled($db->phone)) {
             $site['company']['phone'] = $db->phone;
+        }
+        if (filled($db->phone_alt)) {
+            $site['company']['phone_alt'] = $db->phone_alt;
         }
         if (filled($db->email)) {
             $site['company']['email'] = $db->email;

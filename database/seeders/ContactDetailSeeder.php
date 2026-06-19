@@ -17,6 +17,7 @@ class ContactDetailSeeder extends Seeder
 
         ContactDetail::query()->create([
             'phone' => $c['phone'] ?? null,
+            'phone_alt' => $c['phone_alt'] ?? null,
             'email' => $c['email'] ?? null,
             'address' => $c['address'] ?? null,
             'map_embed_url' => $c['map_embed_url'] ?? null,

@@ -302,10 +302,18 @@
             <h2>Speak to a specialist and start recovery with confidence</h2>
             <p class="contact-home-lead">Connect with our team for debt recovery, tracing, investigations, and vehicle security support. We respond quickly with a structured next-step plan.</p>
             <div class="contact-home-cards">
-                <a href="tel:{{ preg_replace('/\s+/', '', $site['company']['phone']) }}" class="contact-mini-card">
-                    <strong>Phone</strong>
-                    <span>{{ $site['company']['phone'] }}</span>
-                </a>
+                @if(trim((string) ($site['company']['phone'] ?? '')) !== '')
+                    <a href="tel:{{ preg_replace('/\s+/', '', $site['company']['phone']) }}" class="contact-mini-card">
+                        <strong>Phone</strong>
+                        <span>{{ $site['company']['phone'] }}</span>
+                    </a>
+                @endif
+                @if(trim((string) ($site['company']['phone_alt'] ?? '')) !== '')
+                    <a href="tel:{{ preg_replace('/\s+/', '', $site['company']['phone_alt']) }}" class="contact-mini-card">
+                        <strong>Alternate phone</strong>
+                        <span>{{ $site['company']['phone_alt'] }}</span>
+                    </a>
+                @endif
                 <a href="mailto:{{ $site['company']['email'] }}" class="contact-mini-card">
                     <strong>Email</strong>
                     <span>{{ $site['company']['email'] }}</span>

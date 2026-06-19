@@ -38,6 +38,9 @@ class SettingsController extends Controller
             'company_tagline' => $saved['company_tagline'] ?? ($company['tagline'] ?? ''),
             'company_email' => $siteEmail ?? '',
             'company_phone' => $saved['company_phone'] ?? ($company['phone'] ?? ''),
+            'company_phone_alt' => $saved['company_phone_alt']
+                ?? (Schema::hasTable('contact_details') ? ContactDetail::query()->value('phone_alt') : null)
+                ?? ($company['phone_alt'] ?? ''),
             'company_kra_pin' => $saved['company_kra_pin'] ?? '',
             'company_address' => DocumentPlainText::fromHtml($saved['company_address'] ?? ($company['address'] ?? '')),
             'company_domain' => $saved['company_domain'] ?? $siteDomain,
@@ -110,6 +113,7 @@ class SettingsController extends Controller
             'company_tagline' => ['nullable', 'string', 'max:255'],
             'company_email' => ['nullable', 'email', 'max:255'],
             'company_phone' => ['nullable', 'string', 'max:255'],
+            'company_phone_alt' => ['nullable', 'string', 'max:255'],
             'company_kra_pin' => ['nullable', 'string', 'max:64'],
             'company_address' => ['nullable', 'string', 'max:2000'],
             'company_map_embed_url' => ['nullable', 'string', 'max:4000'],
@@ -173,6 +177,7 @@ class SettingsController extends Controller
         if (Schema::hasTable('contact_details')) {
             ContactDetail::syncFromAdminSettings([
                 'phone' => $settings['company_phone'] ?? null,
+                'phone_alt' => $settings['company_phone_alt'] ?? null,
                 'email' => $settings['company_email'] ?? null,
                 'address' => $settings['company_address'] ?? null,
                 'map_embed_url' => $mapEmbedUrl,

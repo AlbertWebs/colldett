@@ -24,15 +24,23 @@
                 use App\Support\DocumentPlainText;
 
                 $coPhone = trim((string) ($site['company']['phone'] ?? ''));
+                $coPhoneAlt = trim((string) ($site['company']['phone_alt'] ?? ''));
                 $coEmail = trim((string) ($site['company']['email'] ?? ''));
                 $coAddress = DocumentPlainText::fromHtml($site['company']['address'] ?? '');
                 $telHref = $coPhone !== '' ? 'tel:'.preg_replace('/\s+/', '', $coPhone) : '';
+                $telAltHref = $coPhoneAlt !== '' ? 'tel:'.preg_replace('/\s+/', '', $coPhoneAlt) : '';
             @endphp
             <div class="contact-detail-list">
                 @if($coPhone !== '')
                     <a class="contact-detail-item" href="{{ $telHref }}">
                         <span>Call us</span>
                         <strong>{{ $coPhone }}</strong>
+                    </a>
+                @endif
+                @if($coPhoneAlt !== '')
+                    <a class="contact-detail-item" href="{{ $telAltHref }}">
+                        <span>Alternate line</span>
+                        <strong>{{ $coPhoneAlt }}</strong>
                     </a>
                 @endif
                 @if($coEmail !== '')

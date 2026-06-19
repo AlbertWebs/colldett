@@ -87,8 +87,10 @@
         ? 'https://wa.me/'.$waDigits.'?text='.rawurlencode('Hello, I would like to request Colldett services.')
         : route('contact');
     $metaPhone = trim((string) ($site['company']['phone'] ?? ''));
+    $metaPhoneAlt = trim((string) ($site['company']['phone_alt'] ?? ''));
     $metaEmail = strtolower(trim((string) ($site['company']['email'] ?? '')));
     $metaTelHref = $metaPhone !== '' ? 'tel:'.preg_replace('/\s+/', '', $metaPhone) : '';
+    $metaTelAltHref = $metaPhoneAlt !== '' ? 'tel:'.preg_replace('/\s+/', '', $metaPhoneAlt) : '';
     $topbarSocialItems = [
         ['href' => $site['social']['linkedin'] ?? '', 'label' => 'LinkedIn', 'abbr' => 'in'],
         ['href' => $site['social']['facebook'] ?? '', 'label' => 'Facebook', 'abbr' => 'f'],
@@ -105,14 +107,20 @@
 <div class="topbar-meta">
     <div class="container topbar-meta-wrap">
         <span class="topbar-meta__tagline">Professional Recovery & Tracing Services</span>
-        @if($metaPhone !== '' || $metaEmail !== '' || $hasTopbarSocial)
+        @if($metaPhone !== '' || $metaPhoneAlt !== '' || $metaEmail !== '' || $hasTopbarSocial)
         <div class="topbar-meta__right">
-            @if($metaPhone !== '' || $metaEmail !== '')
+            @if($metaPhone !== '' || $metaPhoneAlt !== '' || $metaEmail !== '')
                 <div class="topbar-meta__contacts">
                     @if($metaPhone !== '')
                         <a href="{{ $metaTelHref }}" class="topbar-meta__contact">{{ $metaPhone }}</a>
                     @endif
-                    @if($metaPhone !== '' && $metaEmail !== '')
+                    @if($metaPhone !== '' && $metaPhoneAlt !== '')
+                        <span class="topbar-meta__sep" aria-hidden="true">|</span>
+                    @endif
+                    @if($metaPhoneAlt !== '')
+                        <a href="{{ $metaTelAltHref }}" class="topbar-meta__contact">{{ $metaPhoneAlt }}</a>
+                    @endif
+                    @if(($metaPhone !== '' || $metaPhoneAlt !== '') && $metaEmail !== '')
                         <span class="topbar-meta__sep" aria-hidden="true">|</span>
                     @endif
                     @if($metaEmail !== '')
@@ -242,6 +250,7 @@
 @php
     $footerTagline = trim((string) ($site['company']['tagline'] ?? ''));
     $footerPhone = trim((string) ($site['company']['phone'] ?? ''));
+    $footerPhoneAlt = trim((string) ($site['company']['phone_alt'] ?? ''));
     $footerEmail = trim((string) ($site['company']['email'] ?? ''));
     $footerAddress = \App\Support\DocumentPlainText::fromHtml($site['company']['address'] ?? '');
 @endphp
@@ -314,6 +323,12 @@
                     <a class="footer-contact-block" href="tel:{{ preg_replace('/\s+/', '', $footerPhone) }}">
                         <span class="footer-contact-label">Phone</span>
                         <span class="footer-contact-value">{{ $footerPhone }}</span>
+                    </a>
+                @endif
+                @if($footerPhoneAlt !== '')
+                    <a class="footer-contact-block" href="tel:{{ preg_replace('/\s+/', '', $footerPhoneAlt) }}">
+                        <span class="footer-contact-label">Alternate phone</span>
+                        <span class="footer-contact-value">{{ $footerPhoneAlt }}</span>
                     </a>
                 @endif
                 @if($footerEmail !== '')

@@ -14,6 +14,7 @@ class ContactDetail extends Model
 {
     protected $fillable = [
         'phone',
+        'phone_alt',
         'email',
         'address',
         'map_embed_url',
@@ -35,7 +36,7 @@ class ContactDetail extends Model
     }
 
     /**
-     * @param  array{phone?: ?string, email?: ?string, address?: ?string, map_embed_url?: ?string}  $attributes
+     * @param  array{phone?: ?string, phone_alt?: ?string, email?: ?string, address?: ?string, map_embed_url?: ?string}  $attributes
      */
     public static function syncFromAdminSettings(array $attributes): void
     {
@@ -51,6 +52,7 @@ class ContactDetail extends Model
         $row = self::query()->first();
         $payload = [
             'phone' => $normalize($attributes['phone'] ?? null),
+            'phone_alt' => $normalize($attributes['phone_alt'] ?? null),
             'email' => $normalize($attributes['email'] ?? null),
             'address' => $normalize(self::plainAddress($attributes['address'] ?? null)),
             'map_embed_url' => $normalize($attributes['map_embed_url'] ?? null),
