@@ -9,6 +9,12 @@
     $coreValuesProse = RichContentHtml::containsMarkup($coreValuesSource)
         ? RichContentHtml::toParagraphHtml($coreValuesSource)
         : '';
+    $coreValuesBlocks = RichContentHtml::containsMarkup($coreValuesSource)
+        ? RichContentHtml::expandTitledParagraphs($coreValuesSource)
+        : array_map(
+            static fn (string $value): array => ['title' => $value, 'body' => ''],
+            $about['core_values'] ?? ['Integrity', 'Professionalism', 'Respect', 'Confidentiality', 'Accountability', 'Results-Driven Performance']
+        );
 @endphp
 <section class="page-hero">
     <div class="container">
@@ -18,34 +24,53 @@
             <span>About Us</span>
         </p>
         <h1>{{ $about['hero_title'] ?? 'About Colldett Trace Limited' }}</h1>
-        <div class="about-rich-text">
-            {!! RichContentHtml::toParagraphHtml($about['hero_intro'] ?? 'Colldett Trace Limited is a dynamic and forward-thinking debt recovery firm formed by experienced professionals with strong backgrounds in financial institutions, legal practice, and corporate governance.') !!}
-        </div>
     </div>
 </section>
 
 <section class="about-page">
+    <section class="section about-hero-intro reveal">
+        <div class="container">
+            <div class="about-rich-text about-intro">
+                {!! RichContentHtml::toParagraphHtml($about['hero_intro'] ?? 'Colldett Trace Limited is a dynamic and forward-thinking debt recovery firm formed by experienced professionals with strong backgrounds in financial institutions, legal practice, and corporate governance.') !!}
+            </div>
+        </div>
+    </section>
 
     <section class="section about-section reveal">
         <div class="container">
             <div class="brand-arrow-accent" aria-hidden="true"><span class="bar"></span><span class="chevrons"><i></i><i class="c2"></i><i class="c3"></i></span></div>
             <h2>Mission, Vision &amp; Core Values</h2>
-            <div class="about-mvv-grid">
-                <article class="about-card">
-                    <h3>Mission</h3>
-                    <div class="about-rich-text">
-                        {!! RichContentHtml::toParagraphHtml($about['mission_text'] ?? "To deliver innovative, ethical, and results-driven debt recovery solutions that enhance our clients' cash flow, reduce financial risk, and preserve business relationships.") !!}
-                    </div>
-                </article>
-                <article class="about-card">
-                    <h3>Vision</h3>
-                    <div class="about-rich-text">
-                        {!! RichContentHtml::toParagraphHtml($about['vision_text'] ?? 'To be a leading debt recovery firm in Africa and beyond, recognized for excellence, integrity, and a refined approach to recovery grounded in legal and financial expertise.') !!}
-                    </div>
-                </article>
-                <article class="about-card">
+            <div class="about-mvv-layout">
+                <div class="about-mvv-top">
+                    <article class="about-card">
+                        <h3>Mission</h3>
+                        <div class="about-rich-text">
+                            {!! RichContentHtml::toParagraphHtml($about['mission_text'] ?? "To deliver innovative, ethical, and results-driven debt recovery solutions that enhance our clients' cash flow, reduce financial risk, and preserve business relationships.") !!}
+                        </div>
+                    </article>
+                    <article class="about-card">
+                        <h3>Vision</h3>
+                        <div class="about-rich-text">
+                            {!! RichContentHtml::toParagraphHtml($about['vision_text'] ?? 'To be a leading debt recovery firm in Africa and beyond, recognized for excellence, integrity, and a refined approach to recovery grounded in legal and financial expertise.') !!}
+                        </div>
+                    </article>
+                </div>
+                <div class="about-mvv-values">
                     <h3>Core Values</h3>
-                    @if($coreValuesProse !== '')
+                    @if($coreValuesBlocks !== [])
+                        <div class="about-values-grid">
+                            @foreach($coreValuesBlocks as $valueBlock)
+                                <article class="about-value-card">
+                                    @if(($valueBlock['title'] ?? '') !== '')
+                                        <h4>{{ $valueBlock['title'] }}</h4>
+                                    @endif
+                                    @if(($valueBlock['body'] ?? '') !== '')
+                                        <div class="about-rich-text">{!! $valueBlock['body'] !!}</div>
+                                    @endif
+                                </article>
+                            @endforeach
+                        </div>
+                    @elseif($coreValuesProse !== '')
                         <div class="about-rich-text">{!! $coreValuesProse !!}</div>
                     @else
                         <ul class="about-icon-list">
@@ -54,7 +79,7 @@
                             @endforeach
                         </ul>
                     @endif
-                </article>
+                </div>
             </div>
         </div>
     </section>

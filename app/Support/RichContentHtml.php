@@ -208,4 +208,67 @@ final class RichContentHtml
 
         return $html;
     }
+
+    /**
+     * Split Quill HTML into titled blocks (e.g. core values: bold title + description).
+     *
+     * @return array<int, array{title: string, body: string}>
+     */
+    public static function expandTitledParagraphs(?string $value): array
+    {
+        if ($value === null || trim($value) === '') {
+            return [];
+        }
+
+        $html = self::sanitize($value);
+        if ($html === '') {
+            return [];
+        }
+
+        if (! preg_match_all('#<p[^>]*>(.*?)</p>#is', $html, $paras) || $paras[1] === []) {
+            $plain = DocumentPlainText::fromHtml($value);
+
+            return $plain !== '' ? [['title' => '', 'body' => e($plain)]] : [];
+        }
+
+        $blocks = [];
+        $current = null;
+
+        foreach ($paras[1] as $para) {
+            $para = trim((string) $para);
+            if ($para === '' || preg_match('/^\s*(?:<br\s*\/?>)?\s*$/i', $para)) {
+                continue;
+            }
+
+            $isTitle = (bool) preg_match('#^<(?:strong|b)[^>]*>(.+?)</(?:strong|b)>\s*$#is', $para, $titleMatch);
+
+            if ($isTitle) {
+                if ($current !== null) {
+                    $blocks[] = $current;
+                }
+                $current = [
+                    'title' => trim(strip_tags($titleMatch[1])),
+                    'body' => '',
+                ];
+
+                continue;
+            }
+
+            $piece = self::sanitize('<p>'.$para.'</p>');
+
+            if ($current === null) {
+                $blocks[] = ['title' => '', 'body' => $piece];
+
+                continue;
+            }
+
+            $current['body'] .= ($current['body'] !== '' ? "\n" : '').$piece;
+        }
+
+        if ($current !== null) {
+            $blocks[] = $current;
+        }
+
+        return $blocks;
+    }
 }
