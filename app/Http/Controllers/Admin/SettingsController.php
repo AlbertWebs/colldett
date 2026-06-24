@@ -24,7 +24,301 @@ class SettingsController extends Controller
 {
     private const STORAGE_PATH = 'admin/settings.json';
 
-    public function index(): View
+    public function index(): RedirectResponse
+    {
+        return redirect()->route('admin.settings.company');
+    }
+
+    public function company(): View
+    {
+        return view('admin.settings.company', [
+            'settings' => $this->settingsForView(),
+        ]);
+    }
+
+    public function branding(): View
+    {
+        return view('admin.settings.branding', [
+            'settings' => $this->settingsForView(),
+        ]);
+    }
+
+    public function documents(): View
+    {
+        return view('admin.settings.documents', [
+            'settings' => $this->settingsForView(),
+        ]);
+    }
+
+    public function operations(): View
+    {
+        return view('admin.settings.operations', [
+            'settings' => $this->settingsForView(),
+        ]);
+    }
+
+    public function security(Request $request): View
+    {
+        $adminUserId = (int) $request->session()->get('admin_user_id', 0);
+        $adminUser = $adminUserId > 0
+            ? AdminUser::query()->find($adminUserId)
+            : null;
+
+        return view('admin.settings.security', [
+            'adminUser' => $adminUser,
+            'usesMasterAccess' => $adminUser === null,
+        ]);
+    }
+
+    public function updateCompany(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'company_name' => ['nullable', 'string', 'max:255'],
+            'company_tagline' => ['nullable', 'string', 'max:255'],
+            'company_email' => ['nullable', 'email', 'max:255'],
+            'company_phone' => ['nullable', 'string', 'max:255'],
+            'company_phone_alt' => ['nullable', 'string', 'max:255'],
+            'company_kra_pin' => ['nullable', 'string', 'max:64'],
+            'company_address' => ['nullable', 'string', 'max:2000'],
+            'company_map_embed_url' => ['nullable', 'string', 'max:4000'],
+            'company_domain' => ['nullable', 'string', 'max:255'],
+            'company_description' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $settings = $this->readSettings();
+        $settings = array_merge($settings, $data);
+
+        if (isset($settings['company_address'])) {
+            $plainAddress = DocumentPlainText::fromHtml((string) $settings['company_address']);
+            $settings['company_address'] = $plainAddress !== '' ? $plainAddress : null;
+        }
+
+        $mapEmbedUrl = $settings['company_map_embed_url'] ?? null;
+        unset($settings['company_map_embed_url']);
+
+        $this->persistSettings($settings);
+
+        if (Schema::hasTable('contact_details')) {
+            ContactDetail::syncFromAdminSettings([
+                'phone' => $settings['company_phone'] ?? null,
+                'phone_alt' => $settings['company_phone_alt'] ?? null,
+                'email' => $settings['company_email'] ?? null,
+                'address' => $settings['company_address'] ?? null,
+                'map_embed_url' => $mapEmbedUrl,
+            ]);
+        }
+
+        return redirect()
+            ->route('admin.settings.company')
+            ->with('status', 'Company settings saved.');
+    }
+
+    public function updateBranding(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'company_logo_file' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,svg', 'max:4096'],
+            'footer_logo_file' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,svg', 'max:4096'],
+            'favicon_file' => ['nullable', 'image', 'mimes:png,ico,webp', 'max:2048'],
+            'social_facebook' => ['nullable', 'url', 'max:500'],
+            'social_twitter' => ['nullable', 'url', 'max:500'],
+            'social_linkedin' => ['nullable', 'url', 'max:500'],
+            'social_instagram' => ['nullable', 'url', 'max:500'],
+            'social_youtube' => ['nullable', 'url', 'max:500'],
+        ]);
+
+        $settings = $this->readSettings();
+        $settings = array_merge($settings, $request->only([
+            'social_facebook',
+            'social_twitter',
+            'social_linkedin',
+            'social_instagram',
+            'social_youtube',
+        ]));
+
+        if ($request->hasFile('company_logo_file')) {
+            $settings['company_logo'] = $this->storeUploadedImage($request->file('company_logo_file'), 'company-logo');
+        }
+
+        if ($request->hasFile('footer_logo_file')) {
+            $settings['footer_logo'] = $this->storeUploadedImage($request->file('footer_logo_file'), 'footer-logo');
+        }
+
+        if ($request->hasFile('favicon_file')) {
+            $settings['favicon'] = $this->storeUploadedImage($request->file('favicon_file'), 'favicon');
+        }
+
+        $this->persistSettings($settings);
+
+        return redirect()
+            ->route('admin.settings.branding')
+            ->with('status', 'Branding settings saved.');
+    }
+
+    public function updateDocuments(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'document_website' => ['nullable', 'string', 'max:255'],
+            'document_phones' => ['nullable', 'string', 'max:500'],
+            'document_address_lines' => ['nullable', 'string', 'max:2000'],
+            'document_letterhead_file' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
+            'invoice_vat_rate' => ['nullable', 'string', 'max:32'],
+            'invoice_vat_label' => ['nullable', 'string', 'max:255'],
+            'invoice_currency' => ['nullable', 'string', 'max:32'],
+            'invoice_payment_title' => ['nullable', 'string', 'max:255'],
+            'invoice_bank_heading' => ['nullable', 'string', 'max:128'],
+            'invoice_other_heading' => ['nullable', 'string', 'max:128'],
+            'invoice_payment_other_lines' => ['nullable', 'string', 'max:2000'],
+            'invoice_payment_note' => ['nullable', 'string', 'max:2000'],
+            'remittance_account_name' => ['nullable', 'string', 'max:255'],
+            'remittance_account_number' => ['nullable', 'string', 'max:128'],
+            'remittance_bank' => ['nullable', 'string', 'max:255'],
+            'remittance_branch' => ['nullable', 'string', 'max:255'],
+            'remittance_swift_code' => ['nullable', 'string', 'max:64'],
+            'remittance_bank_code' => ['nullable', 'string', 'max:32'],
+            'remittance_branch_code' => ['nullable', 'string', 'max:32'],
+            'remittance_reference_line' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $settings = array_merge($this->readSettings(), $data);
+
+        foreach (AdminStoredSettings::remittanceSettingKeys() as $key) {
+            $settings[$key] = trim((string) ($settings[$key] ?? ''));
+        }
+        $settings['invoice_payment_bank_lines'] = AdminStoredSettings::composeInvoicePaymentBankLinesFromRemittanceFields($settings);
+
+        if ($request->hasFile('document_letterhead_file')) {
+            $settings['document_letterhead_path'] = $this->storeUploadedImage($request->file('document_letterhead_file'), 'letterhead-document');
+        }
+
+        $this->persistSettings($settings);
+
+        return redirect()
+            ->route('admin.settings.documents')
+            ->with('status', 'Document settings saved.');
+    }
+
+    public function updateOperations(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'smtp_host' => ['nullable', 'string', 'max:255'],
+            'smtp_credentials' => ['nullable', 'string', 'max:1000'],
+            'document_prefixes' => ['nullable', 'string', 'max:500'],
+            'currency_tax' => ['nullable', 'string', 'max:255'],
+            'regional_preferences' => ['nullable', 'string', 'max:255'],
+            'show_reports_nav' => ['nullable', 'boolean'],
+        ]);
+
+        $settings = array_merge($this->readSettings(), $data);
+        $settings['show_reports_nav'] = $request->boolean('show_reports_nav');
+
+        $this->persistSettings($settings);
+
+        return redirect()
+            ->route('admin.settings.operations')
+            ->with('status', 'Operations settings saved.');
+    }
+
+    public function updateAccessPin(Request $request): RedirectResponse
+    {
+        $adminUserId = (int) $request->session()->get('admin_user_id', 0);
+        $user = $adminUserId > 0 ? AdminUser::query()->find($adminUserId) : null;
+
+        if ($user === null) {
+            return redirect()
+                ->route('admin.settings.security')
+                ->withErrors(['access_pin' => 'PIN changes are only available for staff accounts. Master access is configured in your environment file.']);
+        }
+
+        $data = $request->validate([
+            'current_access_code' => ['required', 'string', 'max:500'],
+            'access_code' => ['required', 'string', 'min:4', 'max:200', 'confirmed'],
+        ]);
+
+        if (! Hash::check($data['current_access_code'], (string) $user->access_code_hash)) {
+            return redirect()
+                ->route('admin.settings.security')
+                ->withErrors(['current_access_code' => 'Current PIN or password is incorrect.'])
+                ->withInput();
+        }
+
+        $user->access_code_hash = Hash::make($data['access_code']);
+        $user->save();
+
+        return redirect()
+            ->route('admin.settings.security')
+            ->with('status', 'Your admin PIN/password was updated successfully.');
+    }
+
+    public function purgeTestData(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'confirm' => ['required', 'string', 'in:PURGE'],
+            'access_code' => ['required', 'string', 'max:500'],
+        ]);
+
+        if (! $this->accessCodeAuthorized($request, (string) $data['access_code'])) {
+            return redirect()
+                ->route('admin.settings.security')
+                ->withErrors(['purge_access_code' => 'Incorrect PIN/password.'])
+                ->withInput();
+        }
+
+        $deletedFiles = [];
+        $paths = [
+            'admin/clients.json',
+            'admin/cases.json',
+            'admin/billing_invoice_seq.json',
+            'admin/billing_invoices.json',
+            'admin/billing_quotation_seq.json',
+            'admin/billing_fee_note_seq.json',
+            'admin/billing_fee_notes.json',
+            'admin/fee_note_client_addresses.json',
+            'admin/billing_payment_seq.json',
+        ];
+
+        foreach ($paths as $path) {
+            if (Storage::disk('local')->exists($path)) {
+                Storage::disk('local')->delete($path);
+                $deletedFiles[] = $path;
+            }
+        }
+
+        $purged = [
+            'inquiries' => 0,
+            'career_applications' => 0,
+        ];
+
+        if (Schema::hasTable('inquiries')) {
+            $purged['inquiries'] = Inquiry::query()->count();
+            Inquiry::query()->delete();
+        }
+
+        if (Schema::hasTable('career_applications')) {
+            $applications = CareerApplication::query()->get();
+            $purged['career_applications'] = $applications->count();
+            foreach ($applications as $application) {
+                $application->deleteStoredFiles();
+            }
+            CareerApplication::query()->delete();
+            Storage::disk('local')->deleteDirectory('career-applications');
+        }
+
+        if (Schema::hasTable('careers')) {
+            Career::query()->delete();
+        }
+
+        return redirect()
+            ->route('admin.settings.security')
+            ->with('status', 'Test data purged. Cleared: '
+                .count($deletedFiles).' management files, '
+                .$purged['inquiries'].' inquiries, and '
+                .$purged['career_applications'].' career applications.');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function settingsForView(): array
     {
         $saved = $this->readSettings();
         $company = config('colldett.company', []);
@@ -72,207 +366,48 @@ class SettingsController extends Controller
             'invoice_payment_other_lines' => $saved['invoice_payment_other_lines'] ?? '',
             'invoice_payment_note' => $saved['invoice_payment_note'] ?? config('colldett.invoice.payment_details.note', ''),
             'show_reports_nav' => filter_var($saved['show_reports_nav'] ?? false, FILTER_VALIDATE_BOOL),
-            'company_map_embed_url' => old(
-                'company_map_embed_url',
-                Schema::hasTable('contact_details')
-                    ? (ContactDetail::query()->value('map_embed_url')
-                        ?? (string) (config('colldett.company.map_embed_url') ?? ''))
-                    : (string) (config('colldett.company.map_embed_url') ?? '')
-            ),
+            'company_map_embed_url' => Schema::hasTable('contact_details')
+                ? (ContactDetail::query()->value('map_embed_url')
+                    ?? (string) (config('colldett.company.map_embed_url') ?? ''))
+                : (string) (config('colldett.company.map_embed_url') ?? ''),
         ];
 
-        $settings = array_merge($settings, AdminStoredSettings::remittanceFormValuesForAdmin($saved));
-
-        return view('admin.settings', compact('settings'));
+        return array_merge($settings, AdminStoredSettings::remittanceFormValuesForAdmin($saved));
     }
 
-    public function update(Request $request): RedirectResponse
+    /**
+     * @param  array<string, mixed>  $settings
+     */
+    private function persistSettings(array $settings): void
     {
-        $data = $request->validate([
-            'document_website' => ['nullable', 'string', 'max:255'],
-            'document_phones' => ['nullable', 'string', 'max:500'],
-            'document_address_lines' => ['nullable', 'string', 'max:2000'],
-            'document_letterhead_file' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
-            'invoice_vat_rate' => ['nullable', 'string', 'max:32'],
-            'invoice_vat_label' => ['nullable', 'string', 'max:255'],
-            'invoice_currency' => ['nullable', 'string', 'max:32'],
-            'invoice_payment_title' => ['nullable', 'string', 'max:255'],
-            'invoice_bank_heading' => ['nullable', 'string', 'max:128'],
-            'invoice_other_heading' => ['nullable', 'string', 'max:128'],
-            'invoice_payment_other_lines' => ['nullable', 'string', 'max:2000'],
-            'invoice_payment_note' => ['nullable', 'string', 'max:2000'],
-            'remittance_account_name' => ['nullable', 'string', 'max:255'],
-            'remittance_account_number' => ['nullable', 'string', 'max:128'],
-            'remittance_bank' => ['nullable', 'string', 'max:255'],
-            'remittance_branch' => ['nullable', 'string', 'max:255'],
-            'remittance_swift_code' => ['nullable', 'string', 'max:64'],
-            'remittance_bank_code' => ['nullable', 'string', 'max:32'],
-            'remittance_branch_code' => ['nullable', 'string', 'max:32'],
-            'remittance_reference_line' => ['nullable', 'string', 'max:500'],
-            'company_name' => ['nullable', 'string', 'max:255'],
-            'company_tagline' => ['nullable', 'string', 'max:255'],
-            'company_email' => ['nullable', 'email', 'max:255'],
-            'company_phone' => ['nullable', 'string', 'max:255'],
-            'company_phone_alt' => ['nullable', 'string', 'max:255'],
-            'company_kra_pin' => ['nullable', 'string', 'max:64'],
-            'company_address' => ['nullable', 'string', 'max:2000'],
-            'company_map_embed_url' => ['nullable', 'string', 'max:4000'],
-            'company_domain' => ['nullable', 'string', 'max:255'],
-            'company_description' => ['nullable', 'string', 'max:2000'],
-            'company_logo_file' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,svg', 'max:4096'],
-            'footer_logo_file' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,svg', 'max:4096'],
-            'favicon_file' => ['nullable', 'image', 'mimes:png,ico,webp', 'max:2048'],
-            'social_facebook' => ['nullable', 'url', 'max:500'],
-            'social_twitter' => ['nullable', 'url', 'max:500'],
-            'social_linkedin' => ['nullable', 'url', 'max:500'],
-            'social_instagram' => ['nullable', 'url', 'max:500'],
-            'social_youtube' => ['nullable', 'url', 'max:500'],
-            'smtp_host' => ['nullable', 'string', 'max:255'],
-            'smtp_credentials' => ['nullable', 'string', 'max:1000'],
-            'document_prefixes' => ['nullable', 'string', 'max:500'],
-            'currency_tax' => ['nullable', 'string', 'max:255'],
-            'regional_preferences' => ['nullable', 'string', 'max:255'],
-            'show_reports_nav' => ['nullable', 'boolean'],
-        ]);
-
-        unset($data['company_logo_file'], $data['footer_logo_file'], $data['favicon_file'], $data['document_letterhead_file']);
-
-        $saved = $this->readSettings();
-        $settings = array_merge($saved, $data);
-        $settings['show_reports_nav'] = $request->boolean('show_reports_nav');
-
-        foreach (AdminStoredSettings::remittanceSettingKeys() as $key) {
-            $settings[$key] = trim((string) ($settings[$key] ?? ''));
-        }
-        $settings['invoice_payment_bank_lines'] = AdminStoredSettings::composeInvoicePaymentBankLinesFromRemittanceFields($settings);
-
-        if (isset($settings['company_address'])) {
-            $plainAddress = DocumentPlainText::fromHtml((string) $settings['company_address']);
-            $settings['company_address'] = $plainAddress !== '' ? $plainAddress : null;
-        }
-
-        $mapEmbedUrl = $settings['company_map_embed_url'] ?? null;
-        unset($settings['company_map_embed_url']);
-
-        if ($request->hasFile('company_logo_file')) {
-            $settings['company_logo'] = $this->storeUploadedImage($request->file('company_logo_file'), 'company-logo');
-        }
-
-        if ($request->hasFile('footer_logo_file')) {
-            $settings['footer_logo'] = $this->storeUploadedImage($request->file('footer_logo_file'), 'footer-logo');
-        }
-
-        if ($request->hasFile('favicon_file')) {
-            $settings['favicon'] = $this->storeUploadedImage($request->file('favicon_file'), 'favicon');
-        }
-
-        if ($request->hasFile('document_letterhead_file')) {
-            $settings['document_letterhead_path'] = $this->storeUploadedImage($request->file('document_letterhead_file'), 'letterhead-document');
-        }
-
         Storage::disk('local')->put(self::STORAGE_PATH, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-
         AdminStoredSettings::flushCache();
-
-        if (Schema::hasTable('contact_details')) {
-            ContactDetail::syncFromAdminSettings([
-                'phone' => $settings['company_phone'] ?? null,
-                'phone_alt' => $settings['company_phone_alt'] ?? null,
-                'email' => $settings['company_email'] ?? null,
-                'address' => $settings['company_address'] ?? null,
-                'map_embed_url' => $mapEmbedUrl,
-            ]);
-        }
-
-        return redirect()
-            ->route('admin.settings')
-            ->with('status', 'Settings saved successfully.');
     }
 
-    public function purgeTestData(Request $request): RedirectResponse
+    private function accessCodeAuthorized(Request $request, string $provided): bool
     {
-        $data = $request->validate([
-            'confirm' => ['required', 'string', 'in:PURGE'],
-            'access_code' => ['required', 'string', 'max:500'],
-        ]);
-
-        $provided = (string) ($data['access_code'] ?? '');
         $secret = (string) config('colldett.admin.access_secret', '');
         $pin = (string) config('colldett.admin.access_pin', '');
 
-        $authorized = ($secret !== '' && hash_equals($secret, $provided))
-            || ($pin !== '' && hash_equals($pin, $provided));
+        if (($secret !== '' && hash_equals($secret, $provided))
+            || ($pin !== '' && hash_equals($pin, $provided))) {
+            return true;
+        }
 
-        if (! $authorized) {
-            $adminUserId = (int) $request->session()->get('admin_user_id', 0);
-            if ($adminUserId > 0) {
-                $u = AdminUser::query()->whereKey($adminUserId)->first(['id', 'access_code_hash']);
-                if ($u && Hash::check($provided, (string) $u->access_code_hash)) {
-                    $authorized = true;
-                }
+        $adminUserId = (int) $request->session()->get('admin_user_id', 0);
+        if ($adminUserId > 0) {
+            $user = AdminUser::query()->whereKey($adminUserId)->first(['id', 'access_code_hash']);
+            if ($user && Hash::check($provided, (string) $user->access_code_hash)) {
+                return true;
             }
         }
 
-        if (! $authorized) {
-            return redirect()
-                ->route('admin.settings')
-                ->withErrors(['purge_access_code' => 'Incorrect PIN/password.'])
-                ->withInput();
-        }
-
-        $deletedFiles = [];
-        $paths = [
-            // Operational / management stores (JSON)
-            'admin/clients.json',
-            'admin/cases.json',
-            'admin/billing_invoice_seq.json',
-            'admin/billing_invoices.json',
-            'admin/billing_quotation_seq.json',
-            'admin/billing_fee_note_seq.json',
-            'admin/billing_fee_notes.json',
-            'admin/fee_note_client_addresses.json',
-            'admin/billing_payment_seq.json',
-        ];
-
-        foreach ($paths as $path) {
-            if (Storage::disk('local')->exists($path)) {
-                Storage::disk('local')->delete($path);
-                $deletedFiles[] = $path;
-            }
-        }
-
-        $purged = [
-            'inquiries' => 0,
-            'career_applications' => 0,
-        ];
-
-        if (Schema::hasTable('inquiries')) {
-            $purged['inquiries'] = Inquiry::query()->count();
-            Inquiry::query()->delete();
-        }
-
-        if (Schema::hasTable('career_applications')) {
-            $applications = CareerApplication::query()->get();
-            $purged['career_applications'] = $applications->count();
-            foreach ($applications as $application) {
-                $application->deleteStoredFiles();
-            }
-            CareerApplication::query()->delete();
-            Storage::disk('local')->deleteDirectory('career-applications');
-        }
-
-        if (Schema::hasTable('careers')) {
-            Career::query()->delete();
-        }
-
-        return redirect()
-            ->route('admin.settings')
-            ->with('status', 'Test data purged. Cleared: '
-                .count($deletedFiles).' management files, '
-                .$purged['inquiries'].' inquiries, and '
-                .$purged['career_applications'].' career applications.');
+        return false;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function readSettings(): array
     {
         if (! Storage::disk('local')->exists(self::STORAGE_PATH)) {

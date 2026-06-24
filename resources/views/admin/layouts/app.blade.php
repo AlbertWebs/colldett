@@ -52,7 +52,7 @@
             'title' => 'Administration',
             'items' => [
                 ['route' => 'admin.users', 'label' => 'Users', 'icon' => 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 7a4 4 0 1 0 0.01 0', 'active' => ['admin.users', 'admin.users.*']],
-                ['route' => 'admin.settings', 'label' => 'Settings', 'icon' => 'M12 8a4 4 0 1 0 0.01 0 M4.93 4.93l1.41 1.41 M17.66 17.66l1.41 1.41 M1 12h2 M21 12h2', 'active' => ['admin.settings', 'admin.settings.*']],
+                ['route' => 'admin.settings.company', 'label' => 'Settings', 'icon' => 'M12 8a4 4 0 1 0 0.01 0 M4.93 4.93l1.41 1.41 M17.66 17.66l1.41 1.41 M1 12h2 M21 12h2', 'active' => ['admin.settings', 'admin.settings.*']],
             ],
         ],
     ];
@@ -182,7 +182,7 @@
                             <div x-show="profileMenuOpen" x-transition class="absolute right-0 mt-2 w-52 admin-card p-2 text-sm">
                                 <a class="block rounded-md px-3 py-2 hover:bg-slate-50" href="{{ route('admin.profile') }}">Profile</a>
                                 <a class="block rounded-md px-3 py-2 hover:bg-slate-50" href="{{ route('admin.account-settings') }}">Account Settings</a>
-                                <a class="block rounded-md px-3 py-2 hover:bg-slate-50" href="{{ route('admin.change-password') }}">Change Password</a>
+                                <a class="block rounded-md px-3 py-2 hover:bg-slate-50" href="{{ route('admin.settings.security') }}">Change PIN / password</a>
                                 <form method="POST" action="{{ route('admin.logout') }}" class="block">
                                     @csrf
                                     <button type="submit" class="w-full rounded-md px-3 py-2 text-left text-rose-600 hover:bg-rose-50">Sign out</button>

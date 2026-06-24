@@ -32,16 +32,30 @@
         <article class="admin-card p-5 xl:col-span-8">
             <div class="mb-3 flex items-center justify-between">
                 <h3 class="admin-card-title">Recent Activity</h3>
-                <span class="admin-chip">Live Feed</span>
+                <span class="admin-chip">{{ count($recentActivities ?? []) }} events</span>
             </div>
             <div class="admin-table-wrap">
                 <table class="admin-table">
-                    <thead><tr><th>Event</th><th>Entity</th><th>User</th><th>Time</th></tr></thead>
+                    <thead><tr><th>Event</th><th>Entity</th><th>Source</th><th>Time</th></tr></thead>
                     <tbody>
-                        <tr><td>Invoice generated</td><td>INV-2026-1198</td><td>Finance Admin</td><td>3 mins ago</td></tr>
-                        <tr><td>Case status updated</td><td>CASE-004281</td><td>Collections Lead</td><td>8 mins ago</td></tr>
-                        <tr><td>Demand letter sent</td><td>DL-2091</td><td>Legal Officer</td><td>18 mins ago</td></tr>
-                        <tr><td>Payment captured</td><td>PM-9001</td><td>Billing Desk</td><td>35 mins ago</td></tr>
+                        @forelse($recentActivities ?? [] as $activity)
+                            <tr>
+                                <td>{{ $activity['event'] }}</td>
+                                <td>
+                                    @if(!empty($activity['url']))
+                                        <a href="{{ $activity['url'] }}" class="font-medium text-admin-ink underline decoration-slate-300 underline-offset-2 hover:text-admin-primary">{{ $activity['entity'] }}</a>
+                                    @else
+                                        {{ $activity['entity'] }}
+                                    @endif
+                                </td>
+                                <td>{{ $activity['user'] }}</td>
+                                <td title="{{ $activity['occurred_at']->format('j M Y, H:i') }}">{{ $activity['occurred_at']->diffForHumans() }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="text-admin-muted">No recent activity yet. New inquiries, applications, cases, and billing documents will appear here.</td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

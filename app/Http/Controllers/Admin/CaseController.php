@@ -66,6 +66,7 @@ class CaseController extends Controller
         $data['id'] = $nextId;
         $data['case_number'] = $this->nextCaseNumber($items);
         $data['notes'] = [];
+        $data['created_at'] = now()->toDateTimeString();
         $items[] = $data;
         $this->saveItems($items);
         $this->sendAssignmentEmail($data['officer'], $data['case_number'], $data['client'], $data['next_action_date']);

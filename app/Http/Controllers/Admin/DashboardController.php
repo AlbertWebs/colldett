@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\CareerApplication;
 use App\Models\Inquiry;
+use App\Support\AdminActivityFeed;
 use App\Support\ClientDirectory;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -44,6 +45,7 @@ class DashboardController extends Controller
                 ['Inbound inquiries', number_format($inquiriesTotal)],
                 ['New career applications', number_format($newApplications)],
             ],
+            'recentActivities' => AdminActivityFeed::recent(12),
         ]);
     }
 

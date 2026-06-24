@@ -39,7 +39,7 @@
                             <p class="mt-2 rounded-lg border border-sky-200/80 bg-sky-50/80 px-3 py-2 text-sm text-sky-950">
                                 <strong>Save draft</strong> keeps all details without using the next FN number; finish later, then click <strong>Issue fee note (assign FN number)</strong> on the edit screen.
                                 Or click <strong>Issue fee note</strong> on create to assign FN-… immediately. Fill <strong>reference details</strong> → <strong>client particulars</strong> → <strong>fee computation</strong> → optional notes.
-                                Bank remittance lines on the printed fee note come from <a href="{{ route('admin.settings') }}#settings-invoice-payment" class="font-semibold underline decoration-sky-700/50 underline-offset-2 hover:text-sky-900">Admin → Settings → Invoices &amp; printable documents</a> (bank lines), so you do not re-enter them here.
+                                Bank remittance lines on the printed fee note come from <a href="{{ route('admin.settings.documents') }}" class="font-semibold underline decoration-sky-700/50 underline-offset-2 hover:text-sky-900">Admin → Settings → Documents</a> (bank lines), so you do not re-enter them here.
                             </p>
                         @endif
                         @if($module === 'demand')
