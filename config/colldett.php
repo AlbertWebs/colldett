@@ -444,8 +444,9 @@ return [
     ],
 
     /*
-    | Admin panel gate: set ADMIN_ACCESS_SECRET (password) and/or ADMIN_ACCESS_PIN in .env.
-    | At least one must be set; login accepts either value. Uses session (not Laravel users).
+    | Admin panel session key. Panel PIN is stored hashed in storage (see AdminAccess).
+    | Legacy ADMIN_ACCESS_SECRET / ADMIN_ACCESS_PIN in .env are only used once to migrate
+    | to the stored PIN on first successful login, then ignored.
     */
     'admin' => [
         'access_secret' => env('ADMIN_ACCESS_SECRET', ''),

@@ -8,6 +8,7 @@ use App\Models\Career;
 use App\Models\CareerApplication;
 use App\Models\ContactDetail;
 use App\Models\Inquiry;
+use App\Support\AdminAccess;
 use App\Support\AdminStoredSettings;
 use App\Support\DocumentPlainText;
 use Illuminate\Http\RedirectResponse;
@@ -66,7 +67,8 @@ class SettingsController extends Controller
 
         return view('admin.settings.security', [
             'adminUser' => $adminUser,
-            'usesMasterAccess' => $adminUser === null,
+            'usesPanelAccess' => $adminUser === null,
+            'panelPinConfigured' => AdminAccess::hasPanelPin(),
         ]);
     }
 
@@ -226,7 +228,7 @@ class SettingsController extends Controller
         if ($user === null) {
             return redirect()
                 ->route('admin.settings.security')
-                ->withErrors(['access_pin' => 'PIN changes are only available for staff accounts. Master access is configured in your environment file.']);
+                ->withErrors(['access_pin' => 'Use the panel PIN form below to update the shared admin PIN.']);
         }
 
         $data = $request->validate([
@@ -249,6 +251,38 @@ class SettingsController extends Controller
             ->with('status', 'Your admin PIN/password was updated successfully.');
     }
 
+    public function updatePanelPin(Request $request): RedirectResponse
+    {
+        if ((int) $request->session()->get('admin_user_id', 0) > 0) {
+            return redirect()
+                ->route('admin.settings.security')
+                ->withErrors(['panel_pin' => 'Staff accounts change their own PIN in the form above.']);
+        }
+
+        $hasPanelPin = AdminAccess::hasPanelPin();
+        $rules = [
+            'access_code' => ['required', 'string', 'min:4', 'max:200', 'confirmed'],
+        ];
+        if ($hasPanelPin) {
+            $rules['current_access_code'] = ['required', 'string', 'max:500'];
+        }
+
+        $data = $request->validate($rules);
+
+        if ($hasPanelPin && ! AdminAccess::verifyPanelPin((string) $data['current_access_code'])) {
+            return redirect()
+                ->route('admin.settings.security')
+                ->withErrors(['current_access_code' => 'Current panel PIN is incorrect.'])
+                ->withInput();
+        }
+
+        AdminAccess::setPanelPin((string) $data['access_code']);
+
+        return redirect()
+            ->route('admin.settings.security')
+            ->with('status', $hasPanelPin ? 'Panel PIN updated successfully.' : 'Panel PIN set successfully.');
+    }
+
     public function purgeTestData(Request $request): RedirectResponse
     {
         $data = $request->validate([
@@ -256,7 +290,7 @@ class SettingsController extends Controller
             'access_code' => ['required', 'string', 'max:500'],
         ]);
 
-        if (! $this->accessCodeAuthorized($request, (string) $data['access_code'])) {
+        if (! AdminAccess::authorizeSensitive($request, (string) $data['access_code'])) {
             return redirect()
                 ->route('admin.settings.security')
                 ->withErrors(['purge_access_code' => 'Incorrect PIN/password.'])
@@ -382,27 +416,6 @@ class SettingsController extends Controller
     {
         Storage::disk('local')->put(self::STORAGE_PATH, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         AdminStoredSettings::flushCache();
-    }
-
-    private function accessCodeAuthorized(Request $request, string $provided): bool
-    {
-        $secret = (string) config('colldett.admin.access_secret', '');
-        $pin = (string) config('colldett.admin.access_pin', '');
-
-        if (($secret !== '' && hash_equals($secret, $provided))
-            || ($pin !== '' && hash_equals($pin, $provided))) {
-            return true;
-        }
-
-        $adminUserId = (int) $request->session()->get('admin_user_id', 0);
-        if ($adminUserId > 0) {
-            $user = AdminUser::query()->whereKey($adminUserId)->first(['id', 'access_code_hash']);
-            if ($user && Hash::check($provided, (string) $user->access_code_hash)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**

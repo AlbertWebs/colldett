@@ -66,7 +66,7 @@
                                     <span class="admin-login-reveal__hide" hidden>Hide</span>
                                 </button>
                             </div>
-                            <p id="access-code-hint" class="admin-login-hint">Use the access password or PIN defined in your site’s environment configuration.</p>
+                            <p id="access-code-hint" class="admin-login-hint">Enter your panel PIN or staff account PIN.</p>
                         </div>
                         <button type="submit" class="admin-login-submit">
                             <span>Continue</span>
@@ -74,7 +74,7 @@
                         </button>
                     </form>
 
-                    <p class="admin-login-meta">Session-based access · supports staff PIN/passwords and master access code</p>
+                    <p class="admin-login-meta">Session-based access · panel PIN or staff account</p>
 
                     <a href="{{ route('home') }}" class="admin-login-backlink">
                         <span class="admin-login-backlink__icon" aria-hidden="true">←</span>

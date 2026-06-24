@@ -169,5 +169,6 @@ Route::middleware('admin.access')->prefix('admin')->name('admin.')->group(functi
     Route::post('/settings/operations', [SettingsController::class, 'updateOperations'])->name('settings.operations.update');
     Route::get('/settings/security', [SettingsController::class, 'security'])->name('settings.security');
     Route::post('/settings/security/pin', [SettingsController::class, 'updateAccessPin'])->name('settings.security.pin');
+    Route::post('/settings/security/panel-pin', [SettingsController::class, 'updatePanelPin'])->name('settings.security.panel-pin');
     Route::post('/settings/purge-test-data', [SettingsController::class, 'purgeTestData'])->name('settings.purge-test-data');
 });

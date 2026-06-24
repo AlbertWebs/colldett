@@ -18,6 +18,14 @@ final class AdminStoredSettings
         self::$cache = null;
     }
 
+    public static function setValue(string $key, mixed $value): void
+    {
+        $settings = self::all();
+        $settings[$key] = $value;
+        Storage::disk('local')->put(self::STORAGE_PATH, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        self::flushCache();
+    }
+
     public static function all(): array
     {
         if (self::$cache !== null) {

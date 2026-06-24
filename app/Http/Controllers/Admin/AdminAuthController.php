@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AdminUser;
+use App\Support\AdminAccess;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -27,37 +28,25 @@ class AdminAuthController extends Controller
         ]);
 
         $provided = (string) $request->input('access_code', '');
-        $secret = (string) config('colldett.admin.access_secret', '');
-        $pin = (string) config('colldett.admin.access_pin', '');
 
-        $hasAnyAdminUsers = AdminUser::query()->where('is_active', true)->exists();
-
-        if ($secret === '' && $pin === '' && ! $hasAnyAdminUsers) {
+        if (! AdminAccess::hasAnyLoginMethod()) {
             return back()
-                ->withErrors(['access_code' => 'Admin access is not configured. Set ADMIN_ACCESS_SECRET or ADMIN_ACCESS_PIN in your environment file.'])
+                ->withErrors(['access_code' => 'Admin access is not configured yet. Run php artisan admin:set-pin on the server, or create a staff account under Users.'])
                 ->onlyInput('access_code');
         }
 
-        $valid = ($secret !== '' && hash_equals($secret, $provided))
-            || ($pin !== '' && hash_equals($pin, $provided));
+        $auth = AdminAccess::authenticate($provided);
 
-        $user = null;
-        if (! $valid) {
-            $user = AdminUser::query()
-                ->where('is_active', true)
-                ->get(['id', 'name', 'email', 'role', 'access_code_hash'])
-                ->first(fn (AdminUser $u) => Hash::check($provided, $u->access_code_hash));
-            $valid = $user !== null;
-        }
-
-        if (! $valid) {
+        if ($auth === null) {
             return back()
                 ->withErrors(['access_code' => 'Incorrect password or PIN.'])
                 ->onlyInput('access_code');
         }
 
+        $user = $auth['user'];
+
         $request->session()->put($this->sessionKey(), true);
-        if ($user) {
+        if ($user instanceof AdminUser) {
             $request->session()->put('admin_user_id', $user->id);
             $request->session()->put('admin_user_name', $user->name);
             $request->session()->put('admin_user_role', $user->role);
