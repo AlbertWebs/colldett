@@ -183,6 +183,17 @@ class SettingsController extends Controller
 
         $settings = array_merge($this->readSettings(), $data);
 
+        foreach (['document_address_lines', 'invoice_payment_other_lines', 'invoice_payment_note'] as $plainKey) {
+            if (array_key_exists($plainKey, $settings)) {
+                $settings[$plainKey] = DocumentPlainText::fromHtml((string) ($settings[$plainKey] ?? ''));
+            }
+        }
+        foreach (['invoice_payment_title', 'invoice_bank_heading', 'invoice_other_heading'] as $plainKey) {
+            if (array_key_exists($plainKey, $settings)) {
+                $settings[$plainKey] = DocumentPlainText::fromHtml((string) ($settings[$plainKey] ?? ''));
+            }
+        }
+
         foreach (AdminStoredSettings::remittanceSettingKeys() as $key) {
             $settings[$key] = trim((string) ($settings[$key] ?? ''));
         }

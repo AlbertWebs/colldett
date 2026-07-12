@@ -2,7 +2,13 @@
 
 @section('content')
 @php
+    use App\Support\DocumentPlainText;
     $cols = $meta['list_fields'] ?? $meta['fields'];
+    $plainCell = static function (mixed $value): string {
+        $text = DocumentPlainText::fromHtml(is_string($value) ? $value : (string) ($value ?? ''));
+
+        return $text !== '' ? $text : '—';
+    };
 @endphp
 <section class="space-y-6">
     <div class="flex items-center justify-between">
@@ -47,7 +53,12 @@
                         @endphp
                         <tr>
                             @foreach($cols as $field)
-                                <td class="align-top text-sm @if(! empty($field['truncate'])) max-w-[11rem] truncate @endif" title="{{ ($field['name'] ?? '') !== '__fee_note_status' ? (string) ($row[$field['name']] ?? '') : '' }}">
+                                @php
+                                    $rawCell = ($field['name'] ?? '') !== '__fee_note_status'
+                                        ? $plainCell($row[$field['name']] ?? '')
+                                        : '';
+                                @endphp
+                                <td class="align-top text-sm @if(! empty($field['truncate'])) max-w-[11rem] truncate @endif" title="{{ $rawCell }}">
                                     @if(($field['name'] ?? '') === '__fee_note_status')
                                         @if(! empty($row['is_draft']))
                                             <span class="admin-status-chip admin-status-chip-pending">Draft</span>
@@ -58,10 +69,10 @@
                                         @if(! empty($row['is_draft']) && trim((string) ($row['number'] ?? '')) === '')
                                             <span class="text-admin-muted">—</span>
                                         @else
-                                            {{ $row['number'] ?? '—' }}
+                                            {{ $plainCell($row['number'] ?? '') }}
                                         @endif
                                     @else
-                                        {{ $row[$field['name']] ?? '—' }}
+                                        {{ $plainCell($row[$field['name']] ?? '') }}
                                     @endif
                                 </td>
                             @endforeach

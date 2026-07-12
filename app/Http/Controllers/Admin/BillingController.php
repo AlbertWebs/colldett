@@ -369,6 +369,14 @@ class BillingController extends Controller
                     ['name' => 'billing_address', 'label' => 'Billing address (Invoiced To)', 'type' => 'textarea'],
                     ['name' => 'notes', 'label' => 'Notes', 'type' => 'textarea'],
                 ],
+                'list_fields' => [
+                    ['name' => 'number', 'label' => 'Number', 'truncate' => true],
+                    ['name' => 'client', 'label' => 'Client', 'truncate' => true],
+                    ['name' => 'issued_date', 'label' => 'Issued'],
+                    ['name' => 'due_date', 'label' => 'Due'],
+                    ['name' => 'amount', 'label' => 'Amount'],
+                    ['name' => 'line_description', 'label' => 'Description', 'truncate' => true],
+                ],
             ],
             'quotations' => [
                 'title' => 'Quotations',
@@ -380,6 +388,13 @@ class BillingController extends Controller
                     ['name' => 'valid_until', 'label' => 'Valid Until', 'type' => 'date'],
                     ['name' => 'amount', 'label' => 'Quoted Amount'],
                     ['name' => 'scope', 'label' => 'Scope', 'type' => 'textarea'],
+                ],
+                'list_fields' => [
+                    ['name' => 'number', 'label' => 'Quotation Number'],
+                    ['name' => 'client', 'label' => 'Client', 'truncate' => true],
+                    ['name' => 'valid_until', 'label' => 'Valid Until'],
+                    ['name' => 'amount', 'label' => 'Amount'],
+                    ['name' => 'scope', 'label' => 'Scope', 'truncate' => true],
                 ],
             ],
             'fee-notes' => [
@@ -659,7 +674,10 @@ class BillingController extends Controller
         $rows = $this->readInvoiceIndex();
         usort($rows, static fn (array $a, array $b): int => ((int) ($b['id'] ?? 0)) <=> ((int) ($a['id'] ?? 0)));
 
-        return $rows;
+        return array_map(
+            fn (array $row): array => $this->plainTextFieldsForModule('invoices', $row),
+            $rows
+        );
     }
 
     /** @return array<string, mixed>|null */

@@ -68,6 +68,70 @@ class BillingDocumentPlainTextTest extends TestCase
         $this->assertStringNotContainsString('<p>Formal demand', $html);
     }
 
+    public function test_invoice_list_cells_do_not_show_html_tags(): void
+    {
+        $html = View::make('admin.billing-module-list', [
+            'module' => 'invoices',
+            'meta' => [
+                'title' => 'Invoices',
+                'singular' => 'Invoice',
+                'fields' => [
+                    ['name' => 'number', 'label' => 'Invoice Number'],
+                    ['name' => 'client', 'label' => 'Client'],
+                    ['name' => 'line_description', 'label' => 'Line item description', 'type' => 'textarea'],
+                    ['name' => 'notes', 'label' => 'Notes', 'type' => 'textarea'],
+                ],
+            ],
+            'rows' => [[
+                'id' => 1,
+                'number' => 'INV-2026-1002',
+                'client' => 'Prime Foods Ltd',
+                'line_description' => '<p>Debt recovery services</p>',
+                'notes' => '<p>Thank you for your business.</p>',
+            ]],
+        ])->render();
+
+        $this->assertStringContainsString('Debt recovery services', $html);
+        $this->assertStringContainsString('Thank you for your business.', $html);
+        $this->assertStringNotContainsString('&lt;p&gt;', $html);
+        $this->assertStringNotContainsString('<p>Debt recovery', $html);
+        $this->assertStringNotContainsString('<p>Thank you', $html);
+    }
+
+    public function test_invoice_payment_block_does_not_show_html_tags(): void
+    {
+        \App\Support\AdminStoredSettings::flushCache();
+        \Illuminate\Support\Facades\Storage::disk('local')->put('admin/settings.json', json_encode([
+            'invoice_other_heading' => 'Mpesa Paybill',
+            'invoice_payment_other_lines' => '<p>PAYBILL : 522533</p><p>ACCOUNT : 8080678</p>',
+            'invoice_payment_note' => '<p>NB: Quote your invoice number on all remittances.</p>',
+        ], JSON_PRETTY_PRINT));
+
+        $html = View::make('admin.partials.invoice-document-content', [
+            'values' => [
+                'number' => 'INV-2026-1008',
+                'client' => 'Prime Foods Ltd',
+                'issued_date' => '2026-04-01',
+                'due_date' => '2026-04-15',
+                'amount' => '250000',
+                'line_description' => 'Debt recovery services',
+                'billing_address' => 'Prime Foods Ltd',
+                'notes' => '',
+            ],
+        ])->render();
+
+        \App\Support\AdminStoredSettings::flushCache();
+        \Illuminate\Support\Facades\Storage::disk('local')->delete('admin/settings.json');
+
+        $this->assertStringContainsString('Mpesa Paybill', $html);
+        $this->assertStringContainsString('PAYBILL : 522533', $html);
+        $this->assertStringContainsString('ACCOUNT : 8080678', $html);
+        $this->assertStringContainsString('NB: Quote your invoice number on all remittances.', $html);
+        $this->assertStringNotContainsString('&lt;p&gt;', $html);
+        $this->assertStringNotContainsString('<p>PAYBILL', $html);
+        $this->assertStringNotContainsString('<p>NB:', $html);
+    }
+
     public function test_fee_note_document_does_not_show_html_tags(): void
     {
         $html = View::make('admin.partials.fee-note-document-content', [

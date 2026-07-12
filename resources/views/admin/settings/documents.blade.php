@@ -32,7 +32,7 @@
                     </div>
                     <div class="space-y-1.5">
                         <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Address lines (one per line)</label>
-                        <textarea class="admin-input min-h-28" name="document_address_lines" rows="4">{{ old('document_address_lines', $settings['document_address_lines'] ?? '') }}</textarea>
+                        <textarea class="admin-input min-h-28" name="document_address_lines" rows="4" data-no-editor="true">{{ old('document_address_lines', \App\Support\DocumentPlainText::fromHtml($settings['document_address_lines'] ?? '')) }}</textarea>
                     </div>
                     <div class="rounded-lg border border-admin-border bg-slate-50 p-3">
                         <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-admin-muted">Letterhead background (optional)</p>
@@ -109,11 +109,11 @@
                     </div>
                     <div class="space-y-1.5">
                         <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Other payment lines</label>
-                        <textarea class="admin-input min-h-16" name="invoice_payment_other_lines" rows="3">{{ old('invoice_payment_other_lines', $settings['invoice_payment_other_lines'] ?? '') }}</textarea>
+                        <textarea class="admin-input min-h-16" name="invoice_payment_other_lines" rows="3" data-no-editor="true">{{ old('invoice_payment_other_lines', \App\Support\DocumentPlainText::fromHtml($settings['invoice_payment_other_lines'] ?? '')) }}</textarea>
                     </div>
                     <div class="space-y-1.5">
                         <label class="text-xs font-semibold uppercase tracking-wide text-admin-muted">Payment note</label>
-                        <textarea class="admin-input min-h-20" name="invoice_payment_note" rows="3">{{ old('invoice_payment_note', $settings['invoice_payment_note'] ?? '') }}</textarea>
+                        <textarea class="admin-input min-h-20" name="invoice_payment_note" rows="3" data-no-editor="true">{{ old('invoice_payment_note', \App\Support\DocumentPlainText::fromHtml($settings['invoice_payment_note'] ?? '')) }}</textarea>
                     </div>
                 </div>
             </div>

@@ -130,16 +130,16 @@ final class AdminStoredSettings
             $currency = (string) ($defaults['currency'] ?? 'Ksh');
         }
 
-        $title = trim((string) ($saved['invoice_payment_title'] ?? ''));
+        $title = DocumentPlainText::fromHtml(trim((string) ($saved['invoice_payment_title'] ?? '')));
         if ($title === '') {
             $title = (string) ($pd['title'] ?? 'Payment Details');
         }
 
         $sections = self::buildPaymentSections($saved, $pd);
 
-        $note = trim((string) ($saved['invoice_payment_note'] ?? ''));
+        $note = DocumentPlainText::fromHtml(trim((string) ($saved['invoice_payment_note'] ?? '')));
         if ($note === '') {
-            $note = (string) ($pd['note'] ?? '');
+            $note = DocumentPlainText::fromHtml((string) ($pd['note'] ?? ''));
         }
 
         return [
@@ -177,40 +177,72 @@ final class AdminStoredSettings
         $defaultSections = $defaultPaymentDetails['sections'] ?? [];
         $out = [];
 
-        $bankHeading = trim((string) ($saved['invoice_bank_heading'] ?? '')) ?: 'Bank';
+        $bankHeading = DocumentPlainText::fromHtml(trim((string) ($saved['invoice_bank_heading'] ?? ''))) ?: 'Bank';
         $bankRaw = trim((string) ($saved['invoice_payment_bank_lines'] ?? ''));
         if ($bankRaw === '') {
             $bankRaw = self::composeInvoicePaymentBankLinesFromRemittanceFields($saved);
         }
-        if ($bankRaw !== '') {
-            $lines = array_values(array_filter(array_map('trim', preg_split("/\r\n|\r|\n/", $bankRaw))));
-            if ($lines !== []) {
-                $out[] = ['heading' => $bankHeading, 'lines' => $lines];
-            }
+        $bankLines = self::plainTextLines($bankRaw);
+        if ($bankLines !== []) {
+            $out[] = ['heading' => $bankHeading, 'lines' => $bankLines];
         } elseif (isset($defaultSections[0]) && is_array($defaultSections[0])) {
-            $out[] = $defaultSections[0];
+            $out[] = self::sanitizePaymentSection($defaultSections[0]);
         }
 
-        $otherHeading = trim((string) ($saved['invoice_other_heading'] ?? '')) ?: 'Other';
-        $otherRaw = trim((string) ($saved['invoice_payment_other_lines'] ?? ''));
-        if ($otherRaw !== '') {
-            $lines = array_values(array_filter(array_map('trim', preg_split("/\r\n|\r|\n/", $otherRaw))));
-            if ($lines !== []) {
-                $out[] = ['heading' => $otherHeading, 'lines' => $lines];
-            }
+        $otherHeading = DocumentPlainText::fromHtml(trim((string) ($saved['invoice_other_heading'] ?? ''))) ?: 'Other';
+        $otherLines = self::plainTextLines((string) ($saved['invoice_payment_other_lines'] ?? ''));
+        if ($otherLines !== []) {
+            $out[] = ['heading' => $otherHeading, 'lines' => $otherLines];
         } elseif (isset($defaultSections[1]) && is_array($defaultSections[1]) && ! empty($defaultSections[1]['lines'])) {
-            $out[] = $defaultSections[1];
+            $out[] = self::sanitizePaymentSection($defaultSections[1]);
         }
 
         if ($out === []) {
             foreach ($defaultSections as $section) {
                 if (is_array($section) && ! empty($section['lines'])) {
-                    $out[] = $section;
+                    $out[] = self::sanitizePaymentSection($section);
                 }
             }
         }
 
         return $out;
+    }
+
+    /**
+     * @param  array<string, mixed>  $section
+     * @return array{heading: string, lines: array<int, string>}
+     */
+    private static function sanitizePaymentSection(array $section): array
+    {
+        $lines = [];
+        foreach ($section['lines'] ?? [] as $line) {
+            foreach (self::plainTextLines(is_string($line) ? $line : (string) $line) as $plain) {
+                $lines[] = $plain;
+            }
+        }
+
+        return [
+            'heading' => DocumentPlainText::fromHtml((string) ($section['heading'] ?? '')) ?: 'Payment',
+            'lines' => $lines,
+        ];
+    }
+
+    /**
+     * Strip Quill/HTML and expand paragraph breaks into individual display lines.
+     *
+     * @return list<string>
+     */
+    public static function plainTextLines(?string $value): array
+    {
+        $plain = DocumentPlainText::fromHtml($value);
+        if ($plain === '') {
+            return [];
+        }
+
+        return array_values(array_filter(
+            array_map('trim', preg_split("/\r\n|\r|\n/", $plain) ?: []),
+            static fn (string $line): bool => $line !== ''
+        ));
     }
 
     /**
