@@ -152,10 +152,15 @@
             </thead>
             <tbody>
                 @foreach($meta['fields'] as $field)
-                    @php $value = $values[$field['name']] ?? '—'; @endphp
+                    @php
+                        $value = \App\Support\DocumentPlainText::fromHtml((string) ($values[$field['name']] ?? '—'));
+                        if ($value === '') {
+                            $value = '—';
+                        }
+                    @endphp
                     <tr>
                         <td>{{ $field['label'] }}</td>
-                        <td>{!! nl2br(e((string) $value)) !!}</td>
+                        <td>{!! nl2br(e($value)) !!}</td>
                     </tr>
                 @endforeach
             </tbody>

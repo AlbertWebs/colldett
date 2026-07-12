@@ -13,7 +13,8 @@ final class DocumentPlainText
             return '';
         }
 
-        $s = $value;
+        // Decode first so entity-encoded tags (&lt;p&gt;) are stripped like real HTML.
+        $s = RichContentHtml::decodeEntities($value);
         $s = preg_replace('#<\s*br\s*/?>#i', "\n", $s) ?? $s;
         $s = preg_replace('#</\s*(p|div|li|tr|h[1-6])\s*>#i', "\n", $s) ?? $s;
         $s = strip_tags($s);

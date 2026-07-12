@@ -1,7 +1,8 @@
 @php
     use App\Support\AdminStoredSettings;
     use App\Support\ClientDirectory;
-    $v = fn (string $key): string => trim((string) ($values[$key] ?? ''));
+    use App\Support\DocumentPlainText;
+    $v = fn (string $key): string => DocumentPlainText::fromHtml(trim((string) ($values[$key] ?? '')));
     $companyKra = AdminStoredSettings::companyKraPin();
     $clientKra = ClientDirectory::clientTaxPinForDocument($values);
     $fmtMoney = function (string $raw): string {
@@ -14,6 +15,7 @@
 
         return $raw;
     };
+    $bodyPlain = $v('body');
 @endphp
 <div class="colldett-demand-letter">
     <div class="colldett-demand-letter__meta">
@@ -53,6 +55,6 @@
     </div>
 
     <div class="colldett-demand-letter__body">
-        {!! nl2br(e($v('body'))) !!}
+        {!! nl2br(e($bodyPlain)) !!}
     </div>
 </div>

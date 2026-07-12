@@ -1,5 +1,6 @@
 @php
     use App\Support\AdminStoredSettings;
+    use App\Support\DocumentPlainText;
     use Illuminate\Support\Carbon;
     $inv = AdminStoredSettings::invoice();
     $vatRate = (float) ($inv['vat_rate'] ?? 0.16);
@@ -18,11 +19,11 @@
         : Carbon::now()->addDays(30);
     $fmtMoney = fn (float $n): string => $currency . ' ' . number_format($n, 2, '.', ',');
     $pay = $inv['payment_details'] ?? [];
-    $scope = trim((string) ($values['scope'] ?? ''));
+    $scope = DocumentPlainText::fromHtml(trim((string) ($values['scope'] ?? '')));
     if ($scope === '') {
         $scope = 'Professional services — see engagement terms.';
     }
-    $clientRaw = trim((string) ($values['client'] ?? ''));
+    $clientRaw = DocumentPlainText::fromHtml(trim((string) ($values['client'] ?? '')));
     $quotedLines = $clientRaw !== ''
         ? preg_split("/\r\n|\r|\n/", $clientRaw)
         : array_filter(['Client', 'Address on file']);

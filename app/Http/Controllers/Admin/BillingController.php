@@ -93,6 +93,8 @@ class BillingController extends Controller
         $meta = $this->moduleMeta($module);
         $data = $request->validate($this->rules($module));
 
+        $data = $this->plainTextFieldsForModule($module, $data);
+
         if ($module === 'invoices') {
             $data['number'] = $this->generateNextInvoiceNumber();
             $newId = $this->appendInvoiceRecord($data);
@@ -112,7 +114,6 @@ class BillingController extends Controller
         }
 
         if ($module === 'fee-notes') {
-            $data = $this->feeNotePlainTextFields($data);
             $data = $this->feeNoteNormalizeInput($data);
             $data = FeeNoteReference::apply($data);
             $data = AdminStoredSettings::feeNoteFillRemittance($data);
@@ -145,23 +146,15 @@ class BillingController extends Controller
         }
 
         return redirect()
-            ->route('admin.billing.module.edit', [$module, 1])
-            ->with('status', $meta['singular'].' created successfully.');
+            ->route('admin.billing.module.preview', [$module, 1])
+            ->with('status', $meta['singular'].' created successfully.')
+            ->with('preview_values', $data);
     }
 
     public function preview(Request $request, string $module, int $id): View
     {
         $meta = $this->moduleMeta($module);
-        if ($module === 'fee-notes') {
-            $values = $this->feeNoteValuesForDocument($id);
-        } elseif ($module === 'invoices') {
-            $values = $this->invoiceValuesForDocument($id);
-        } else {
-            $values = $request->session()->get('preview_values');
-            if (! is_array($values) || empty($values)) {
-                $values = $this->sampleValues($module, $id);
-            }
-        }
+        $values = $this->documentValues($request, $module, $id);
 
         return view('admin.billing-preview', [
             'meta' => $meta,
@@ -178,16 +171,7 @@ class BillingController extends Controller
     public function printPreview(Request $request, string $module, int $id): View
     {
         $meta = $this->moduleMeta($module);
-        if ($module === 'fee-notes') {
-            $values = $this->feeNoteValuesForDocument($id);
-        } elseif ($module === 'invoices') {
-            $values = $this->invoiceValuesForDocument($id);
-        } else {
-            $values = $request->session()->get('preview_values');
-            if (! is_array($values) || empty($values)) {
-                $values = $this->sampleValues($module, $id);
-            }
-        }
+        $values = $this->documentValues($request, $module, $id);
 
         return view('admin.billing-print', [
             'meta' => $meta,
@@ -200,16 +184,7 @@ class BillingController extends Controller
     public function downloadPreviewPdf(Request $request, string $module, int $id)
     {
         $meta = $this->moduleMeta($module);
-        if ($module === 'fee-notes') {
-            $values = $this->feeNoteValuesForDocument($id);
-        } elseif ($module === 'invoices') {
-            $values = $this->invoiceValuesForDocument($id);
-        } else {
-            $values = $request->session()->get('preview_values');
-            if (! is_array($values) || empty($values)) {
-                $values = $this->sampleValues($module, $id);
-            }
-        }
+        $values = $this->documentValues($request, $module, $id);
 
         $docRef = '#'.($values['number'] ?? ($values['payment_id'] ?? ('REC-'.$id)));
         $docTitle = $module === 'invoices'
@@ -324,7 +299,7 @@ class BillingController extends Controller
             $existing = $this->findFeeNoteById($id);
             abort_unless($existing, 404);
             $data = $request->validate($this->rules($module));
-            $data = $this->feeNotePlainTextFields($data);
+            $data = $this->plainTextFieldsForModule($module, $data);
             $data = $this->feeNoteNormalizeInput($data);
             $merged = array_merge($existing, $data, ['id' => $id]);
             $merged = FeeNoteReference::apply($merged);
@@ -348,6 +323,7 @@ class BillingController extends Controller
             $existing = $this->findInvoiceById($id);
             abort_unless($existing, 404);
             $data = $request->validate($this->rules($module));
+            $data = $this->plainTextFieldsForModule($module, $data);
             $merged = array_merge($existing, $data, [
                 'id' => $id,
                 'number' => (string) ($existing['number'] ?? ''),
@@ -359,11 +335,13 @@ class BillingController extends Controller
                 ->with('status', $meta['singular'].' updated successfully.');
         }
 
-        $request->validate($this->rules($module));
+        $data = $request->validate($this->rules($module));
+        $data = $this->plainTextFieldsForModule($module, $data);
 
         return redirect()
             ->route('admin.billing.module.edit', [$module, $id])
-            ->with('status', $meta['singular'].' updated successfully.');
+            ->with('status', $meta['singular'].' updated successfully.')
+            ->with('preview_values', $data);
     }
 
     private function moduleMeta(string $module): array
@@ -704,7 +682,7 @@ class BillingController extends Controller
         $out = $row;
         unset($out['id']);
 
-        return $out;
+        return $this->plainTextFieldsForModule('invoices', $out);
     }
 
     /**
@@ -730,14 +708,7 @@ class BillingController extends Controller
     /** @return array<string, mixed> */
     private function invoiceValuesForForm(int $id): array
     {
-        $out = $this->invoiceValuesForDocument($id);
-        foreach (['line_description', 'billing_address', 'notes'] as $key) {
-            if (array_key_exists($key, $out)) {
-                $out[$key] = DocumentPlainText::fromHtml((string) ($out[$key] ?? ''));
-            }
-        }
-
-        return $out;
+        return $this->invoiceValuesForDocument($id);
     }
 
     /**
@@ -1033,7 +1004,7 @@ class BillingController extends Controller
             );
         }
 
-        return $out;
+        return $this->plainTextFieldsForModule('fee-notes', $out);
     }
 
     /** @return array<string, mixed> */
@@ -1044,7 +1015,7 @@ class BillingController extends Controller
         $out = AdminStoredSettings::feeNoteStripStoredRemittance($row);
         unset($out['id'], $out['is_draft']);
 
-        $out = $this->feeNotePlainTextFields($out);
+        $out = $this->plainTextFieldsForModule('fee-notes', $out);
         if (trim((string) ($out['our_ref'] ?? '')) === '') {
             $out['our_ref'] = FeeNoteReference::build(
                 (int) ($out['service_id'] ?? 0),
@@ -1070,12 +1041,40 @@ class BillingController extends Controller
     }
 
     /**
+     * Resolve printable document values and strip any Quill/HTML leftovers from textarea fields.
+     *
+     * @return array<string, mixed>
+     */
+    private function documentValues(Request $request, string $module, int $id): array
+    {
+        if ($module === 'fee-notes') {
+            return $this->feeNoteValuesForDocument($id);
+        }
+        if ($module === 'invoices') {
+            return $this->invoiceValuesForDocument($id);
+        }
+
+        $values = $request->session()->get('preview_values');
+        if (! is_array($values) || empty($values)) {
+            $values = $this->sampleValues($module, $id);
+        }
+
+        return $this->plainTextFieldsForModule($module, $values);
+    }
+
+    /**
+     * Convert textarea fields from Quill/HTML to plain text for storage and print.
+     *
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
-    private function feeNotePlainTextFields(array $data): array
+    private function plainTextFieldsForModule(string $module, array $data): array
     {
-        foreach (['address', 'line_description', 'notes'] as $key) {
+        foreach ($this->moduleMeta($module)['fields'] as $field) {
+            if (($field['type'] ?? 'text') !== 'textarea') {
+                continue;
+            }
+            $key = $field['name'];
             if (! array_key_exists($key, $data)) {
                 continue;
             }

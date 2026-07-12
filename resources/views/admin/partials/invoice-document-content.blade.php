@@ -1,5 +1,6 @@
 @php
     use App\Support\AdminStoredSettings;
+    use App\Support\DocumentPlainText;
     use Illuminate\Support\Carbon;
     $inv = AdminStoredSettings::invoice();
     $vatRate = (float) ($inv['vat_rate'] ?? 0.16);
@@ -20,14 +21,15 @@
         : Carbon::now()->addDays(14);
     $fmtMoney = fn (float $n): string => $currency . ' ' . number_format($n, 2, '.', ',');
     $pay = $inv['payment_details'] ?? [];
-    $lineDesc = trim((string) ($values['line_description'] ?? ''));
+    $lineDesc = DocumentPlainText::fromHtml(trim((string) ($values['line_description'] ?? '')));
     if ($lineDesc === '') {
         $lineDesc = 'Professional services — see engagement terms.';
     }
-    $billingRaw = trim((string) ($values['billing_address'] ?? ''));
+    $billingRaw = DocumentPlainText::fromHtml(trim((string) ($values['billing_address'] ?? '')));
     $billingLines = $billingRaw !== ''
         ? preg_split("/\r\n|\r|\n/", $billingRaw)
         : array_filter([$values['client'] ?? 'Client', 'Address on file']);
+    $notesPlain = DocumentPlainText::fromHtml(trim((string) ($values['notes'] ?? '')));
     $pdfMode = $pdfMode ?? false;
 @endphp
 
@@ -80,7 +82,7 @@
         </thead>
         <tbody>
             <tr>
-                <td>{{ $lineDesc }}</td>
+                <td>{!! nl2br(e($lineDesc)) !!}</td>
                 <td class="colldett-invoice__cell-num">{{ $fmtMoney($subtotal) }}</td>
             </tr>
             <tr class="colldett-invoice__summary-row">
@@ -102,10 +104,10 @@
         </tbody>
     </table>
 
-    @if(!empty(trim((string) ($values['notes'] ?? ''))))
+    @if($notesPlain !== '')
         <div class="colldett-invoice__notes">
             <div class="colldett-invoice__notes-label">Notes</div>
-            <div class="colldett-invoice__notes-body">{{ $values['notes'] }}</div>
+            <div class="colldett-invoice__notes-body">{!! nl2br(e($notesPlain)) !!}</div>
         </div>
     @endif
 
