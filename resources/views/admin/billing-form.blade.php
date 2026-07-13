@@ -62,7 +62,7 @@
                             'your_ref' => 'Client reference if provided.',
                             'payment_terms' => 'Example: IMMEDIATE, 7 DAYS, 14 DAYS.',
                             'line_description' => 'This text appears in the particulars row in the table.',
-                            'vat_rate' => 'Use decimal form (0.16) or percentage (16).',
+                            'apply_vat' => 'Choose With VAT to add the configured rate (default 16%), or Without VAT for fee only.',
                             'address' => 'After you save a fee note, this address is remembered for the same client — pick the client again on a new fee note to auto-fill.',
                         ];
                         $feeNotePlaceholders = [
@@ -71,7 +71,6 @@
                             'payment_terms' => 'e.g. IMMEDIATE',
                             'line_description' => 'Professional fees for debt collection ...',
                             'amount' => 'e.g. 5321.60',
-                            'vat_rate' => 'e.g. 0.16',
                         ];
                     @endphp
                     <div class="grid gap-3 md:grid-cols-2">
@@ -219,6 +218,19 @@
                                             Official fee note number (locked).
                                         @endif
                                     </p>
+                                @elseif(($field['type'] ?? 'text') === 'select' && $field['name'] === 'apply_vat')
+                                    @php
+                                        $applyVatCurrent = (string) old('apply_vat', $values['apply_vat'] ?? '1');
+                                        if (! in_array($applyVatCurrent, ['0', '1'], true)) {
+                                            $applyVatCurrent = \App\Support\DocumentVat::applies($values) ? '1' : '0';
+                                        }
+                                    @endphp
+                                    <select class="admin-select" name="apply_vat" data-no-autolabel="true">
+                                        @foreach(($field['options'] ?? ['1' => 'With VAT (16%)', '0' => 'Without VAT']) as $optValue => $optLabel)
+                                            <option value="{{ $optValue }}" @selected($applyVatCurrent === (string) $optValue)>{{ $optLabel }}</option>
+                                        @endforeach
+                                    </select>
+                                    <p class="mt-1 text-xs text-admin-muted">With VAT adds the rate from document settings (default 16%). Without VAT, the total equals the amount entered.</p>
                                 @elseif(($field['type'] ?? 'text') === 'textarea')
                                     <textarea
                                         class="admin-input min-h-32"

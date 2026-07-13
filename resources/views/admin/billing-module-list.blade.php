@@ -65,6 +65,8 @@
                                         @else
                                             <span class="admin-status-chip admin-status-chip-active">Issued</span>
                                         @endif
+                                    @elseif(($field['name'] ?? '') === 'apply_vat')
+                                        {{ \App\Support\DocumentVat::applies($row) ? 'With VAT' : 'Without VAT' }}
                                     @elseif(($field['name'] ?? '') === 'number')
                                         @if(! empty($row['is_draft']) && trim((string) ($row['number'] ?? '')) === '')
                                             <span class="text-admin-muted">—</span>

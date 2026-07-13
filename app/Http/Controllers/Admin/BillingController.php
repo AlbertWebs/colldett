@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Support\AdminStoredSettings;
 use App\Support\ClientDirectory;
 use App\Support\DocumentPlainText;
+use App\Support\DocumentVat;
 use App\Support\FeeNoteReference;
 use App\Support\ServiceCatalog;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -30,6 +31,7 @@ class BillingController extends Controller
         $values = [];
         if ($module === 'invoices') {
             $values['number'] = $this->peekNextInvoiceNumber();
+            $values['apply_vat'] = '1';
             $presetClient = trim((string) $request->query('client', ''));
             if ($presetClient !== '') {
                 $values['client'] = $presetClient;
@@ -37,6 +39,7 @@ class BillingController extends Controller
         }
         if ($module === 'quotations') {
             $values['number'] = $this->peekNextQuotationNumber();
+            $values['apply_vat'] = '1';
         }
         if ($module === 'fee-notes') {
             $values = array_merge(
@@ -44,6 +47,8 @@ class BillingController extends Controller
                 [
                     'number' => $this->peekNextFeeNoteNumber(),
                     'issued_date' => date('Y-m-d'),
+                    'apply_vat' => '1',
+                    'vat_rate' => (string) DocumentVat::normalizeRate((float) (AdminStoredSettings::invoice()['vat_rate'] ?? 0.16)),
                 ]
             );
             $presetClient = trim((string) $request->query('client', ''));
@@ -94,6 +99,7 @@ class BillingController extends Controller
         $data = $request->validate($this->rules($module));
 
         $data = $this->plainTextFieldsForModule($module, $data);
+        $data = $this->normalizeApplyVatForModule($module, $data);
 
         if ($module === 'invoices') {
             $data['number'] = $this->generateNextInvoiceNumber();
@@ -300,6 +306,7 @@ class BillingController extends Controller
             abort_unless($existing, 404);
             $data = $request->validate($this->rules($module));
             $data = $this->plainTextFieldsForModule($module, $data);
+            $data = $this->normalizeApplyVatForModule($module, $data);
             $data = $this->feeNoteNormalizeInput($data);
             $merged = array_merge($existing, $data, ['id' => $id]);
             $merged = FeeNoteReference::apply($merged);
@@ -324,6 +331,7 @@ class BillingController extends Controller
             abort_unless($existing, 404);
             $data = $request->validate($this->rules($module));
             $data = $this->plainTextFieldsForModule($module, $data);
+            $data = $this->normalizeApplyVatForModule($module, $data);
             $merged = array_merge($existing, $data, [
                 'id' => $id,
                 'number' => (string) ($existing['number'] ?? ''),
@@ -337,6 +345,7 @@ class BillingController extends Controller
 
         $data = $request->validate($this->rules($module));
         $data = $this->plainTextFieldsForModule($module, $data);
+        $data = $this->normalizeApplyVatForModule($module, $data);
 
         return redirect()
             ->route('admin.billing.module.edit', [$module, $id])
@@ -365,6 +374,10 @@ class BillingController extends Controller
                     ['name' => 'issued_date', 'label' => 'Issued Date', 'type' => 'date'],
                     ['name' => 'due_date', 'label' => 'Due Date', 'type' => 'date'],
                     ['name' => 'amount', 'label' => 'Amount (before VAT)'],
+                    ['name' => 'apply_vat', 'label' => 'VAT', 'type' => 'select', 'options' => [
+                        '1' => 'With VAT (16%)',
+                        '0' => 'Without VAT',
+                    ]],
                     ['name' => 'line_description', 'label' => 'Line item description', 'type' => 'textarea'],
                     ['name' => 'billing_address', 'label' => 'Billing address (Invoiced To)', 'type' => 'textarea'],
                     ['name' => 'notes', 'label' => 'Notes', 'type' => 'textarea'],
@@ -375,6 +388,7 @@ class BillingController extends Controller
                     ['name' => 'issued_date', 'label' => 'Issued'],
                     ['name' => 'due_date', 'label' => 'Due'],
                     ['name' => 'amount', 'label' => 'Amount'],
+                    ['name' => 'apply_vat', 'label' => 'VAT'],
                     ['name' => 'line_description', 'label' => 'Description', 'truncate' => true],
                 ],
             ],
@@ -387,6 +401,10 @@ class BillingController extends Controller
                     ['name' => 'client', 'label' => 'Client'],
                     ['name' => 'valid_until', 'label' => 'Valid Until', 'type' => 'date'],
                     ['name' => 'amount', 'label' => 'Quoted Amount'],
+                    ['name' => 'apply_vat', 'label' => 'VAT', 'type' => 'select', 'options' => [
+                        '1' => 'With VAT (16%)',
+                        '0' => 'Without VAT',
+                    ]],
                     ['name' => 'scope', 'label' => 'Scope', 'type' => 'textarea'],
                 ],
                 'list_fields' => [
@@ -394,6 +412,7 @@ class BillingController extends Controller
                     ['name' => 'client', 'label' => 'Client', 'truncate' => true],
                     ['name' => 'valid_until', 'label' => 'Valid Until'],
                     ['name' => 'amount', 'label' => 'Amount'],
+                    ['name' => 'apply_vat', 'label' => 'VAT'],
                     ['name' => 'scope', 'label' => 'Scope', 'truncate' => true],
                 ],
             ],
@@ -412,7 +431,10 @@ class BillingController extends Controller
                     ['name' => 'payment_terms', 'label' => 'Payment Terms'],
                     ['name' => 'line_description', 'label' => 'Particulars of Service Rendered', 'type' => 'textarea'],
                     ['name' => 'amount', 'label' => 'Professional Fee (before VAT)'],
-                    ['name' => 'vat_rate', 'label' => 'VAT Rate (e.g. 0.16)'],
+                    ['name' => 'apply_vat', 'label' => 'VAT', 'type' => 'select', 'options' => [
+                        '1' => 'With VAT (16%)',
+                        '0' => 'Without VAT',
+                    ]],
                     ['name' => 'notes', 'label' => 'Additional Notes', 'type' => 'textarea'],
                 ],
                 'list_fields' => [
@@ -421,6 +443,7 @@ class BillingController extends Controller
                     ['name' => 'client', 'label' => 'Client', 'truncate' => true],
                     ['name' => 'issued_date', 'label' => 'Issue date'],
                     ['name' => 'amount', 'label' => 'Fee (ex VAT)'],
+                    ['name' => 'apply_vat', 'label' => 'VAT'],
                     ['name' => 'payment_terms', 'label' => 'Terms', 'truncate' => true],
                 ],
             ],
@@ -471,6 +494,10 @@ class BillingController extends Controller
     {
         $rules = [];
         foreach ($this->moduleMeta($module)['fields'] as $field) {
+            if (($field['type'] ?? 'text') === 'select' && $field['name'] === 'apply_vat') {
+                $rules[$field['name']] = ['nullable', 'in:0,1'];
+                continue;
+            }
             $max = ($module === 'demand' && $field['name'] === 'body') ? 8000 : 2000;
             $rules[$field['name']] = ['nullable', 'string', 'max:'.$max];
         }
@@ -490,11 +517,19 @@ class BillingController extends Controller
                 'issued_date' => '2026-04-01',
                 'due_date' => '2026-04-15',
                 'amount' => '250000',
+                'apply_vat' => '1',
                 'line_description' => 'Debt recovery services — monthly portfolio support and case reporting.',
                 'billing_address' => "Prime Foods Ltd\nATTN: Accounts Payable\nIndustrial Area, Nairobi\nNairobi, Kenya\n00100",
                 'notes' => 'Thank you for your business.',
             ],
-            'quotations' => ['number' => 'QTN-2026-1001', 'client' => 'Apex Motors', 'valid_until' => '2026-04-30', 'amount' => '410000', 'scope' => 'Debt tracing and legal demand support'],
+            'quotations' => [
+                'number' => 'QTN-2026-1001',
+                'client' => 'Apex Motors',
+                'valid_until' => '2026-04-30',
+                'amount' => '410000',
+                'apply_vat' => '1',
+                'scope' => 'Debt tracing and legal demand support',
+            ],
             'fee-notes' => AdminStoredSettings::feeNoteFillRemittance([
                 'number' => 'FN-2026-1001',
                 'service_id' => '1',
@@ -506,6 +541,7 @@ class BillingController extends Controller
                 'payment_terms' => 'IMMEDIATE',
                 'line_description' => 'Professional fees for debt collection KES 53,216 at a commission rate of 10%.',
                 'amount' => '5321.60',
+                'apply_vat' => '1',
                 'vat_rate' => '0.16',
                 'notes' => 'When replying please quote our reference.',
             ]),
@@ -726,7 +762,7 @@ class BillingController extends Controller
     /** @return array<string, mixed> */
     private function invoiceValuesForForm(int $id): array
     {
-        return $this->invoiceValuesForDocument($id);
+        return DocumentVat::forForm($this->invoiceValuesForDocument($id));
     }
 
     /**
@@ -1042,7 +1078,20 @@ class BillingController extends Controller
             );
         }
 
-        return $out;
+        return DocumentVat::forForm($out);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function normalizeApplyVatForModule(string $module, array $data): array
+    {
+        if (! in_array($module, ['invoices', 'quotations', 'fee-notes'], true)) {
+            return $data;
+        }
+
+        return DocumentVat::normalizeInput($data, $module === 'fee-notes');
     }
 
     /**

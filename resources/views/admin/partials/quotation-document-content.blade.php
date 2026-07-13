@@ -1,16 +1,18 @@
 @php
     use App\Support\AdminStoredSettings;
     use App\Support\DocumentPlainText;
+    use App\Support\DocumentVat;
     use Illuminate\Support\Carbon;
     $inv = AdminStoredSettings::invoice();
-    $vatRate = (float) ($inv['vat_rate'] ?? 0.16);
+    $applyVat = DocumentVat::applies($values);
+    $vatRate = DocumentVat::rate($values);
     $vatLabel = $inv['vat_label'] ?? (number_format($vatRate * 100, 2) . '% VAT');
     $currency = $inv['currency'] ?? 'Ksh';
     $rawAmount = $values['amount'] ?? 0;
     $subtotal = is_numeric($rawAmount)
         ? (float) $rawAmount
         : (float) preg_replace('/[^\d.]/', '', (string) $rawAmount);
-    $vat = round($subtotal * $vatRate, 2);
+    $vat = $applyVat ? round($subtotal * $vatRate, 2) : 0.0;
     $credit = 0.0;
     $total = round($subtotal + $vat - $credit, 2);
     $qDate = Carbon::now();
@@ -86,14 +88,16 @@
                 <td class="colldett-invoice__summary-label">Sub Total</td>
                 <td class="colldett-invoice__cell-num">{{ $fmtMoney($subtotal) }}</td>
             </tr>
-            <tr class="colldett-invoice__summary-row">
-                <td class="colldett-invoice__summary-label">{{ $vatLabel }}</td>
-                <td class="colldett-invoice__cell-num">{{ $fmtMoney($vat) }}</td>
-            </tr>
-            <tr class="colldett-invoice__summary-row">
-                <td class="colldett-invoice__summary-label">Credit</td>
-                <td class="colldett-invoice__cell-num">{{ $fmtMoney($credit) }}</td>
-            </tr>
+            @if($applyVat)
+                <tr class="colldett-invoice__summary-row">
+                    <td class="colldett-invoice__summary-label">{{ $vatLabel }}</td>
+                    <td class="colldett-invoice__cell-num">{{ $fmtMoney($vat) }}</td>
+                </tr>
+                <tr class="colldett-invoice__summary-row">
+                    <td class="colldett-invoice__summary-label">Credit</td>
+                    <td class="colldett-invoice__cell-num">{{ $fmtMoney($credit) }}</td>
+                </tr>
+            @endif
             <tr class="colldett-invoice__summary-row colldett-invoice__summary-row--total">
                 <td class="colldett-invoice__summary-label">Total</td>
                 <td class="colldett-invoice__cell-num">{{ $fmtMoney($total) }}</td>

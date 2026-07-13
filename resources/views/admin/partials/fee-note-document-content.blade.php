@@ -1,5 +1,6 @@
 @php
     use App\Support\DocumentPlainText;
+    use App\Support\DocumentVat;
     use Illuminate\Support\Carbon;
 
     $values = \App\Support\AdminStoredSettings::feeNoteFillRemittance($values);
@@ -40,18 +41,9 @@
     $currency = \App\Support\AdminStoredSettings::invoice()['currency'] ?? 'KES';
     $amountRaw = (string) ($values['amount'] ?? '0');
     $amount = is_numeric($amountRaw) ? (float) $amountRaw : (float) preg_replace('/[^\d.]/', '', $amountRaw);
-    $vatRateRaw = (string) ($values['vat_rate'] ?? '0.16');
-    $vatRate = is_numeric($vatRateRaw) ? (float) $vatRateRaw : 0.16;
-    if ($vatRate > 1 && $vatRate <= 100) {
-        $vatRate /= 100;
-    }
-    if ($vatRate > 1 || $vatRate < 0) {
-        $vatRate = (float) (\App\Support\AdminStoredSettings::invoice()['vat_rate'] ?? 0.16);
-        if ($vatRate > 1) {
-            $vatRate /= 100;
-        }
-    }
-    $vat = round($amount * $vatRate, 2);
+    $applyVat = DocumentVat::applies($values);
+    $vatRate = DocumentVat::rate($values);
+    $vat = $applyVat ? round($amount * $vatRate, 2) : 0.0;
     $total = round($amount + $vat, 2);
     $fmtMoney = fn (float $n): string => number_format($n, 2, '.', ',');
     $companyKra = \App\Support\AdminStoredSettings::companyKraPin();
@@ -90,10 +82,12 @@
                 <td>{!! nl2br(e($description)) !!}</td>
                 <td class="colldett-fee-note__num">{{ $fmtMoney($amount) }}</td>
             </tr>
-            <tr>
-                <td class="colldett-fee-note__label">V.A.T ({{ number_format($vatRate * 100, 0) }}%)</td>
-                <td class="colldett-fee-note__num">{{ $fmtMoney($vat) }}</td>
-            </tr>
+            @if($applyVat)
+                <tr>
+                    <td class="colldett-fee-note__label">V.A.T ({{ number_format($vatRate * 100, 0) }}%)</td>
+                    <td class="colldett-fee-note__num">{{ $fmtMoney($vat) }}</td>
+                </tr>
+            @endif
             <tr class="colldett-fee-note__row-total">
                 <td class="colldett-fee-note__label">Total</td>
                 <td class="colldett-fee-note__num">{{ $currency }} {{ $fmtMoney($total) }}</td>
