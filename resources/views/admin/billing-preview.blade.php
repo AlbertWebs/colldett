@@ -21,6 +21,9 @@
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="admin-chip">{{ strtoupper($module) }}</span>
                     <a href="{{ route('admin.billing.module.edit', [$module, $recordId]) }}" class="admin-btn-soft">Edit</a>
+                    @if($module === 'fee-notes' && trim((string) ($values['number'] ?? '')) !== '' && trim((string) ($values['number'] ?? '')) !== 'Draft')
+                        <a href="{{ route('admin.billing.module.create', ['credit-notes', 'fee_note_id' => $recordId]) }}" class="admin-btn-primary">Issue credit note</a>
+                    @endif
                     <a href="{{ route('admin.billing.module.index', $module) }}" class="admin-btn-soft">View All</a>
                 </div>
             </div>

@@ -71,7 +71,7 @@
                         </td>
                         <td><code class="rounded bg-slate-100 px-2 py-1 text-xs text-slate-700">{{ $item['slug'] }}</code></td>
                         <td class="max-w-xl">
-                            <p class="text-sm text-admin-muted">{{ \Illuminate\Support\Str::limit($item['description'], 140) }}</p>
+                            <p class="text-sm text-admin-muted">{{ \Illuminate\Support\Str::limit(\App\Support\DocumentPlainText::fromHtml($item['description'] ?? ''), 140) }}</p>
                         </td>
                         <td>
                             <div class="admin-row-actions">

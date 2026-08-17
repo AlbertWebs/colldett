@@ -115,7 +115,7 @@ final class TeamDirectory
         }
 
         return array_values(array_filter(array_map(static function ($item): string {
-            return trim((string) $item);
+            return DocumentPlainText::fromHtml(trim((string) $item));
         }, $value), static fn (string $s): bool => $s !== ''));
     }
 

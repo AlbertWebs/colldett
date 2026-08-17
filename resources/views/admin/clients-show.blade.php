@@ -144,19 +144,21 @@
                 </div>
                 <div class="space-y-6 p-5">
                     @php
-                        $docs = $clientDocuments ?? ['fee_notes' => [], 'invoices' => [], 'cases' => []];
+                        $docs = $clientDocuments ?? ['fee_notes' => [], 'credit_notes' => [], 'invoices' => [], 'cases' => []];
                     @endphp
 
                     @if(! ($hasClientDocuments ?? false))
                         <p class="text-sm text-admin-muted">No fee notes, invoices, or cases are linked to this client yet.</p>
                         <div class="flex flex-wrap gap-2">
                             <a href="{{ route('admin.billing.module.create', ['fee-notes', 'client' => $company]) }}" class="admin-btn-soft text-xs">New fee note</a>
+                            <a href="{{ route('admin.billing.module.create', 'credit-notes') }}" class="admin-btn-soft text-xs">New credit note</a>
                             <a href="{{ route('admin.billing.module.create', ['invoices', 'client' => $company]) }}" class="admin-btn-soft text-xs">New invoice</a>
                             <a href="{{ route('admin.cases.create') }}" class="admin-btn-soft text-xs">New case</a>
                         </div>
                     @else
                         @foreach([
                             'fee_notes' => ['label' => 'Fee notes', 'module' => 'fee-notes', 'show_pdf' => true],
+                            'credit_notes' => ['label' => 'Credit notes', 'module' => 'credit-notes', 'show_pdf' => true],
                             'invoices' => ['label' => 'Invoices', 'module' => 'invoices', 'show_pdf' => true],
                             'cases' => ['label' => 'Cases', 'module' => null, 'show_pdf' => false],
                         ] as $docKey => $docMeta)

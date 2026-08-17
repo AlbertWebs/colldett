@@ -42,6 +42,11 @@
                                 Bank remittance lines on the printed fee note come from <a href="{{ route('admin.settings.documents') }}" class="font-semibold underline decoration-sky-700/50 underline-offset-2 hover:text-sky-900">Admin → Settings → Documents</a> (bank lines), so you do not re-enter them here.
                             </p>
                         @endif
+                        @if($module === 'credit-notes')
+                            <p class="mt-2 rounded-lg border border-emerald-200/80 bg-emerald-50/80 px-3 py-2 text-sm text-emerald-950">
+                                Select the <strong>issued fee note</strong> this credit applies to. Client, address, references, and VAT follow that fee note. The credit cannot exceed the remaining professional fee (ex VAT).
+                            </p>
+                        @endif
                         @if($module === 'demand')
                             <p class="mt-2 rounded-lg border border-emerald-200/80 bg-emerald-50/80 px-3 py-2 text-sm text-emerald-950">
                                 The <strong>engaging client</strong> is who instructs you. Write the full letter — including recipient, address, and salutation if needed — in <strong>Letter (body)</strong>.
@@ -129,6 +134,35 @@
                                             <option value="{{ $ref }}" @selected($currentCaseRef === $ref)>{{ $ref }}</option>
                                         @endforeach
                                     </select>
+                                @elseif($module === 'credit-notes' && $field['name'] === 'number')
+                                    <input
+                                        class="admin-input cursor-not-allowed bg-slate-50 font-mono text-admin-ink"
+                                        type="text"
+                                        name="{{ $field['name'] }}"
+                                        value="{{ old($field['name'], $values[$field['name']] ?? '') }}"
+                                        readonly
+                                        data-no-autolabel="true"
+                                    />
+                                    <p class="mt-1 text-xs text-admin-muted">{{ $mode === 'create' ? 'Assigned on issue (CN-YEAR-####).' : 'Official credit note number (locked).' }}</p>
+                                @elseif($module === 'credit-notes' && $field['name'] === 'fee_note_id')
+                                    @php
+                                        $currentFeeNoteId = (string) old('fee_note_id', $values['fee_note_id'] ?? '');
+                                        $feeNoteOpts = $feeNoteOptions ?? [];
+                                    @endphp
+                                    <select class="admin-select" name="fee_note_id" id="credit-note-fee-note-id" data-no-autolabel="true" @disabled($mode === 'edit')>
+                                        <option value="">Select issued fee note</option>
+                                        @foreach($feeNoteOpts as $opt)
+                                            <option
+                                                value="{{ $opt['id'] }}"
+                                                data-remaining="{{ $opt['remaining'] }}"
+                                                @selected($currentFeeNoteId === (string) $opt['id'])
+                                            >{{ $opt['label'] }}</option>
+                                        @endforeach
+                                    </select>
+                                    @if($mode === 'edit')
+                                        <input type="hidden" name="fee_note_id" value="{{ $currentFeeNoteId }}" />
+                                    @endif
+                                    <p class="mt-1 text-xs text-admin-muted" id="credit-note-remaining-hint">VAT and client details are taken from the selected fee note.</p>
                                 @elseif($module === 'payments' && $mode === 'create' && $field['name'] === 'payment_id')
                                     <input
                                         class="admin-input cursor-not-allowed bg-slate-50 text-admin-ink"
@@ -269,6 +303,9 @@
                         @if($module === 'fee-notes')
                             <li class="rounded-lg border border-admin-border bg-slate-50 px-3 py-2">Use <strong>Save draft</strong> to record details before you are ready for an official FN number.</li>
                         @endif
+                        @if($module === 'credit-notes')
+                            <li class="rounded-lg border border-admin-border bg-slate-50 px-3 py-2">A credit note does not request payment. It reduces the amount payable on the linked fee note.</li>
+                        @endif
                         <li class="rounded-lg border border-admin-border bg-slate-50 px-3 py-2">Add concise notes for future audit and reconciliation.</li>
                     </ul>
                     <div class="rounded-lg border border-dashed border-admin-border bg-slate-50 p-3 text-xs text-admin-muted">
@@ -371,6 +408,45 @@
                 }
 
                 buildOurRef();
+            });
+        </script>
+    @endpush
+@endif
+@if($module === 'credit-notes')
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const sel = document.getElementById('credit-note-fee-note-id');
+                const amount = document.querySelector('input[name="amount"]');
+                const hint = document.getElementById('credit-note-remaining-hint');
+                if (!sel || !amount) {
+                    return;
+                }
+                const applyRemaining = function () {
+                    const opt = sel.options[sel.selectedIndex];
+                    if (!opt || !opt.value) {
+                        return;
+                    }
+                    const remaining = opt.getAttribute('data-remaining');
+                    if (remaining === null) {
+                        return;
+                    }
+                    if (hint) {
+                        hint.textContent = 'Remaining professional fee on this fee note: ' + remaining + ' (ex VAT). VAT follows the original fee note.';
+                    }
+                    if (!(amount.value || '').trim()) {
+                        amount.value = remaining;
+                    }
+                };
+                sel.addEventListener('change', function () {
+                    const opt = sel.options[sel.selectedIndex];
+                    const remaining = opt ? opt.getAttribute('data-remaining') : '';
+                    if (remaining) {
+                        amount.value = remaining;
+                    }
+                    applyRemaining();
+                });
+                applyRemaining();
             });
         </script>
     @endpush

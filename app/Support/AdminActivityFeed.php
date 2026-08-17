@@ -20,6 +20,7 @@ final class AdminActivityFeed
             self::fromCareerApplications(),
             self::fromInvoices(),
             self::fromFeeNotes(),
+            self::fromCreditNotes(),
             self::fromCases(),
         );
 
@@ -142,6 +143,38 @@ final class AdminActivityFeed
                 'user' => 'Billing',
                 'occurred_at' => $occurredAt,
                 'url' => isset($row['id']) ? route('admin.billing.module.preview', ['fee-notes', (int) $row['id']]) : null,
+            ];
+        }
+
+        return $items;
+    }
+
+    /**
+     * @return list<array{event: string, entity: string, user: string, occurred_at: Carbon, url: string|null}>
+     */
+    private static function fromCreditNotes(): array
+    {
+        $items = [];
+        foreach (self::readJsonList('admin/billing_credit_notes.json') as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $number = trim((string) ($row['number'] ?? ''));
+            if ($number === '') {
+                continue;
+            }
+            $occurredAt = self::parseDate($row['issued_date'] ?? null);
+            if ($occurredAt === null) {
+                continue;
+            }
+            $client = trim((string) ($row['client'] ?? ''));
+            $against = trim((string) ($row['fee_note_number'] ?? ''));
+            $items[] = [
+                'event' => 'Credit note issued',
+                'entity' => $number.($against !== '' ? ' vs '.$against : '').($client !== '' ? ' — '.$client : ''),
+                'user' => 'Billing',
+                'occurred_at' => $occurredAt,
+                'url' => isset($row['id']) ? route('admin.billing.module.preview', ['credit-notes', (int) $row['id']]) : null,
             ];
         }
 

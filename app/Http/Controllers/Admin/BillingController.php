@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Support\AdminStoredSettings;
 use App\Support\ClientDirectory;
+use App\Support\CreditNoteLedger;
 use App\Support\DocumentPlainText;
 use App\Support\DocumentVat;
 use App\Support\FeeNoteReference;
@@ -59,6 +60,14 @@ class BillingController extends Controller
         if ($module === 'payments') {
             $values['payment_id'] = $this->peekNextPaymentId();
         }
+        if ($module === 'credit-notes') {
+            $values['number'] = $this->peekNextCreditNoteNumber();
+            $values['issued_date'] = date('Y-m-d');
+            $presetFeeNoteId = (int) $request->query('fee_note_id', 0);
+            if ($presetFeeNoteId > 0) {
+                $values['fee_note_id'] = (string) $presetFeeNoteId;
+            }
+        }
 
         return view('admin.billing-form', [
             'meta' => $meta,
@@ -73,6 +82,7 @@ class BillingController extends Controller
             'feeNoteAddressByClient' => $module === 'fee-notes' ? ClientDirectory::feeNoteAddressesForForm() : [],
             'feeNoteServices' => $module === 'fee-notes' ? ServiceCatalog::optionsForSelect() : [],
             'feeNoteClientAccountRefs' => $module === 'fee-notes' ? ClientDirectory::accountRefByCompany() : [],
+            'feeNoteOptions' => $module === 'credit-notes' ? $this->issuedFeeNoteOptionsForCreditNotes() : [],
         ]);
     }
 
@@ -83,6 +93,7 @@ class BillingController extends Controller
         $rows = match ($module) {
             'fee-notes' => $this->readFeeNoteIndexSorted(),
             'invoices' => $this->readInvoiceIndexSorted(),
+            'credit-notes' => $this->readCreditNoteIndexSorted(),
             default => [$this->sampleValues($module, 1)],
         };
 
@@ -151,6 +162,19 @@ class BillingController extends Controller
                 ->with('preview_values', $data);
         }
 
+        if ($module === 'credit-notes') {
+            $prepared = $this->prepareCreditNoteFromFeeNote($data);
+            if ($prepared instanceof RedirectResponse) {
+                return $prepared;
+            }
+            $prepared['number'] = $this->generateNextCreditNoteNumber();
+            $newId = $this->appendCreditNoteRecord($prepared);
+
+            return redirect()
+                ->route('admin.billing.module.preview', [$module, $newId])
+                ->with('status', $meta['singular'].' issued successfully.');
+        }
+
         return redirect()
             ->route('admin.billing.module.preview', [$module, 1])
             ->with('status', $meta['singular'].' created successfully.')
@@ -195,7 +219,7 @@ class BillingController extends Controller
         $docRef = '#'.($values['number'] ?? ($values['payment_id'] ?? ('REC-'.$id)));
         $docTitle = $module === 'invoices'
             ? 'Invoice'
-            : ($module === 'demand' ? 'Demand Letter' : ($module === 'fee-notes' ? 'Fee Note' : $meta['singular'].' preview'));
+            : ($module === 'demand' ? 'Demand Letter' : ($module === 'fee-notes' ? 'Fee Note' : ($module === 'credit-notes' ? 'Credit Note' : $meta['singular'].' preview')));
         $slugBase = $module === 'payments'
             ? ($values['payment_id'] ?? 'payment-'.$id)
             : ($values['number'] ?? ($meta['singular'].'-'.$id));
@@ -233,6 +257,13 @@ class BillingController extends Controller
                 'invoiceBodyCss' => $this->invoiceBodyStylesheet(),
                 'logoUrl' => $logoDataUri,
             ])->setPaper('a4', 'portrait')->setOptions($pdfOptions);
+        } elseif ($module === 'credit-notes') {
+            $pdf = Pdf::loadView('admin.billing-credit-note-pdf', [
+                'values' => $values,
+                'documentChromeCss' => $this->documentChromeStylesheet(),
+                'invoiceBodyCss' => $this->invoiceBodyStylesheet(),
+                'logoUrl' => $logoDataUri,
+            ])->setPaper('a4', 'portrait')->setOptions($pdfOptions);
         } else {
             $pdf = Pdf::loadView('admin.billing-document-pdf', [
                 'meta' => $meta,
@@ -254,6 +285,7 @@ class BillingController extends Controller
         $values = match ($module) {
             'fee-notes' => $this->feeNoteValuesForForm($id),
             'invoices' => $this->invoiceValuesForForm($id),
+            'credit-notes' => $this->creditNoteValuesForForm($id),
             default => $this->sampleValues($module, $id),
         };
 
@@ -276,6 +308,7 @@ class BillingController extends Controller
             'feeNoteAddressByClient' => $module === 'fee-notes' ? ClientDirectory::feeNoteAddressesForForm() : [],
             'feeNoteServices' => $module === 'fee-notes' ? ServiceCatalog::optionsForSelect() : [],
             'feeNoteClientAccountRefs' => $module === 'fee-notes' ? ClientDirectory::accountRefByCompany() : [],
+            'feeNoteOptions' => $module === 'credit-notes' ? $this->issuedFeeNoteOptionsForCreditNotes($id) : [],
         ]);
     }
 
@@ -337,6 +370,27 @@ class BillingController extends Controller
                 'number' => (string) ($existing['number'] ?? ''),
             ]);
             $this->replaceInvoiceRecord($merged);
+
+            return redirect()
+                ->route('admin.billing.module.edit', [$module, $id])
+                ->with('status', $meta['singular'].' updated successfully.');
+        }
+
+        if ($module === 'credit-notes') {
+            $existing = $this->findCreditNoteById($id);
+            abort_unless($existing, 404);
+            $data = $request->validate($this->rules($module));
+            $data = $this->plainTextFieldsForModule($module, $data);
+            $data['fee_note_id'] = (string) ($existing['fee_note_id'] ?? '');
+            $prepared = $this->prepareCreditNoteFromFeeNote($data, $id);
+            if ($prepared instanceof RedirectResponse) {
+                return $prepared;
+            }
+            $merged = array_merge($existing, $prepared, [
+                'id' => $id,
+                'number' => (string) ($existing['number'] ?? ''),
+            ]);
+            $this->replaceCreditNoteRecord($merged);
 
             return redirect()
                 ->route('admin.billing.module.edit', [$module, $id])
@@ -504,6 +558,13 @@ class BillingController extends Controller
         if ($module === 'fee-notes') {
             $rules['service_id'] = ['nullable', 'integer', 'min:1'];
         }
+        if ($module === 'credit-notes') {
+            $rules['fee_note_id'] = ['required', 'integer', 'min:1'];
+            $rules['amount'] = ['required', 'string', 'max:50'];
+            $rules['line_description'] = ['required', 'string', 'max:4000'];
+            $rules['issued_date'] = ['required', 'date'];
+            $rules['number'] = ['nullable', 'string', 'max:50'];
+        }
 
         return $rules;
     }
@@ -555,6 +616,23 @@ class BillingController extends Controller
                 'body' => "Dear Sir/Madam,\n\nWe act on behalf of our client Apex Motors regarding the above-referenced matter. Despite prior correspondence, the sum of KES 2,100,000 remains due and payable.\n\nTake notice that unless payment is received in full on or before the deadline below, our client reserves the right to pursue recovery without further reference to you.\n\nYours faithfully,",
             ],
             'payments' => ['payment_id' => 'PM-2026-1001', 'client' => 'Prime Foods Ltd', 'invoice' => 'INV-2026-1002', 'amount' => '250000', 'method' => 'Bank', 'date' => '2026-04-08', 'reference' => 'TRX-98310'],
+            'credit-notes' => [
+                'number' => 'CN-2026-1001',
+                'fee_note_id' => '1',
+                'fee_note_number' => 'FN-2026-1001',
+                'fee_note_date' => '2026-03-12',
+                'fee_note_amount' => '5321.60',
+                'our_ref' => '1/001/2026',
+                'your_ref' => '4523',
+                'client' => 'MORANI LIMITED',
+                'address' => "P.O BOX 3146-10400\nNYERI",
+                'issued_date' => '2026-04-02',
+                'line_description' => 'Credit of professional fees previously billed in error / overcharge.',
+                'amount' => '5321.60',
+                'apply_vat' => '1',
+                'vat_rate' => '0.16',
+                'notes' => 'When replying please quote our reference and this credit note number.',
+            ],
         ];
 
         return $samples[$module] ?? ['id' => $id];
@@ -605,6 +683,10 @@ class BillingController extends Controller
 
     /** @var string Persisted fee note rows (full field set + id). */
     private const FEE_NOTE_INDEX_PATH = 'admin/billing_fee_notes.json';
+
+    private const CREDIT_NOTE_SEQ_PATH = CreditNoteLedger::SEQ_PATH;
+
+    private const CREDIT_NOTE_INDEX_PATH = CreditNoteLedger::INDEX_PATH;
 
     private const PAYMENT_SEQ_PATH = 'admin/billing_payment_seq.json';
 
@@ -1082,16 +1164,232 @@ class BillingController extends Controller
     }
 
     /**
+     * Issued fee notes available to credit, with remaining professional fee (ex VAT).
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function issuedFeeNoteOptionsForCreditNotes(?int $exceptCreditId = null): array
+    {
+        $credits = $this->readCreditNoteIndex();
+        $currency = AdminStoredSettings::invoice()['currency'] ?? 'KES';
+        $out = [];
+        foreach ($this->readFeeNoteIndex() as $row) {
+            if (! is_array($row) || (bool) ($row['is_draft'] ?? false)) {
+                continue;
+            }
+            $number = trim((string) ($row['number'] ?? ''));
+            if ($number === '') {
+                continue;
+            }
+            $remaining = CreditNoteLedger::remainingExVat($row, $credits, $exceptCreditId);
+            $client = trim((string) ($row['client'] ?? ''));
+            $out[] = [
+                'id' => (int) ($row['id'] ?? 0),
+                'number' => $number,
+                'client' => $client,
+                'remaining' => $remaining,
+                'apply_vat' => DocumentVat::applies($row) ? '1' : '0',
+                'label' => $number
+                    .($client !== '' ? ' — '.$client : '')
+                    .' (remaining '.$currency.' '.number_format($remaining, 2, '.', ',').')',
+            ];
+        }
+        usort($out, static fn (array $a, array $b): int => strcmp((string) $b['number'], (string) $a['number']));
+
+        return $out;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>|\Illuminate\Http\RedirectResponse
+     */
+    private function prepareCreditNoteFromFeeNote(array $data, ?int $exceptCreditId = null): array|RedirectResponse
+    {
+        $feeNoteId = (int) ($data['fee_note_id'] ?? 0);
+        $feeNote = $this->findFeeNoteById($feeNoteId);
+        if ($feeNote === null || (bool) ($feeNote['is_draft'] ?? false) || trim((string) ($feeNote['number'] ?? '')) === '') {
+            return back()->withErrors(['fee_note_id' => 'Select an issued fee note.'])->withInput();
+        }
+
+        $snapshot = CreditNoteLedger::snapshotFromFeeNote($feeNote);
+        $merged = array_merge($data, $snapshot);
+        $amount = CreditNoteLedger::parseAmount($merged['amount'] ?? 0);
+        if ($amount <= 0) {
+            return back()->withErrors(['amount' => 'Enter a credit amount greater than zero.'])->withInput();
+        }
+        $remaining = CreditNoteLedger::remainingExVat($feeNote, $this->readCreditNoteIndex(), $exceptCreditId);
+        if ($amount - $remaining > 0.009) {
+            return back()
+                ->withErrors(['amount' => 'Credit cannot exceed the remaining fee-note amount of '.number_format($remaining, 2, '.', ',').'.'])
+                ->withInput();
+        }
+        $merged['amount'] = (string) $amount;
+        if (trim((string) ($merged['our_ref'] ?? '')) === '') {
+            $merged['our_ref'] = FeeNoteReference::build(
+                (int) ($merged['service_id'] ?? 0),
+                (string) ($merged['client'] ?? ''),
+                isset($feeNote['issued_date']) ? (string) $feeNote['issued_date'] : null
+            );
+        }
+
+        return $this->plainTextFieldsForModule('credit-notes', $merged);
+    }
+
+    private function peekNextCreditNoteNumber(): string
+    {
+        $year = (int) date('Y');
+        $last = $this->creditNoteLastIssued();
+
+        return sprintf('CN-%d-%04d', $year, $last + 1);
+    }
+
+    private function generateNextCreditNoteNumber(): string
+    {
+        $year = (int) date('Y');
+        $last = $this->creditNoteLastIssued();
+        $next = $last + 1;
+        Storage::disk('local')->put(self::CREDIT_NOTE_SEQ_PATH, json_encode([
+            'year' => $year,
+            'last' => $next,
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
+        return sprintf('CN-%d-%04d', $year, $next);
+    }
+
+    private function creditNoteLastIssued(): int
+    {
+        $year = (int) date('Y');
+        if (! Storage::disk('local')->exists(self::CREDIT_NOTE_SEQ_PATH)) {
+            return 1000;
+        }
+        $data = json_decode((string) Storage::disk('local')->get(self::CREDIT_NOTE_SEQ_PATH), true);
+        if (! is_array($data) || (int) ($data['year'] ?? 0) !== $year) {
+            return 1000;
+        }
+
+        return (int) ($data['last'] ?? 1000);
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function readCreditNoteIndex(): array
+    {
+        if (! Storage::disk('local')->exists(self::CREDIT_NOTE_INDEX_PATH)) {
+            return [];
+        }
+        $decoded = json_decode((string) Storage::disk('local')->get(self::CREDIT_NOTE_INDEX_PATH), true);
+        if (! is_array($decoded)) {
+            return [];
+        }
+        $out = [];
+        foreach (array_values($decoded) as $row) {
+            if (is_array($row)) {
+                $out[] = $row;
+            }
+        }
+
+        return $out;
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function readCreditNoteIndexSorted(): array
+    {
+        $rows = $this->readCreditNoteIndex();
+        usort($rows, static fn (array $a, array $b): int => ((int) ($b['id'] ?? 0)) <=> ((int) ($a['id'] ?? 0)));
+
+        return array_map(
+            fn (array $row): array => $this->plainTextFieldsForModule('credit-notes', $row),
+            $rows
+        );
+    }
+
+    private function writeCreditNoteIndex(array $rows): void
+    {
+        Storage::disk('local')->put(
+            self::CREDIT_NOTE_INDEX_PATH,
+            json_encode(array_values($rows), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+        );
+    }
+
+    /** @return array<string, mixed>|null */
+    private function findCreditNoteById(int $id): ?array
+    {
+        foreach ($this->readCreditNoteIndex() as $row) {
+            if ((int) ($row['id'] ?? 0) === $id) {
+                return $row;
+            }
+        }
+
+        return null;
+    }
+
+    /** @param  array<string, mixed>  $data */
+    private function appendCreditNoteRecord(array $data): int
+    {
+        $rows = $this->readCreditNoteIndex();
+        $nextId = $rows === [] ? 1 : max(array_map(static fn (array $r): int => (int) ($r['id'] ?? 0), $rows)) + 1;
+        $rows[] = array_merge($data, ['id' => $nextId]);
+        $this->writeCreditNoteIndex($rows);
+
+        return $nextId;
+    }
+
+    /** @param  array<string, mixed>  $row */
+    private function replaceCreditNoteRecord(array $row): void
+    {
+        $id = (int) ($row['id'] ?? 0);
+        abort_unless($id > 0, 404);
+        $rows = $this->readCreditNoteIndex();
+        $found = false;
+        foreach ($rows as $i => $existing) {
+            if ((int) ($existing['id'] ?? 0) === $id) {
+                $rows[$i] = $row;
+                $found = true;
+                break;
+            }
+        }
+        abort_unless($found, 404);
+        $this->writeCreditNoteIndex($rows);
+    }
+
+    /** @return array<string, mixed> */
+    private function creditNoteValuesForDocument(int $id): array
+    {
+        $row = $this->findCreditNoteById($id);
+        abort_unless($row, 404);
+        $out = $row;
+        unset($out['id']);
+        $out = $this->plainTextFieldsForModule('credit-notes', $out);
+        $feeNote = $this->findFeeNoteById((int) ($row['fee_note_id'] ?? 0));
+        if (is_array($feeNote)) {
+            $remainingEx = CreditNoteLedger::remainingExVat($feeNote, $this->readCreditNoteIndex());
+            $out['balance_remaining_total'] = CreditNoteLedger::totals(array_merge($out, ['amount' => $remainingEx]))['total'];
+        }
+
+        return $out;
+    }
+
+    /** @return array<string, mixed> */
+    private function creditNoteValuesForForm(int $id): array
+    {
+        $row = $this->findCreditNoteById($id);
+        abort_unless($row, 404);
+        $out = $row;
+        unset($out['id']);
+
+        return DocumentVat::forForm($this->plainTextFieldsForModule('credit-notes', $out));
+    }
+
+    /**
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function normalizeApplyVatForModule(string $module, array $data): array
     {
-        if (! in_array($module, ['invoices', 'quotations', 'fee-notes'], true)) {
+        if (! in_array($module, ['invoices', 'quotations', 'fee-notes', 'credit-notes'], true)) {
             return $data;
         }
 
-        return DocumentVat::normalizeInput($data, $module === 'fee-notes');
+        return DocumentVat::normalizeInput($data, in_array($module, ['fee-notes', 'credit-notes'], true));
     }
 
     /**
@@ -1119,6 +1417,9 @@ class BillingController extends Controller
         }
         if ($module === 'invoices') {
             return $this->invoiceValuesForDocument($id);
+        }
+        if ($module === 'credit-notes') {
+            return $this->creditNoteValuesForDocument($id);
         }
 
         $values = $request->session()->get('preview_values');

@@ -8,6 +8,8 @@
             {{ $values['number'] ?? 'Invoice' }}
         @elseif($module === 'payments')
             {{ $values['payment_id'] ?? 'Payment receipt' }}
+        @elseif($module === 'credit-notes')
+            {{ $values['number'] ?? 'Credit Note' }}
         @else
             {{ $meta['singular'] }} — print
         @endif

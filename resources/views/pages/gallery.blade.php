@@ -20,14 +20,14 @@
                 $src = str_starts_with($item->image_path, 'http')
                     ? $item->image_path
                     : asset(ltrim($item->image_path, '/'));
-                $alt = trim((string) ($item->caption ?? 'Gallery image'));
+                $alt = trim(\App\Support\DocumentPlainText::fromHtml((string) ($item->caption ?? 'Gallery image')));
             @endphp
             <figure class="gallery-card reveal">
                 <a class="gallery-link" href="{{ $src }}" target="_blank" rel="noopener noreferrer">
                     <img src="{{ $src }}" alt="{{ $alt !== '' ? $alt : 'Gallery image' }}" loading="lazy" decoding="async" />
                 </a>
                 @if(!empty(trim((string) $item->caption)))
-                    <figcaption>{{ $item->caption }}</figcaption>
+                    <figcaption>{{ \App\Support\DocumentPlainText::fromHtml((string) $item->caption) }}</figcaption>
                 @endif
             </figure>
         @empty

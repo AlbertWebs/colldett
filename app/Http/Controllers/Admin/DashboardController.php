@@ -33,6 +33,7 @@ class DashboardController extends Controller
             : 0;
 
         $feeNotesTotal = count($this->readJsonList('admin/billing_fee_notes.json'));
+        $creditNotesTotal = count($this->readJsonList('admin/billing_credit_notes.json'));
 
         return view('admin.dashboard', [
             'kpis' => [
@@ -41,6 +42,7 @@ class DashboardController extends Controller
                 ['Pending Cases', number_format($pendingCases)],
                 ['Total Invoices', number_format($invoicesTotal)],
                 ['Fee notes', number_format($feeNotesTotal)],
+                ['Credit notes', number_format($creditNotesTotal)],
                 ['Payment receipts issued', number_format($paymentsTotal)],
                 ['Inbound inquiries', number_format($inquiriesTotal)],
                 ['New career applications', number_format($newApplications)],

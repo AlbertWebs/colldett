@@ -17,6 +17,8 @@
             <p class="text-sm text-admin-muted">
                 @if($module === 'fee-notes')
                     Issued fee notes show their FN number; drafts stay editable until you issue an official number.
+                @elseif($module === 'credit-notes')
+                    Credit notes are issued against an existing fee note and reduce the amount payable on that fee note.
                 @else
                     View all {{ strtolower($meta['title']) }} records.
                 @endif
@@ -44,6 +46,12 @@
                         <tr>
                             <td colspan="{{ count($cols) + 1 }}" class="py-10 text-center text-sm text-admin-muted">
                                 No fee notes yet. Use <strong>Create Fee Note</strong> to add your first record (save a draft or issue immediately).
+                            </td>
+                        </tr>
+                    @elseif($module === 'credit-notes' && ($rows ?? []) === [])
+                        <tr>
+                            <td colspan="{{ count($cols) + 1 }}" class="py-10 text-center text-sm text-admin-muted">
+                                No credit notes yet. Issue one against an existing fee note.
                             </td>
                         </tr>
                     @else
@@ -80,7 +88,7 @@
                             @endforeach
                             <td>
                                 <div class="admin-row-actions">
-                                    @if(in_array($module, ['fee-notes', 'invoices'], true))
+                                    @if(in_array($module, ['fee-notes', 'invoices', 'credit-notes'], true))
                                         <a class="admin-link-btn" href="{{ route('admin.billing.module.preview', [$module, $recordId]) }}">View</a>
                                     @endif
                                     <a class="admin-link-btn" href="{{ route('admin.billing.module.edit', [$module, $recordId]) }}">Edit</a>

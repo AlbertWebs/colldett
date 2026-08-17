@@ -98,7 +98,7 @@ class SiteController extends Controller
         $data = $this->viewData($capability['name']);
         $company = $data['site']['company']['name'] ?? config('colldett.company.name', 'Colldett Trace Limited');
         $data['metaTitle'] = (string) ($capability['seo_title'] ?? ($capability['name'].' | '.$company));
-        $data['metaDescription'] = Str::limit(strip_tags((string) ($capability['seo_description'] ?? $capability['description'] ?? config('colldett.company.description'))), 158);
+        $data['metaDescription'] = Str::limit(DocumentPlainText::fromHtml((string) ($capability['seo_description'] ?? $capability['description'] ?? config('colldett.company.description'))), 158);
         $data['metaKeywords'] = (string) ($capability['seo_keywords'] ?? ($capability['name'].', debt recovery Kenya, asset tracing, investigations, Colldett Trace'));
         $data['canonicalUrl'] = route('capabilities.show', $slug, absolute: true);
         $data['ogImageAlt'] = $capability['name'].' — '.$data['site']['company']['name'];
@@ -194,7 +194,11 @@ class SiteController extends Controller
         abort_unless($member && ($member['is_active'] ?? true), 404);
 
         $data = $this->viewData($member['name']);
-        $data['metaDescription'] = Str::limit(strip_tags((string) ($member['seo_description'] ?? ($member['bio'] ?? config('colldett.company.description')))), 158);
+        $data['metaDescription'] = Str::limit(DocumentPlainText::fromHtml((string) (
+            ($member['seo_description'] ?? '') !== ''
+                ? $member['seo_description']
+                : ($member['bio'] ?? config('colldett.company.description'))
+        )), 158);
         $memberImage = $member['image'] ?? null;
         $data['metaImage'] = $memberImage
             ? (str_starts_with($memberImage, 'http') ? $memberImage : asset($memberImage))
@@ -268,7 +272,7 @@ class SiteController extends Controller
 
         return [
             'metaTitle' => $title.' | '.$site['company']['name'],
-            'metaDescription' => $site['company']['description'],
+            'metaDescription' => Str::limit(DocumentPlainText::fromHtml((string) ($site['company']['description'] ?? '')), 158),
             'site' => $site,
             'canonicalUrl' => null,
             'ogType' => 'website',

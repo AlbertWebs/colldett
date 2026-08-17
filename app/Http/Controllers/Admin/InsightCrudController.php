@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Insight;
+use App\Support\RichContentHtml;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -119,7 +120,16 @@ class InsightCrudController extends Controller
 
     private function contentToArray(string $content): array
     {
-        return collect(preg_split('/\R{2,}/', trim($content)) ?: [])
+        $content = trim($content);
+        if ($content === '') {
+            return [];
+        }
+
+        if (RichContentHtml::containsMarkup($content)) {
+            return [$content];
+        }
+
+        return collect(preg_split('/\R{2,}/', $content) ?: [])
             ->map(fn ($line) => trim((string) $line))
             ->filter()
             ->values()

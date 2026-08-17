@@ -33,7 +33,7 @@
                                     <span>{{ $item['name'] }}</span>
                                 </div>
                             </td>
-                            <td>{{ $item['description'] }}</td>
+                            <td>{{ \App\Support\DocumentPlainText::fromHtml($item['description'] ?? '') }}</td>
                             <td>
                                 <div class="admin-row-actions">
                                     <a href="{{ route('admin.industries.edit', $item['id']) }}" class="admin-link-btn">Edit</a>

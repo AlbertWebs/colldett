@@ -156,4 +156,27 @@ class BillingDocumentPlainTextTest extends TestCase
         $this->assertStringNotContainsString('&lt;p&gt;', $html);
         $this->assertStringNotContainsString('<p>Professional fees', $html);
     }
+
+    public function test_payment_receipt_does_not_show_html_tags(): void
+    {
+        $html = View::make('admin.partials.payment-receipt-document-content', [
+            'values' => [
+                'payment_id' => 'PM-2026-1001',
+                'invoice' => '<p>INV-2026-1002</p>',
+                'method' => '<p>Bank transfer</p>',
+                'client' => '<p>Prime Foods Ltd</p><p>Industrial Area</p>',
+                'date' => '2026-04-02',
+                'amount' => '250000',
+                'reference' => '<p>TXN-8891</p>',
+            ],
+        ])->render();
+
+        $this->assertStringContainsString('Prime Foods Ltd', $html);
+        $this->assertStringContainsString('INV-2026-1002', $html);
+        $this->assertStringContainsString('Bank transfer', $html);
+        $this->assertStringContainsString('TXN-8891', $html);
+        $this->assertStringNotContainsString('&lt;p&gt;', $html);
+        $this->assertStringNotContainsString('<p>Prime Foods', $html);
+        $this->assertStringNotContainsString('<p>INV-2026', $html);
+    }
 }

@@ -1,9 +1,14 @@
 @extends('layouts.app')
 
 @php
+    use App\Support\DocumentPlainText;
+    use App\Support\RichContentHtml;
     use App\Support\TeamDirectory;
     $teamUsesAvatar = TeamDirectory::imageIsGenericPlaceholder((string) ($member['image'] ?? ''));
     $memberImage = $teamUsesAvatar ? null : TeamDirectory::memberPortraitImageUrl((string) ($member['image'] ?? ''));
+    $schemaDescription = DocumentPlainText::fromHtml(
+        (string) (($member['seo_description'] ?? '') !== '' ? $member['seo_description'] : ($member['bio'] ?? ''))
+    );
     $personSchema = array_filter([
         '@context' => 'https://schema.org',
         '@type' => 'Person',
@@ -14,7 +19,7 @@
             'name' => config('colldett.company.name'),
             'url' => url('/'),
         ],
-        'description' => $member['seo_description'] ?? $member['bio'],
+        'description' => $schemaDescription !== '' ? $schemaDescription : null,
         'image' => $memberImage,
         'email' => ! empty($member['email']) ? 'mailto:'.$member['email'] : null,
         'url' => url()->current(),
@@ -61,33 +66,37 @@
                     <span>{{ $member['department'] }}</span>
                 @endif
             </div>
-            <p class="team-profile-bio">{{ $member['bio'] }}</p>
+            @if(RichContentHtml::hasVisibleContent($member['bio'] ?? ''))
+                <div class="team-profile-bio about-rich-text">
+                    {!! RichContentHtml::toParagraphHtml($member['bio']) !!}
+                </div>
+            @endif
 
             <h3>Key Focus Areas</h3>
             <div class="about-points">
                 @foreach($member['specialties'] as $specialty)
-                    <span>{{ $specialty }}</span>
+                    <span>{{ DocumentPlainText::fromHtml($specialty) }}</span>
                 @endforeach
             </div>
 
             <h3>Professional Credentials</h3>
             <ul class="team-profile-list">
                 @foreach(($member['credentials'] ?? []) as $credential)
-                    <li>{{ $credential }}</li>
+                    <li>{{ DocumentPlainText::fromHtml($credential) }}</li>
                 @endforeach
             </ul>
 
             <h3>Industries Served</h3>
             <div class="about-points">
                 @foreach(($member['industries'] ?? []) as $industry)
-                    <span>{{ $industry }}</span>
+                    <span>{{ DocumentPlainText::fromHtml($industry) }}</span>
                 @endforeach
             </div>
 
             <h3>Professional Principles</h3>
             <ul class="team-profile-list">
                 @foreach(($member['principles'] ?? []) as $principle)
-                    <li>{{ $principle }}</li>
+                    <li>{{ DocumentPlainText::fromHtml($principle) }}</li>
                 @endforeach
             </ul>
 

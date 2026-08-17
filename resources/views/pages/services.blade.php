@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    use App\Support\RichContentHtml;
+@endphp
 <section class="page-hero page-hero-services">
     <div class="container">
         <p class="page-breadcrumb">
@@ -44,7 +47,11 @@
                         <span class="service-row-toggle" aria-hidden="true">+</span>
                     </summary>
                     <div class="service-row-content">
-                        <p>{{ $service['description'] }}</p>
+                        @if(RichContentHtml::hasVisibleContent($service['description'] ?? ''))
+                            <div class="about-rich-text">
+                                {!! RichContentHtml::toParagraphHtml($service['description']) !!}
+                            </div>
+                        @endif
                         @if($service['slug'] === 'car-tracking')
                             <ul class="checklist compact">
                                 <li>Vehicle tracking device installation</li>

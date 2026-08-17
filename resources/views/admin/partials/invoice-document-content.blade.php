@@ -30,7 +30,7 @@
     $billingRaw = DocumentPlainText::fromHtml(trim((string) ($values['billing_address'] ?? '')));
     $billingLines = $billingRaw !== ''
         ? preg_split("/\r\n|\r|\n/", $billingRaw)
-        : array_filter([$values['client'] ?? 'Client', 'Address on file']);
+        : array_filter([DocumentPlainText::fromHtml((string) ($values['client'] ?? '')) ?: 'Client', 'Address on file']);
     $notesPlain = DocumentPlainText::fromHtml(trim((string) ($values['notes'] ?? '')));
     $pdfMode = $pdfMode ?? false;
 @endphp

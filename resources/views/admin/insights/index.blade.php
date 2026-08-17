@@ -62,7 +62,7 @@
                         <tr>
                             <td>
                                 <div class="font-medium text-admin-ink">{{ $item['title'] }}</div>
-                                <div class="text-xs text-admin-muted">{{ \Illuminate\Support\Str::limit($item['excerpt'] ?? '', 90) }}</div>
+                                <div class="text-xs text-admin-muted">{{ \Illuminate\Support\Str::limit(\App\Support\DocumentPlainText::fromHtml($item['excerpt'] ?? ''), 90) }}</div>
                             </td>
                             <td>{{ $item['slug'] }}</td>
                             <td>{{ $item['date'] }}</td>

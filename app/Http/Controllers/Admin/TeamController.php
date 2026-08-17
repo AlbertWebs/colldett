@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Support\DocumentPlainText;
 use App\Support\TeamDirectory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -166,7 +167,9 @@ class TeamController extends Controller
 
     private function splitLines(?string $text): array
     {
-        return array_values(array_filter(array_map('trim', preg_split("/\r\n|\r|\n/", (string) $text))));
+        return array_values(array_filter(array_map(static function (string $line): string {
+            return DocumentPlainText::fromHtml(trim($line));
+        }, preg_split("/\r\n|\r|\n/", (string) $text) ?: []), static fn (string $s): bool => $s !== ''));
     }
 
     private function resolveSlug(string $source, ?string $exceptSlug = null): string

@@ -425,6 +425,40 @@
   color: #334155;
 }
 
+.colldett-fee-note--credit .colldett-fee-note__banner {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0 0 0.9rem;
+  padding: 0.55rem 0.85rem;
+  background: #1a4d3a;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.colldett-fee-note--credit .colldett-fee-note__table thead th {
+  background: #1a4d3a;
+}
+
+.colldett-fee-note__credit-lead {
+  margin: 0 0 0.85rem;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: #1f2937;
+}
+
+.colldett-fee-note__settlement {
+  margin-top: 0.15rem;
+}
+
+.colldett-fee-note__settlement thead th {
+  background: #334155 !important;
+  font-weight: 700;
+}
+
 @media (max-width: 42rem) {
   .colldett-fee-note__meta-grid {
     grid-template-columns: 1fr;

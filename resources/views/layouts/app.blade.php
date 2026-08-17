@@ -7,7 +7,7 @@
         $seoLocale = config('colldett.seo.locale', 'en_KE');
         $canonical = $canonicalUrl ?? request()->url();
         $pageTitle = $metaTitle ?? config('colldett.company.name');
-        $pageDesc = $metaDescription ?? config('colldett.company.description');
+        $pageDesc = \App\Support\DocumentPlainText::fromHtml((string) ($metaDescription ?? config('colldett.company.description')));
         $ogTypeVal = $ogType ?? 'website';
         $defaultOgImage = $site['branding']['logo'] ?? asset('uploads/logo.png');
         $ogImageVal = $metaImage ?? $defaultOgImage;
@@ -264,7 +264,7 @@
                 <p class="footer-brand-tagline">{{ $footerTagline }}</p>
             @endif
             <div class="footer-brand-description">
-                {!! $site['company']['description'] !!}
+                {!! \App\Support\RichContentHtml::toParagraphHtml($site['company']['description'] ?? '') !!}
             </div>
             <div class="footer-brand-tags">
                 <span>Debt Recovery</span>

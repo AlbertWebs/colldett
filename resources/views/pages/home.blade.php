@@ -269,8 +269,8 @@
                         <span class="insight-date">{{ $article['date'] }}</span>
                         <span class="insight-tag">Expert Brief</span>
                     </div>
-                    <h3>{{ $article['title'] }}</h3>
-                    <p>{{ $article['excerpt'] }}</p>
+                    <h3>{{ \App\Support\DocumentPlainText::fromHtml($article['title'] ?? '') }}</h3>
+                    <p>{{ \App\Support\RichContentHtml::plainExcerpt($article['excerpt'] ?? '', 220) }}</p>
                     <a class="insight-cta" href="{{ route('insights.show', $article['slug']) }}">Read Insight <i aria-hidden="true">→</i></a>
                 </article>
             @endforeach

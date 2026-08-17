@@ -1,5 +1,6 @@
 @php
     use App\Support\AdminStoredSettings;
+    use App\Support\DocumentPlainText;
     use Illuminate\Support\Carbon;
     $inv = AdminStoredSettings::invoice();
     $currency = $inv['currency'] ?? 'Ksh';
@@ -12,7 +13,7 @@
     $payDate = isset($values['date']) && $values['date'] !== ''
         ? Carbon::parse($values['date'])
         : Carbon::now();
-    $clientRaw = trim((string) ($values['client'] ?? ''));
+    $clientRaw = DocumentPlainText::fromHtml(trim((string) ($values['client'] ?? '')));
     $fromLines = $clientRaw !== ''
         ? preg_split("/\r\n|\r|\n/", $clientRaw)
         : array_filter(['Client']);
@@ -28,8 +29,8 @@
         <div class="colldett-invoice__main">
             <div class="colldett-invoice__dates">
                 <div><span class="colldett-invoice__date-label">Payment Date:</span> {{ $payDate->format('l, F jS, Y') }}</div>
-                <div><span class="colldett-invoice__date-label">Invoice reference:</span> {{ $values['invoice'] ?? '—' }}</div>
-                <div><span class="colldett-invoice__date-label">Payment method:</span> {{ $values['method'] ?? '—' }}</div>
+                <div><span class="colldett-invoice__date-label">Invoice reference:</span> {{ DocumentPlainText::fromHtml((string) ($values['invoice'] ?? '')) ?: '—' }}</div>
+                <div><span class="colldett-invoice__date-label">Payment method:</span> {{ DocumentPlainText::fromHtml((string) ($values['method'] ?? '')) ?: '—' }}</div>
                 @include('admin.partials.document-tax-identifiers-invoice', ['values' => $values])
             </div>
             <div class="colldett-invoice__to">
@@ -72,7 +73,7 @@
                 <td>
                     Payment received
                     @if(!empty(trim((string) ($values['reference'] ?? ''))))
-                        <span style="color:#475569;"> — Reference: {{ $values['reference'] }}</span>
+                        <span style="color:#475569;"> — Reference: {{ DocumentPlainText::fromHtml((string) ($values['reference'] ?? '')) }}</span>
                     @endif
                 </td>
                 <td class="colldett-invoice__cell-num">{{ $fmtMoney($amountNum) }}</td>

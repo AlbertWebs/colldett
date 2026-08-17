@@ -11,6 +11,8 @@ final class ClientBillingDocuments
 {
     private const FEE_NOTES_PATH = 'admin/billing_fee_notes.json';
 
+    private const CREDIT_NOTES_PATH = 'admin/billing_credit_notes.json';
+
     private const INVOICES_PATH = 'admin/billing_invoices.json';
 
     private const CASES_PATH = 'admin/cases.json';
@@ -18,6 +20,7 @@ final class ClientBillingDocuments
     /**
      * @return array{
      *     fee_notes: list<array<string, mixed>>,
+     *     credit_notes: list<array<string, mixed>>,
      *     invoices: list<array<string, mixed>>,
      *     cases: list<array<string, mixed>>
      * }
@@ -26,11 +29,12 @@ final class ClientBillingDocuments
     {
         $company = trim($company);
         if ($company === '') {
-            return ['fee_notes' => [], 'invoices' => [], 'cases' => []];
+            return ['fee_notes' => [], 'credit_notes' => [], 'invoices' => [], 'cases' => []];
         }
 
         return [
             'fee_notes' => self::feeNotesFor($company),
+            'credit_notes' => self::creditNotesFor($company),
             'invoices' => self::invoicesFor($company),
             'cases' => self::casesFor($company),
         ];
@@ -39,6 +43,7 @@ final class ClientBillingDocuments
     public static function hasAny(array $documents): bool
     {
         return ($documents['fee_notes'] ?? []) !== []
+            || ($documents['credit_notes'] ?? []) !== []
             || ($documents['invoices'] ?? []) !== []
             || ($documents['cases'] ?? []) !== [];
     }
@@ -65,6 +70,40 @@ final class ClientBillingDocuments
                 'amount' => self::formatAmount($row['amount'] ?? ''),
                 'status' => $isDraft ? 'Draft' : 'Issued',
                 'sort_key' => $number !== '' ? $number : 'zzz-draft-'.$id,
+            ];
+        }
+
+        usort($out, static fn (array $a, array $b): int => strcmp((string) $b['sort_key'], (string) $a['sort_key']));
+
+        return array_map(static function (array $row): array {
+            unset($row['sort_key']);
+
+            return $row;
+        }, $out);
+    }
+
+    /** @return list<array<string, mixed>> */
+    private static function creditNotesFor(string $company): array
+    {
+        $rows = self::readJson(self::CREDIT_NOTES_PATH);
+        $out = [];
+        foreach ($rows as $row) {
+            if (! is_array($row) || trim((string) ($row['client'] ?? '')) !== $company) {
+                continue;
+            }
+            $id = (int) ($row['id'] ?? 0);
+            if ($id < 1) {
+                continue;
+            }
+            $number = trim((string) ($row['number'] ?? ''));
+            $against = trim((string) ($row['fee_note_number'] ?? ''));
+            $out[] = [
+                'id' => $id,
+                'reference' => $number !== '' ? $number.($against !== '' ? ' vs '.$against : '') : 'Credit note #'.$id,
+                'date' => self::formatDate($row['issued_date'] ?? ''),
+                'amount' => self::formatAmount($row['amount'] ?? ''),
+                'status' => 'Issued',
+                'sort_key' => $number !== '' ? $number : 'zzz-'.$id,
             ];
         }
 

@@ -4,16 +4,17 @@
     $isQuotation = $module === 'quotations';
     $isPayment = $module === 'payments';
     $isFeeNote = $module === 'fee-notes';
+    $isCreditNote = $module === 'credit-notes';
     $isDemand = $module === 'demand';
-    $docTitle = $isInvoice ? 'Invoice' : ($isDemand ? 'Demand Letter' : ($isQuotation ? 'Quotation' : ($isPayment ? 'Payment receipt' : ($isFeeNote ? 'Fee Note' : $meta['singular'] . ' preview'))));
+    $docTitle = $isInvoice ? 'Invoice' : ($isDemand ? 'Demand Letter' : ($isQuotation ? 'Quotation' : ($isPayment ? 'Payment receipt' : ($isFeeNote ? 'Fee Note' : ($isCreditNote ? 'Credit Note' : $meta['singular'] . ' preview')))));
     $showPreviewFooterActions = $showPreviewFooterActions ?? false;
-    $showLetterheadDocTitle = ! $isInvoice && ! $isQuotation && ! $isPayment;
+    $showLetterheadDocTitle = ! $isInvoice && ! $isQuotation && ! $isPayment && ! $isCreditNote;
 @endphp
 <x-colldett-document
     :document-title="$docTitle"
     :reference="$isInvoice || $isQuotation || $isPayment ? null : $docRef"
     :show-doc-title="$showLetterheadDocTitle"
-    :show-footer-kra="! $isFeeNote"
+    :show-footer-kra="! $isFeeNote && ! $isCreditNote"
 >
     @if($isInvoice)
         @include('admin.partials.invoice-document-content', ['values' => $values])
@@ -23,6 +24,8 @@
         @include('admin.partials.payment-receipt-document-content', ['values' => $values])
     @elseif($isFeeNote)
         @include('admin.partials.fee-note-document-content', ['values' => $values])
+    @elseif($isCreditNote)
+        @include('admin.partials.credit-note-document-content', ['values' => $values])
     @elseif($isDemand)
         @include('admin.partials.demand-letter-preview', ['values' => $values])
     @else

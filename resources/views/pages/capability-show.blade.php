@@ -2,13 +2,14 @@
 
 @section('content')
 @php
+    use App\Support\DocumentPlainText;
     use App\Support\RichContentHtml;
 
     $descriptionHtml = RichContentHtml::toParagraphHtml($capability['description'] ?? '');
     $hasAdminDescription = RichContentHtml::hasVisibleContent($capability['description'] ?? '');
     $heroIntro = RichContentHtml::plainExcerpt($capability['description'] ?? '', 240);
     if ($heroIntro === '') {
-        $heroIntro = trim(strip_tags((string) ($capability['description'] ?? '')));
+        $heroIntro = trim(DocumentPlainText::fromHtml((string) ($capability['description'] ?? '')));
     }
 @endphp
 <section class="page-hero">
@@ -41,9 +42,9 @@
                     $sections = is_array($content['sections'] ?? null) ? $content['sections'] : [];
                 @endphp
                 @if($intro !== '')
-                    @foreach(preg_split("/\r\n\r\n|\n\n/", trim($intro)) as $para)
-                        <p class="capability-detail-para">{{ $para }}</p>
-                    @endforeach
+                    <div class="capability-detail-prose">
+                        {!! RichContentHtml::toParagraphHtml($intro) !!}
+                    </div>
                 @endif
                 @foreach($sections as $section)
                     @php
@@ -52,15 +53,17 @@
                         $bullets = is_array($section['bullets'] ?? null) ? $section['bullets'] : [];
                     @endphp
                     @if($title !== '')
-                        <h2 class="mt-6">{{ $title }}</h2>
+                        <h2 class="mt-6">{{ DocumentPlainText::fromHtml($title) }}</h2>
                     @endif
                     @if($body !== '')
-                        <p class="capability-detail-para mt-3">{{ $body }}</p>
+                        <div class="capability-detail-prose mt-3">
+                            {!! RichContentHtml::toParagraphHtml($body) !!}
+                        </div>
                     @endif
                     @if($bullets !== [])
                         <ul class="checklist mt-4">
                             @foreach($bullets as $b)
-                                <li>{{ $b }}</li>
+                                <li>{{ DocumentPlainText::fromHtml((string) $b) }}</li>
                             @endforeach
                         </ul>
                     @endif
